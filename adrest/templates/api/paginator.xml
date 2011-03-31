@@ -1,0 +1,10 @@
+<{{ content.name }}s count="{{ content.count }}" page="{{ content.page.number }}">
+
+    <link rel="next" href="{{ content.next }}" />
+    <link rel="prev" href="{{ content.previous }}" />
+
+    {% for obj in content.resources %}
+        {% include emitter.get_template with content=obj %}
+    {% endfor %}
+
+</{{ content.name }}s>

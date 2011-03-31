@@ -1,0 +1,5 @@
+build
+docs/_build
+dist
+.ropeproject
+*.pyc

@@ -1,0 +1,7 @@
+Cherokee
+Check config option
+Add mysql, apache mod_wsgi templates
+Add remove custom templates
+Fix supervisor restart ( only one service )
+Django syncdb multidb support
+Add tests
