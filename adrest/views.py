@@ -7,6 +7,7 @@ from adrest.auth import AuthenticatorMixin
 from adrest.emitters import EmitterMixin, XMLTemplateEmitter, JSONTemplateEmitter
 from adrest.handlers import HandlerMixin
 from adrest.parsers import ParserMixin, XMLParser, JSONParser, FormParser
+from adrest.signals import api_request
 from adrest.utils import HttpError, Response
 
 
@@ -34,7 +35,7 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
             self.check_method_allowed(method)
 
             # Authentificate
-            self.authenticate()
+            self.identifier = self.authenticate()
 
             # Get the appropriate create/read/update/delete function
             func = getattr(self, self.callmap.get(method, None))
@@ -60,7 +61,9 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
         response.headers['Allow'] = ', '.join(self.allowed_methods)
         response.headers['Vary'] = 'Authenticate, Accept'
 
-        return self.emit(response)
+        response = self.emit(response)
+        api_request.send(self, response=response)
+        return response
 
     def check_method_allowed(self, method):
         """ Ensure the request method is permitted for this resource, raising a ResourceException if it is not.

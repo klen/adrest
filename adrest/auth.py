@@ -1,7 +1,6 @@
 import base64
 
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import AnonymousUser
 from django.middleware.csrf import CsrfViewMiddleware
 
 from adrest.utils import as_tuple, HttpError
@@ -11,6 +10,7 @@ class AuthenticatorMixin(object):
     """ Adds pluggable authentication behaviour.
     """
     authenticators = None
+    identifier = ''
 
     def authenticate(self):
         if not self._authenticate():
@@ -38,16 +38,20 @@ class BaseAuthenticator(object):
 
     def __init__(self, resource):
         self.resource = resource
+        self.identifier = ''
 
     def authenticate(self):
-        return False
+        return self.get_identifier()
+
+    def get_identifier(self):
+        return self.identifier
 
 
 class AnonimousAuthenticator(BaseAuthenticator):
     """ Always return true.
     """
-    def authenticate(self):
-        return True
+    def get_identifier(self):
+        return self.resource.request.META.get('REMOTE_ADDR', 'anonymous')
 
 
 class BasicAuthenticator(BaseAuthenticator):
@@ -61,8 +65,8 @@ class BasicAuthenticator(BaseAuthenticator):
                 uname, passwd = base64.b64decode(auth[1]).split(':')
                 user = authenticate(username=uname, password=passwd)
                 if user is not None and user.is_active:
-                    return user
-        return False
+                    self.identifier = user.username
+        return self.get_identifier()
 
 
 class UserAuthenticator(BaseAuthenticator):
@@ -76,11 +80,11 @@ class UserAuthenticator(BaseAuthenticator):
         try:
             username = request.REQUEST.get(self.username_fieldname)
             password = request.REQUEST.get(self.password_fieldname)
-            request.user = authenticate(username=username, password=password) or AnonymousUser()
-            return request.user.is_authenticated()
-
+            request.user = authenticate(username=username, password=password)
+            self.identifier = request.user.username if request.user else ''
         except KeyError:
-            return False
+            pass
+        return self.get_identifier()
 
 
 class UserLoggedInAuthenticator(BaseAuthenticator):
@@ -91,8 +95,8 @@ class UserLoggedInAuthenticator(BaseAuthenticator):
         if getattr(request, 'user', None) and request.user.is_active:
             resp = CsrfViewMiddleware().process_view(request, None, (), {})
             if resp is None:  # csrf passed
-                return request.user
-        return None
+                self.identifier = request.user.username
+        return self.get_identifier()
 
 
 try:
@@ -108,9 +112,10 @@ try:
                 access_key = request.META.get('HTTP_AUTHORIZATION') or request.REQUEST['key']
                 api_key = AccessKey.objects.get(key=access_key)
                 request.user = api_key.user
-                return True
+                self.identifier = request.user.username
             except(  KeyError, models.ObjectDoesNotExist ):
-                return False
+                pass
+            return self.get_identifier()
 
 except ImportError:
     pass

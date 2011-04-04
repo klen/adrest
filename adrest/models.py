@@ -2,24 +2,44 @@ from django.conf import settings
 from django.contrib import admin
 from django.db import models
 
-
-class Access(models.Model):
-    """ Log api queries.
-    """
-    created_at = models.DateTimeField(auto_now_add=True)
-    uri = models.CharField(max_length=100)
-    status_code = models.PositiveIntegerField()
-    request = models.TextField()
-    response = models.TextField()
-    identifier = models.CharField(max_length=255)
-
-    def __unicode__(self):
-        return "%s - %s" % (self.status_code, self.uri)
-
-admin.site.register(Access)
+from adrest.signals import api_request
 
 
-if 'django.contrib.auth' in settings.INSTALLED_APPS:
+# Access log
+# -----------
+if settings.ADREST_ACCESSLOG:
+
+    class Access(models.Model):
+        """ Log api queries.
+        """
+        created_at = models.DateTimeField(auto_now_add=True)
+        uri = models.CharField(max_length=100)
+        status_code = models.PositiveIntegerField()
+        request = models.TextField()
+        response = models.TextField()
+        identifier = models.CharField(max_length=255)
+
+        def __unicode__(self):
+            return "%s - %s" % (self.status_code, self.uri)
+
+    admin.site.register(Access)
+
+    def save_log(sender, response, **kwargs):
+        Access.objects.create(
+            uri = sender.request.path_info,
+            status_code = response.status_code,
+            request = sender.request.raw_post_data,
+            response = response.content,
+            identifier = sender.identifier or '',
+        )
+
+    api_request.connect(save_log)
+
+
+# Access keys
+# -----------
+if settings.ADREST_ACCESSLOG and 'django.contrib.auth' in settings.INSTALLED_APPS:
+
     import uuid
     from django.contrib.auth.models import User
 
@@ -37,7 +57,6 @@ if 'django.contrib.auth' in settings.INSTALLED_APPS:
         def save(self, **kwargs):
             self.key = self.key or str(uuid.uuid4()).replace('-', '')
             super(AccessKey, self).save(**kwargs)
-
 
     admin.site.register(AccessKey)
 
