@@ -3,22 +3,18 @@ from adrest.forms import PartitialForm
 from adrest.utils import HttpError, Paginator
 
 
-class Handler(object):
+class HandlerMixin(object):
 
-    allowed_methods = ('GET', )
     max_resources_per_page = 50
     parent = None
     model = None
     form = None
-    template = None
-    prefix = None
-
-    def __init__(self, **initkwargs):
-        for key, value in initkwargs.iteritems():
-            setattr(self, key, value)
+    form_fields = None
+    prefix = ''
+    uri_params = None
 
     def get(self, request, instance=None, **kwargs):
-
+        assert self.model, "This auto method required in model."
         if instance:
             return instance
 
@@ -27,10 +23,7 @@ class Handler(object):
         return self.paginate(request, q)
 
     def post(self, request, **kwargs):
-
-        if not self.model:
-            self.not_implemented('POST')
-
+        assert self.model, "This auto method required in model."
         form_class = self.get_form()
         form = form_class(data=request.data, **kwargs)
         if form.is_valid():
@@ -39,11 +32,12 @@ class Handler(object):
         raise HttpError("Bad request", status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, instance=None, **kwargs):
+        assert self.model, "This auto method required in model."
         if not instance:
             raise HttpError("Bad request", status=status.HTTP_400_BAD_REQUEST)
 
         form_class = self.get_form()
-        form = form_class(data=request.data, **kwargs)
+        form = form_class(data=request.data, instance=instance, **kwargs)
         if form.is_valid():
             return form.save()
 
@@ -59,27 +53,47 @@ class Handler(object):
         instance.delete()
         return None
 
-    def not_implemented(self, operation):
-        raise HttpError('%s operation on this resource has not been implemented' % operation, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    @classmethod
+    def get_resource_name(cls):
+        if cls.model:
+            return cls.model._meta.module_name
+        class_name = cls.__name__
+        name_bits = [bit for bit in class_name.split('Resource') if bit]
+        return ''.join(name_bits).lower()
 
-    @property
-    def resource_name(self):
-        return self.model._meta.module_name if self.model else self.__class__.__name__.lower()
+    @classmethod
+    def get_urlname(cls):
+        parts = []
 
-    def get_urlname(self):
-        name = ''
-        if self.parent:
-            name = self.parent.get_urlname() + '-'
-        name += self.resource_name
-        return name
+        if cls.parent:
+            parts.append(cls.parent.get_urlname())
 
-    def get_urlregex(self):
-        parent = self.parent
-        regex = ''
+        if cls.prefix:
+            parts.append(cls.prefix)
+
+        if cls.uri_params:
+            parts += list(cls.uri_params)
+
+        parts.append(cls.get_resource_name())
+        return '-'.join(parts)
+
+    @classmethod
+    def get_urlregex(cls):
+
+        parts = []
+        parent = cls.parent
         while parent:
-            regex = '%s/(?P<%s>\d+)/' % (parent.resource_name, parent.resource_name) + regex
+            parts.append(parent.get_resource_name())
             parent = parent.parent
-        regex += '%s/(?:(?P<%s>\d+)/)?$' % (self.resource_name, self.resource_name)
+
+        if cls.uri_params:
+            parts += list(cls.uri_params)
+
+        regex = '/'.join('%(name)s/(?P<%(name)s>[^/]+)' % dict(name = p) for p in parts)
+        regex = regex + '/' if regex else ''
+        regex += '%(name)s/(?:(?P<%(name)s>[^/]+)/)?$' % dict(name = cls.get_resource_name())
+        if cls.prefix:
+            regex = '%s/%s' % (cls.prefix, regex)
         return regex
 
     def get_filter_options(self, request, **kwargs):
@@ -110,5 +124,6 @@ class Handler(object):
             class DynForm(PartitialForm):
                 class Meta():
                     model = self.model
+                    fields = self.form_fields
             return DynForm
         return self.form

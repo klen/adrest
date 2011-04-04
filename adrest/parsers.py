@@ -8,7 +8,11 @@ class ParserMixin(object):
 
     parsers = tuple()
 
-    def parse(self, content_type):
+    def parse(self):
+
+        content_type = self.determine_content(self.request)
+        if not content_type:
+            return None
 
         split = content_type.split(';', 1)
         if len(split) > 1:
@@ -23,6 +27,11 @@ class ParserMixin(object):
             parser = FormParser
 
         return parser(self).parse()
+
+    def determine_content(self, request):
+        if not request.META.get('CONTENT_LENGTH', None) and not request.META.get('TRANSFER_ENCODING', None):
+            return None
+        return request.META.get('CONTENT_TYPE', None)
 
 
 class BaseParser(object):

@@ -23,7 +23,6 @@ _commit:
 	git add . -u
 	git commit
 	git push origin
-	git push intaxi
 
 _register:
 	python setup.py register

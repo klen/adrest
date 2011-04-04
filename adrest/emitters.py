@@ -8,6 +8,7 @@ from adrest.utils import HttpError, Paginator, Response
 class EmitterMixin(object):
 
     emitters = tuple()
+    template = None
 
     def emit(self, response):
         """ Takes a :class:`Response` object and returns a Django :class:`HttpResponse`.
@@ -71,19 +72,21 @@ class TemplateEmmiter(object):
             return template.render(context)
         return response.content
 
-    def get_template(self, content=None):
-        if self.resource.handler.template:
-            return self.resource.handler.template
+    def get_template_dir(self):
+        path = 'api/%s/' % ( self.resource.version or '' )
+        if self.resource.model:
+            path += self.resource.model._meta.app_label + '/'
+        return path
 
-        template_name = 'api/'
+    def get_template(self, content=None):
+        if self.resource.template:
+            return self.resource.template
+
         if isinstance(content, Paginator):
-            template_name += 'paginator'
+            template_name = 'api/paginator'
         else:
-            template_name = '%s%s/' % (template_name, self.resource.version) if self.resource.version else template_name
-            if self.resource.handler.model:
-                template_name += '%s/%s' % (self.resource.handler.model._meta.app_label, self.resource.handler.resource_name)
-            else:
-                template_name += self.resource.handler.resource_name
+            template_name = self.get_template_dir() + self.resource.get_resource_name()
+
         template_name += '.%s' % self.media_type.split('/')[-1]
         return template_name
 

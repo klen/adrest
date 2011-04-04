@@ -5,15 +5,16 @@ from django.views.generic import View
 from adrest import status
 from adrest.auth import AuthenticatorMixin
 from adrest.emitters import EmitterMixin, XMLTemplateEmitter, JSONTemplateEmitter
+from adrest.handlers import HandlerMixin
 from adrest.parsers import ParserMixin, XMLParser, JSONParser, FormParser
 from adrest.utils import HttpError, Response
 
 
-class ResourceView(EmitterMixin, ParserMixin, AuthenticatorMixin, View):
+class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, View):
 
     api = None
 
-    handler = None
+    allowed_methods = ('GET', )
 
     emitters = (XMLTemplateEmitter, JSONTemplateEmitter)
 
@@ -32,16 +33,18 @@ class ResourceView(EmitterMixin, ParserMixin, AuthenticatorMixin, View):
             # Check request method
             self.check_method_allowed(method)
 
+            # Authentificate
+            self.authenticate()
+
             # Get the appropriate create/read/update/delete function
-            func = getattr(self.handler, self.callmap.get(method, None))
+            func = getattr(self, self.callmap.get(method, None))
 
             # Get required resources
-            kwargs = self.parse_kwargs(self.handler, **kwargs)
+            kwargs = self.parse_kwargs(**kwargs)
 
-            content_type = self.determine_content(request)
             # Parse content
-            if method in ('POST', 'PUT') and content_type:
-                request.data = self.parse(content_type)
+            if method in ('POST', 'PUT'):
+                request.data = self.parse()
 
             # Get function data
             content = func(request, *args, **kwargs)
@@ -50,8 +53,11 @@ class ResourceView(EmitterMixin, ParserMixin, AuthenticatorMixin, View):
         except HttpError, e:
             response = Response(e.message, status=e.status)
 
+        except Exception, e:
+            response = self.handle_exception(e)
+
         # Always add these headers
-        response.headers['Allow'] = ', '.join(self.handler.allowed_methods)
+        response.headers['Allow'] = ', '.join(self.allowed_methods)
         response.headers['Vary'] = 'Authenticate, Accept'
 
         return self.emit(response)
@@ -62,27 +68,21 @@ class ResourceView(EmitterMixin, ParserMixin, AuthenticatorMixin, View):
         if not method in self.callmap.keys():
             raise HttpError('Unknown or unsupported method \'%s\'' % method, status=status.HTTP_501_NOT_IMPLEMENTED)
 
-        if not method in self.handler.allowed_methods:
+        if not method in self.allowed_methods:
             raise HttpError('Method \'%s\' not allowed on this resource.' % method, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @property
     def version(self):
         return self.api.str_version if self.api else ''
 
-    def determine_content(self, request):
-        if not request.META.get('CONTENT_LENGTH', None) and not request.META.get('TRANSFER_ENCODING', None):
-            return None
-        return self.request.META.get('CONTENT_TYPE', None)
-
-    @staticmethod
-    def parse_kwargs(handler, **kwargs):
+    def parse_kwargs(self, **kwargs):
         models = dict()
         owners = dict()
-        h = handler
-        while h:
-            if h.model:
-                models[h.model._meta.module_name] = h.model
-            h = h.parent
+        parent = self
+        while parent:
+            if parent.model:
+                models[parent.model._meta.module_name] = parent.model
+            parent = parent.parent
 
         for key, value in kwargs.iteritems():
             key = key.lower()
@@ -97,5 +97,8 @@ class ResourceView(EmitterMixin, ParserMixin, AuthenticatorMixin, View):
                     raise HttpError("Resources conflict.", status=status.HTTP_409_CONFLICT)
 
         kwargs.update(owners)
-        kwargs['instance'] = kwargs.get(handler.resource_name)
+        kwargs['instance'] = kwargs.get(self.get_resource_name())
         return kwargs
+
+    def handle_exception(self, e):
+        return Response(str(e), status=500)
