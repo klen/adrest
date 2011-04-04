@@ -28,8 +28,7 @@ class HandlerMixin(object):
         form = form_class(data=request.data, **kwargs)
         if form.is_valid():
             return form.save()
-
-        raise HttpError("Bad request", status=status.HTTP_400_BAD_REQUEST)
+        raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, instance=None, **kwargs):
         assert self.model, "This auto method required in model."
@@ -41,7 +40,7 @@ class HandlerMixin(object):
         if form.is_valid():
             return form.save()
 
-        raise HttpError("Bad request", status=status.HTTP_400_BAD_REQUEST)
+        raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, instance=None, **kwargs):
         if not instance:
