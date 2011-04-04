@@ -13,10 +13,6 @@ class AuthenticatorMixin(object):
     identifier = ''
 
     def authenticate(self):
-        if not self._authenticate():
-            raise HttpError("Authorization required.", status=401)
-
-    def _authenticate(self):
         """ Attempt to authenticate the request, returning an authentication context or None.
             An authentication context may be any object, although in many cases it will simply be a :class:`User` instance.
         """
@@ -28,7 +24,7 @@ class AuthenticatorMixin(object):
             if auth_result:
                 return auth_result
 
-        return auth_result
+        raise HttpError("Authorization required.", status=401)
 
 
 class BaseAuthenticator(object):

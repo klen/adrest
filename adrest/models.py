@@ -28,7 +28,7 @@ if settings.ADREST_ACCESSLOG:
         Access.objects.create(
             uri = sender.request.path_info,
             status_code = response.status_code,
-            request = sender.request.raw_post_data,
+            request = str(getattr(sender.request, 'data', '')),
             response = response.content,
             identifier = sender.identifier or '',
         )
