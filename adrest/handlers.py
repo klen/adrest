@@ -85,6 +85,8 @@ class HandlerMixin(object):
             parts.append(parent.get_resource_name())
             parent = parent.parent
 
+        parts = list(reversed(parts))
+
         if cls.uri_params:
             parts += list(cls.uri_params)
 
