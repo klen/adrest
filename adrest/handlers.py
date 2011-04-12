@@ -7,6 +7,7 @@ class HandlerMixin(object):
     max_resources_per_page = 50
     parent = None
     model = None
+    queryset = None
     form = None
     form_fields = None
     prefix = ''
@@ -18,8 +19,8 @@ class HandlerMixin(object):
             return instance
 
         filter_options = self.get_filter_options(request, **kwargs)
-        q = self.model.objects.select_related().filter( **filter_options )
-        return self.paginate(request, q)
+        query = self.queryset or self.model.objects.all()
+        return self.paginate(request, query.filter( **filter_options ))
 
     def post(self, request, **kwargs):
         form_class = self.get_form()
