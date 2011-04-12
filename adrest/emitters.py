@@ -11,7 +11,7 @@ class EmitterMixin(object):
     template = None
 
     def emit(self, response):
-        """ Takes a :class:`Response` object and returns a Django :class:`HttpResponse`.
+        """ Takes a Response object and returns a Django HttpResponse.
         """
         try:
             emitter = self._determine_emitter(self.request)

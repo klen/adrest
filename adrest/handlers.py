@@ -4,7 +4,6 @@ from adrest.utils import HttpError, Paginator
 
 
 class HandlerMixin(object):
-
     max_resources_per_page = 50
     parent = None
     model = None
@@ -23,7 +22,6 @@ class HandlerMixin(object):
         return self.paginate(request, q)
 
     def post(self, request, **kwargs):
-        assert self.model, "This auto method required in model."
         form_class = self.get_form()
         form = form_class(data=request.data, **kwargs)
         if form.is_valid():
@@ -31,7 +29,6 @@ class HandlerMixin(object):
         raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, instance=None, **kwargs):
-        assert self.model, "This auto method required in model."
         if not instance:
             raise HttpError("Bad request", status=status.HTTP_400_BAD_REQUEST)
 
@@ -51,51 +48,6 @@ class HandlerMixin(object):
                 assert owner.pk == getattr(instance, '%s_id' % name)
         instance.delete()
         return None
-
-    @classmethod
-    def get_resource_name(cls):
-        if cls.model:
-            return cls.model._meta.module_name
-        class_name = cls.__name__
-        name_bits = [bit for bit in class_name.split('Resource') if bit]
-        return ''.join(name_bits).lower()
-
-    @classmethod
-    def get_urlname(cls):
-        parts = []
-
-        if cls.parent:
-            parts.append(cls.parent.get_urlname())
-
-        if cls.prefix:
-            parts.append(cls.prefix)
-
-        if cls.uri_params:
-            parts += list(cls.uri_params)
-
-        parts.append(cls.get_resource_name())
-        return '-'.join(parts)
-
-    @classmethod
-    def get_urlregex(cls):
-
-        parts = []
-        parent = cls.parent
-        while parent:
-            parts.append(parent.get_resource_name())
-            parent = parent.parent
-
-        parts = list(reversed(parts))
-
-        if cls.uri_params:
-            parts += list(cls.uri_params)
-
-        regex = '/'.join('%(name)s/(?P<%(name)s>[^/]+)' % dict(name = p) for p in parts)
-        regex = regex + '/' if regex else ''
-        regex += '%(name)s/(?:(?P<%(name)s>[^/]+)/)?$' % dict(name = cls.get_resource_name())
-        if cls.prefix:
-            regex = '%s/%s' % (cls.prefix, regex)
-        return regex
 
     def get_filter_options(self, request, **kwargs):
         model_fields = [f.name for f in self.model._meta.fields]

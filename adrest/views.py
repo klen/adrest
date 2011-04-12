@@ -41,14 +41,14 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
             func = getattr(self, self.callmap.get(method, None))
 
             # Get required resources
-            kwargs = self.parse_kwargs(**kwargs)
+            resources = self.parse_resources(**kwargs)
 
             # Parse content
             if method in ('POST', 'PUT'):
                 request.data = self.parse()
 
             # Get function data
-            content = func(request, *args, **kwargs)
+            content = func(request, *args, **resources)
             response = Response(content)
 
         except HttpError, e:
@@ -74,24 +74,68 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
         if not method in self.allowed_methods:
             raise HttpError('Method \'%s\' not allowed on this resource.' % method, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+    @classmethod
+    def get_resource_name(cls):
+        if cls.model:
+            return cls.model._meta.module_name
+        class_name = cls.__name__
+        name_bits = [bit for bit in class_name.split('Resource') if bit]
+        return ''.join(name_bits).lower()
+
+    @classmethod
+    def get_urlname(cls):
+        parts = []
+
+        if cls.parent:
+            parts.append(cls.parent.get_urlname())
+
+        if cls.prefix:
+            parts.append(cls.prefix)
+
+        if cls.uri_params:
+            parts += list(cls.uri_params)
+
+        parts.append(cls.get_resource_name())
+        return '-'.join(parts)
+
+    @classmethod
+    def get_urlregex(cls):
+        parts = [p.get_resource_name() for p in cls.get_parents()]
+
+        if cls.uri_params:
+            parts += list(cls.uri_params)
+
+        regex = '/'.join('%(name)s/(?P<%(name)s>[^/]+)' % dict(name = p) for p in parts)
+        regex = regex + '/' if regex else ''
+        regex += '%(name)s/(?:(?P<%(name)s>[^/]+)/)?$' % dict(name = cls.get_resource_name())
+        if cls.prefix:
+            regex = '%s/%s' % (cls.prefix, regex)
+        return regex
+
+    @classmethod
+    def get_parents(cls):
+        parents = list()
+        while cls.parent:
+            parents.append(cls.parent)
+            cls = cls.parent
+        return reversed(parents)
+
     @property
     def version(self):
         return self.api.str_version if self.api else ''
 
-    def parse_kwargs(self, **kwargs):
-        models = dict()
+    def parse_resources(self, **kwargs):
+        models = [p.model for p in self.get_parents() if p.model]
+        if self.model:
+            models.append(self.model)
+        models_dict = dict((m._meta.module_name, m) for m in models if m)
         owners = dict()
-        parent = self
-        while parent:
-            if parent.model:
-                models[parent.model._meta.module_name] = parent.model
-            parent = parent.parent
 
         for key, value in kwargs.iteritems():
             key = key.lower()
-            if models.has_key(key) and value:
+            if models_dict.has_key(key) and value:
                 try:
-                    owners[key] = models.get(key).objects.get(pk=value)
+                    owners[key] = models_dict.get(key).objects.get(pk=value)
 
                 except ObjectDoesNotExist:
                     raise HttpError("Resource not found.", status=status.HTTP_404_NOT_FOUND)
@@ -100,6 +144,33 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
                     raise HttpError("Resources conflict.", status=status.HTTP_409_CONFLICT)
 
         kwargs.update(owners)
+
+        # Check owners
+        it = (m._meta.module_name for m in models)
+        try:
+            f_name = next(it)
+
+            if self.auth:
+                self.auth.test_owner(owners.get(f_name))
+
+            c_name = next(it)
+
+            while True:
+                ofm, ocm = owners.get(f_name), owners.get(c_name)
+                # Test parent element linked from children
+                assert getattr(ocm, '%s_id' % f_name, ofm.pk)
+                f_name, c_name = c_name, next(it)
+
+        except (AssertionError, ObjectDoesNotExist):
+            raise HttpError("Access forbiden.", status=status.HTTP_403_FORBIDDEN)
+
+        except StopIteration:
+            pass
+
+        for model in reversed(models):
+            if owners.get(model._meta.module_name):
+                pass
+
         kwargs['instance'] = kwargs.get(self.get_resource_name())
         return kwargs
 

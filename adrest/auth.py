@@ -3,6 +3,7 @@ import base64
 from django.contrib.auth import authenticate
 from django.middleware.csrf import CsrfViewMiddleware
 
+from adrest import status
 from adrest.utils import as_tuple, HttpError
 
 
@@ -10,6 +11,7 @@ class AuthenticatorMixin(object):
     """ Adds pluggable authentication behaviour.
     """
     authenticators = None
+    auth = None
     identifier = ''
 
     def authenticate(self):
@@ -20,11 +22,14 @@ class AuthenticatorMixin(object):
         # Attempt authentication against each authenticator in turn,
         auth_result = True
         for authenticator in as_tuple(self.authenticators):
-            auth_result = authenticator(self).authenticate()
+            self.auth = authenticator(self)
+            auth_result = self.auth.authenticate()
             if auth_result:
-                return auth_result
+                break
+        else:
+            raise HttpError("Authorization required.", status=status.HTTP_401_UNAUTHORIZED)
 
-        raise HttpError("Authorization required.", status=401)
+        return auth_result
 
 
 class BaseAuthenticator(object):
@@ -41,6 +46,9 @@ class BaseAuthenticator(object):
 
     def get_identifier(self):
         return self.identifier
+
+    def test_owner(self, instance):
+        pass
 
 
 class AnonimousAuthenticator(BaseAuthenticator):
@@ -97,7 +105,8 @@ class UserLoggedInAuthenticator(BaseAuthenticator):
 
 try:
     from adrest.models import AccessKey
-    from django.db import models
+    from django.core.exceptions import ObjectDoesNotExist
+
 
     class AccessKeyAuthenticator(BaseAuthenticator):
         """ Use AcessKey identification.
@@ -109,7 +118,7 @@ try:
                 api_key = AccessKey.objects.get(key=access_key)
                 request.user = api_key.user
                 self.identifier = request.user.username
-            except(  KeyError, models.ObjectDoesNotExist ):
+            except(KeyError, ObjectDoesNotExist):
                 pass
             return self.get_identifier()
 

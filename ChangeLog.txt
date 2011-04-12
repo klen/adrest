@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-04-07 0.0.8
+-------------------
+* Add owner resource checks
+
 ## 2011-04-07 0.0.7
 -------------------
 * Fix url regex generate bug
