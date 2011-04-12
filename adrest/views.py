@@ -31,6 +31,7 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
         method = request.method.upper()
 
         try:
+
             # Check request method
             self.check_method_allowed(method)
 
@@ -137,7 +138,7 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
                 try:
                     owners[key] = models_dict.get(key).objects.get(pk=value)
 
-                except ObjectDoesNotExist:
+                except (ObjectDoesNotExist, ValueError):
                     raise HttpError("Resource not found.", status=status.HTTP_404_NOT_FOUND)
 
                 except MultipleObjectsReturned:
