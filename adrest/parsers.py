@@ -1,3 +1,4 @@
+from django.http import QueryDict
 from django.utils import simplejson as json
 
 from adrest import status
@@ -62,4 +63,8 @@ class FormParser(BaseParser):
     media_type = 'application/x-www-form-urlencoded'
 
     def parse(self):
-        return dict(self.resource.request.REQUEST.iteritems())
+        source = self.resource.request.REQUEST.iteritems()
+        if self.resource.request.method == "PUT":
+            # Fix django bug: request.GET, .POST are empty on PUT request
+            source = QueryDict(self.resource.request.raw_post_data, encoding=self.resource.request.encoding).iteritems()
+        return dict(source)
