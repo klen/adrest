@@ -15,6 +15,12 @@ if settings.ADREST_ACCESSLOG:
         created_at = models.DateTimeField(auto_now_add=True)
         uri = models.CharField(max_length=100)
         status_code = models.PositiveIntegerField()
+        method = models.CharField(max_length=10, choices=(
+            ('GET', 'GET'),
+            ('POST', 'POST'),
+            ('PUT', 'PUT'),
+            ('DELETE', 'DELETE'),
+        ))
         request = models.TextField()
         response = models.TextField()
         identifier = models.CharField(max_length=255)
@@ -27,6 +33,7 @@ if settings.ADREST_ACCESSLOG:
     def save_log(sender, response, **kwargs):
         Access.objects.create(
             uri = sender.request.path_info,
+            method = sender.request.method,
             status_code = response.status_code,
             request = str(getattr(sender.request, 'data', '')),
             response = response.content,

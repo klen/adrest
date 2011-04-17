@@ -1,7 +1,12 @@
 CHANGES
 =======
 
+## 2011-04-17 0.1.3
+-------------------
+* Add method field in access log model
+
 ## 2011-04-15 0.1.2
+-------------------
 * Fix tests fail for PUT requests
 
 ## 2011-04-15 0.1.1
