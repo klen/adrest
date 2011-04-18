@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.db import models
 
-from adrest.signals import api_request
+from adrest.signals import api_request_finished
 
 
 # Access log
@@ -30,7 +30,7 @@ if settings.ADREST_ACCESSLOG:
 
     admin.site.register(Access)
 
-    def save_log(sender, response, **kwargs):
+    def save_log(sender, response=None, **kwargs):
         Access.objects.create(
             uri = sender.request.path_info,
             method = sender.request.method,
@@ -40,7 +40,7 @@ if settings.ADREST_ACCESSLOG:
             identifier = sender.identifier or '',
         )
 
-    api_request.connect(save_log)
+    api_request_finished.connect(save_log)
 
 
 # Access keys
@@ -57,6 +57,9 @@ if settings.ADREST_ACCESSLOG and 'django.contrib.auth' in settings.INSTALLED_APP
         key =  models.CharField(max_length=40, blank=True)
         user = models.ForeignKey(User)
         created = models.DateTimeField(auto_now_add=True)
+
+        class Meta():
+            unique_together = 'user', 'key'
 
         def __unicode__(self):
             return u"%s for %s" % (self.key, self.user)

@@ -7,7 +7,7 @@ from adrest.auth import AuthenticatorMixin
 from adrest.emitters import EmitterMixin, XMLTemplateEmitter, JSONTemplateEmitter
 from adrest.handlers import HandlerMixin
 from adrest.parsers import ParserMixin, XMLParser, JSONParser, FormParser
-from adrest.signals import api_request
+from adrest.signals import api_request_started, api_request_finished
 from adrest.utils import HttpError, Response
 
 
@@ -28,6 +28,10 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
     def dispatch(self, request, *args, **kwargs):
 
         self.request = request
+
+        # Send started signal
+        api_request_started.send(self, request = request)
+
         method = request.method.upper()
 
         try:
@@ -63,7 +67,10 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
         response.headers['Vary'] = 'Authenticate, Accept'
 
         response = self.emit(response)
-        api_request.send(self, response=response)
+
+        # Send finished signal
+        api_request_finished.send(self, request=self.request, response=response)
+
         return response
 
     def check_method_allowed(self, method):

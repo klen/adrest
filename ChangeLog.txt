@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-04-18 0.1.4
+-------------------
+* Add api_request_started and api_request_finished signals
+
 ## 2011-04-17 0.1.3
 -------------------
 * Add method field in access log model
