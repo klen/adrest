@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-04-18 0.1.5
+-------------------
+* Fix empty content-type
+
 ## 2011-04-18 0.1.4
 -------------------
 * Add api_request_started and api_request_finished signals

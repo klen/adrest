@@ -12,13 +12,11 @@ class ParserMixin(object):
     def parse(self):
 
         content_type = self.determine_content(self.request)
-        if not content_type:
-            return None
-
-        split = content_type.split(';', 1)
-        if len(split) > 1:
-            content_type = split[0]
-        content_type = content_type.strip()
+        if content_type:
+            split = content_type.split(';', 1)
+            if len(split) > 1:
+                content_type = split[0]
+            content_type = content_type.strip()
 
         media_type_to_parser = dict([(parser.media_type, parser) for parser in self.parsers])
 
