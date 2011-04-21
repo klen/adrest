@@ -8,7 +8,7 @@ from adrest.emitters import EmitterMixin, XMLTemplateEmitter, JSONTemplateEmitte
 from adrest.handlers import HandlerMixin
 from adrest.parsers import ParserMixin, XMLParser, JSONParser, FormParser
 from adrest.signals import api_request_started, api_request_finished
-from adrest.utils import HttpError, Response
+from adrest.utils import HttpError, Response, as_tuple
 
 
 class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, View):
@@ -63,7 +63,7 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
             response = self.handle_exception(e)
 
         # Always add these headers
-        response.headers['Allow'] = ', '.join(self.allowed_methods)
+        response.headers['Allow'] = ', '.join(as_tuple(self.allowed_methods))
         response.headers['Vary'] = 'Authenticate, Accept'
 
         response = self.emit(response)
