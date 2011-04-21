@@ -45,7 +45,7 @@ if settings.ADREST_ACCESSLOG:
 
 # Access keys
 # -----------
-if settings.ADREST_ACCESSLOG and 'django.contrib.auth' in settings.INSTALLED_APPS:
+if settings.ADREST_ACCESSKEY and 'django.contrib.auth' in settings.INSTALLED_APPS:
 
     import uuid
     from django.contrib.auth.models import User
@@ -71,9 +71,10 @@ if settings.ADREST_ACCESSLOG and 'django.contrib.auth' in settings.INSTALLED_APP
     admin.site.register(AccessKey)
 
     # Auto create key for created user
-    def create_api_key(sender, **kwargs):
-        if kwargs.get('created') is True:
-            AccessKey.objects.create(user=kwargs.get('instance'))
+    def create_api_key(sender, created=False, instance=None, **kwargs):
+        if created and instance:
+            AccessKey.objects.create(user=instance)
 
     # Connect create handler to user save event
     models.signals.post_save.connect(create_api_key, sender=User)
+
