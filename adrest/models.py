@@ -45,7 +45,7 @@ if settings.ADREST_ACCESSLOG:
 
 # Access keys
 # -----------
-if settings.ADREST_ACCESSKEY and 'django.contrib.auth' in settings.INSTALLED_APPS:
+if 'django.contrib.auth' in settings.INSTALLED_APPS:
 
     import uuid
     from django.contrib.auth.models import User
@@ -76,5 +76,5 @@ if settings.ADREST_ACCESSKEY and 'django.contrib.auth' in settings.INSTALLED_APP
             AccessKey.objects.create(user=instance)
 
     # Connect create handler to user save event
-    models.signals.post_save.connect(create_api_key, sender=User)
-
+    if settings.ADREST_ACCESSKEY:
+        models.signals.post_save.connect(create_api_key, sender=User)
