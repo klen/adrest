@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-04-22 0.1.9
+-------------------
+* Add server timestamp to all request
+
 ## 2011-04-21 0.1.8
 -------------------
 * Minor fixes

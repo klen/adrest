@@ -1,5 +1,7 @@
 from django.http import HttpResponse
 from django.template import RequestContext, loader
+from datetime import datetime
+from time import mktime
 
 from adrest import status
 from adrest.utils import HttpError, Paginator, Response
@@ -104,5 +106,6 @@ class XMLTemplateEmitter(TemplateEmmiter):
 
     def emit(self, response):
         output = super(XMLTemplateEmitter, self).emit(response)
+        ts = int(mktime(datetime.now().timetuple()))
         success = 'true' if response.status == 200 else 'false'
-        return '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s">%s</response>' % ( success, self.resource.version, output )
+        return '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>' % ( success, self.resource.version, ts, output )
