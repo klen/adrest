@@ -31,13 +31,19 @@ if settings.ADREST_ACCESSLOG:
     admin.site.register(Access)
 
     def save_log(sender, response=None, **kwargs):
+
+        if not sender.log:
+            return
+
         Access.objects.create(
             uri = sender.request.path_info,
             method = sender.request.method,
             status_code = response.status_code,
             request = str(getattr(sender.request, 'data', '')),
-            response = response.content,
             identifier = sender.identifier or '',
+
+            # Truncate response to 5000 symbols
+            response = response.content[:5000].rsplit(' ', 1)[0],
         )
 
     api_request_finished.connect(save_log)

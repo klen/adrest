@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+## 2011-04-25 0.2.0
+-------------------
+* Add `log` resource param
+* Truncate response content in log to 5000 symbols
+
 ## 2011-04-22 0.1.9
 -------------------
 * Add server timestamp to all request

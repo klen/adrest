@@ -15,6 +15,8 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
 
     api = None
 
+    log = True
+
     allowed_methods = ('GET', )
 
     emitters = (XMLTemplateEmitter, JSONTemplateEmitter)
