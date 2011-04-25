@@ -1,6 +1,7 @@
 import logging
 
 from django.conf.urls.defaults import url
+from adrest.views import TopResource
 
 
 LOG = logging.getLogger('adrest')
@@ -42,7 +43,14 @@ class Api(object):
         """ Provides URLconf details for the ``Api`` and all registered
             ``Resources`` beneath it.
         """
-        patterns = []
+
+        patterns = [
+
+            # self top level map
+            url(r"^%s/?$" % self.str_version, TopResource.as_view(api=self), name="api_%s_top" % self.str_version),
+
+        ]
+
         for key in sorted(self._resources.keys()):
 
             value = self._resources[key]

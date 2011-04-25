@@ -3,15 +3,17 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
 from adrest import status
-from adrest.auth import AuthenticatorMixin
-from adrest.emitters import EmitterMixin, XMLTemplateEmitter, JSONTemplateEmitter
+from adrest.auth import AuthenticatorMixin, AnonimousAuthenticator
+from adrest.emitters import EmitterMixin, XMLTemplateEmitter, JSONTemplateEmitter, JSONEmitter
 from adrest.handlers import HandlerMixin
 from adrest.parsers import ParserMixin, XMLParser, JSONParser, FormParser
+from adrest.settings import DEBUG
 from adrest.signals import api_request_started, api_request_finished
+from adrest.throttle import ThrottleMixin
 from adrest.utils import HttpError, Response, as_tuple
 
 
-class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, View):
+class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, View):
 
     api = None
 
@@ -29,11 +31,13 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
 
+        # Save request for later use
         self.request = request
 
         # Send started signal
         api_request_started.send(self, request = request)
 
+        # Current HTTP method
         method = request.method.upper()
 
         try:
@@ -44,8 +48,8 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
             # Authentificate
             self.identifier = self.authenticate()
 
-            # Get the appropriate create/read/update/delete function
-            func = getattr(self, self.callmap.get(method, None))
+            # Throttle check
+            self.throttle_check()
 
             # Get required resources
             resources = self.parse_resources(**kwargs)
@@ -53,6 +57,9 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
             # Parse content
             if method in ('POST', 'PUT'):
                 request.data = self.parse()
+
+            # Get the appropriate create/read/update/delete function
+            func = getattr(self, self.callmap.get(method, None))
 
             # Get function data
             content = func(request, *args, **resources)
@@ -68,7 +75,8 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
         response.headers['Allow'] = ', '.join(as_tuple(self.allowed_methods))
         response.headers['Vary'] = 'Authenticate, Accept'
 
-        response = self.emit(response)
+        # Serialize response
+        response = self.emit(request, response)
 
         # Send finished signal
         api_request_finished.send(self, request=self.request, response=response)
@@ -132,6 +140,8 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
 
     @property
     def version(self):
+        """ For templates rendering.
+        """
         return self.api.str_version if self.api else ''
 
     def parse_resources(self, **kwargs):
@@ -185,4 +195,19 @@ class ResourceView(HandlerMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, 
         return kwargs
 
     def handle_exception(self, e):
-        return Response(str(e), status=500)
+        """ Handle code exception.
+        """
+        if not DEBUG:
+            return Response(str(e), status=500)
+
+
+class TopResource(ResourceView):
+    """ TODO: Not implementated.
+    """
+
+    log = False
+    emitters = JSONEmitter
+    authenticators = AnonimousAuthenticator
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(TopResource, self).dispatch(request, *args, **kwargs)

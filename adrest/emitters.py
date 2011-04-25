@@ -1,10 +1,13 @@
-from django.http import HttpResponse
-from django.template import RequestContext, loader
 from datetime import datetime
 from time import mktime
 
-from adrest import status
-from adrest.utils import HttpError, Paginator, Response
+import mimeparse
+from django.core.serializers import json
+from django.http import HttpResponse
+from django.template import RequestContext, loader
+from django.utils import simplejson
+
+from adrest.utils import HttpError, Paginator, Response, as_tuple
 
 
 class EmitterMixin(object):
@@ -12,11 +15,11 @@ class EmitterMixin(object):
     emitters = tuple()
     template = None
 
-    def emit(self, response):
+    def emit(self, request, response):
         """ Takes a Response object and returns a Django HttpResponse.
         """
         try:
-            emitter = self._determine_emitter(self.request)
+            emitter = self._determine_emitter(request)
 
         except HttpError, e:
             emitter = self.default_emitter
@@ -48,20 +51,28 @@ class EmitterMixin(object):
     def _determine_emitter(self, request):
         """ Simple return first emmiter.
         """
-        for emitter in self.emitters:
-            return emitter
-        raise HttpError('Could not statisfy the client\'s Accept header', status=status.HTTP_406_NOT_ACCEPTABLE)
+        emiters_dict = dict((e.media_type, e) for e in as_tuple(self.emitters))
+        types = emiters_dict.keys()
+        accept = request.META.get('HTTP_ACCEPT', '*/*')
+        if accept != '*/*':
+            base_format = mimeparse.best_match(types, request.META['HTTP_ACCEPT'])
+            if base_format:
+                return emiters_dict.get(base_format) or self.default_emitter
+        return self.default_emitter
 
 
-class TemplateEmmiter(object):
-    """ All emitters must extend this class, set the media_type attribute, and
-        override the emit() function.
-    """
+class BaseEmmiter(object):
+
     media_type = None
 
     def __init__(self, resource):
         self.resource = resource
 
+
+class TemplateEmmiter(BaseEmmiter):
+    """ All emitters must extend this class, set the media_type attribute, and
+        override the emit() function.
+    """
     def emit(self, response):
         if response.content is None:
             return ''
@@ -109,3 +120,12 @@ class XMLTemplateEmitter(TemplateEmmiter):
         ts = int(mktime(datetime.now().timetuple()))
         success = 'true' if response.status == 200 else 'false'
         return '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>' % ( success, self.resource.version, ts, output )
+
+
+class JSONEmitter(BaseEmmiter):
+
+    media_type = 'application/json'
+
+    def emit(self, response):
+        return simplejson.dumps(response.content, cls=json.DjangoJSONEncoder, sort_keys=True)
+

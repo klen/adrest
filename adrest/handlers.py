@@ -1,10 +1,11 @@
 from adrest import status
 from adrest.forms import PartitialForm
 from adrest.utils import HttpError, Paginator
+from adrest.settings import LIMIT_PER_PAGE
 
 
 class HandlerMixin(object):
-    max_resources_per_page = 50
+    limit_per_page = LIMIT_PER_PAGE
     parent = None
     model = None
     queryset = None
@@ -71,7 +72,7 @@ class HandlerMixin(object):
     def paginate(self, request, qs):
         """ Paginate queryset.
         """
-        return Paginator(request, qs, self.max_resources_per_page)
+        return Paginator(request, qs, self.limit_per_page)
 
     def get_form(self):
         if not self.form:

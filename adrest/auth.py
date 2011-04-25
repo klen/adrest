@@ -5,6 +5,7 @@ from django.middleware.csrf import CsrfViewMiddleware
 
 from adrest import status
 from adrest.utils import as_tuple, HttpError
+import httplib
 
 
 class AuthenticatorMixin(object):
