@@ -43,7 +43,7 @@ if settings.ADREST_ACCESSLOG:
             identifier = sender.identifier or '',
 
             # Truncate response to 5000 symbols
-            response = response.content[:5000].rsplit(' ', 1)[0],
+            response = response.content[:5000].rsplit(None, 1)[0],
         )
 
     api_request_finished.connect(save_log)

@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-04-25 0.2.2
+-------------------
+* Fix accesslog truncate content
+
 ## 2011-04-25 0.2.1
 -------------------
 * Add `log` resource param
