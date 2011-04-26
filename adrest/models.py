@@ -28,7 +28,9 @@ if settings.ADREST_ACCESSLOG:
         def __unicode__(self):
             return "%s - %s" % (self.status_code, self.uri)
 
-    admin.site.register(Access)
+    class AccessAdmin(admin.ModelAdmin):
+        list_display = 'status_code', 'uri', 'created_at'
+    admin.site.register(Access, AccessAdmin)
 
     def save_log(sender, response=None, **kwargs):
 
