@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-04-27 0.2.4
+-------------------
+* Some more frendly Access logs
+
 ## 2011-04-25 0.2.3
 -------------------
 * Fix accesslog truncate content

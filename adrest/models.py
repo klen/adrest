@@ -29,7 +29,8 @@ if settings.ADREST_ACCESSLOG:
             return "%s - %s" % (self.status_code, self.uri)
 
     class AccessAdmin(admin.ModelAdmin):
-        list_display = 'status_code', 'uri', 'created_at'
+        list_display = 'status_code', 'uri', 'method', 'identifier', 'created_at'
+        list_filter = 'method',
     admin.site.register(Access, AccessAdmin)
 
     def save_log(sender, response=None, **kwargs):
@@ -41,7 +42,7 @@ if settings.ADREST_ACCESSLOG:
             uri = sender.request.path_info,
             method = sender.request.method,
             status_code = response.status_code,
-            request = str(getattr(sender.request, 'data', '')),
+            request = '%s\n\n%s' % ( str(sender.request.META), str(getattr(sender.request, 'data', '')) ),
             identifier = sender.identifier or '',
 
             # Truncate response to 5000 symbols
