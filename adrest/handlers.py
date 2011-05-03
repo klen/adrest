@@ -11,6 +11,7 @@ class HandlerMixin(object):
     queryset = None
     form = None
     form_fields = None
+    form_exclude = None
     prefix = ''
     uri_params = None
 
@@ -80,5 +81,6 @@ class HandlerMixin(object):
                 class Meta():
                     model = self.model
                     fields = self.form_fields
+                    exclude = self.form_exclude
             return DynForm
         return self.form
