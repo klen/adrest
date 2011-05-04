@@ -21,7 +21,7 @@ class HandlerMixin(object):
             return instance
 
         filter_options = self.get_filter_options(request, **kwargs)
-        query = self.queryset or self.model.objects.all()
+        query = self.queryset if not self.queryset is None else self.model.objects.all()
         return self.paginate(request, query.filter( **filter_options ))
 
     def post(self, request, **kwargs):

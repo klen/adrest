@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-05-03 0.2.6
+-------------------
+* Fix handlers and forms
+
 ## 2011-05-03 0.2.5
 -------------------
 * Add form_exclude option to resource
