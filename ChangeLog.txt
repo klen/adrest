@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-05-23 0.2.7
+-------------------
+* Fix statuses. https://github.com/klen/adrest/issues/4
+
 ## 2011-05-03 0.2.6
 -------------------
 * Fix handlers and forms

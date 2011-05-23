@@ -33,14 +33,14 @@ class HandlerMixin(object):
 
     def put(self, request, instance=None, **kwargs):
         if not instance:
-            raise HttpError("Bad request", status=status.HTTP_400_BAD_REQUEST)
+            raise HttpError("Bad request", status=status.HTTP_404_NOT_FOUND)
 
         form_class = self.get_form()
         form = form_class(data=request.data, instance=instance, **kwargs)
         if form.is_valid():
             return form.save()
 
-        raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
+        raise HttpError(form.errors.as_text(), status=status.HTTP_404_NOT_FOUND)
 
     def delete(self, request, instance=None, **kwargs):
         if not instance:
