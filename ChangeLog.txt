@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-05-27 0.2.8
+-------------------
+* Fix DEBUG mode
+
 ## 2011-05-23 0.2.7
 -------------------
 * Fix statuses. https://github.com/klen/adrest/issues/4

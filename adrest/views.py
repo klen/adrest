@@ -1,3 +1,5 @@
+import logging
+
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -12,6 +14,8 @@ from adrest.signals import api_request_started, api_request_finished
 from adrest.throttle import ThrottleMixin
 from adrest.utils import HttpError, Response, as_tuple
 
+
+LOG = logging.getLogger('adrest')
 
 class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, View):
 
@@ -197,7 +201,11 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, Authe
     def handle_exception(self, e):
         """ Handle code exception.
         """
-        if not DEBUG:
+        if DEBUG:
+            raise
+
+        else:
+            LOG.error(str(e))
             return Response(str(e), status=500)
 
 
