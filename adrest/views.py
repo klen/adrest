@@ -61,6 +61,8 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, Authe
             # Parse content
             if method in ('POST', 'PUT'):
                 request.data = self.parse()
+                if isinstance(request.data, basestring):
+                    request.data = dict()
 
             # Get the appropriate create/read/update/delete function
             func = getattr(self, self.callmap.get(method, None))
