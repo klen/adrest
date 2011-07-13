@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-06-13 0.2.91
+--------------------
+* Fix access for nested objects
+
 ## 2011-05-27 0.2.9
 -------------------
 * Fix DEBUG mode

@@ -184,7 +184,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, Authe
             while True:
                 ofm, ocm = owners.get(f_name), owners.get(c_name)
                 # Test parent element linked from children
-                assert getattr(ocm, '%s_id' % f_name, ofm.pk)
+                assert getattr(ocm, '%s_id' % f_name, None) == ofm.pk
                 f_name, c_name = c_name, next(it)
 
         except (AssertionError, ObjectDoesNotExist):
