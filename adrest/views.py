@@ -30,7 +30,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, Authe
     parsers = (FormParser, XMLParser, JSONParser)
 
     callmap = { 'GET': 'get', 'POST': 'post',
-                'PUT': 'put', 'DELETE': 'delete' }
+                'PUT': 'put', 'DELETE': 'delete', 'OPTIONS': 'options' }
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
