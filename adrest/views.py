@@ -9,7 +9,7 @@ from adrest.auth import AuthenticatorMixin, AnonimousAuthenticator
 from adrest.emitters import EmitterMixin, XMLTemplateEmitter, JSONTemplateEmitter, JSONEmitter
 from adrest.handlers import HandlerMixin
 from adrest.parsers import ParserMixin, XMLParser, JSONParser, FormParser
-from adrest.settings import DEBUG
+from adrest.settings import DEBUG, AUTHENTICATE_OPTIONS_REQUEST
 from adrest.signals import api_request_started, api_request_finished
 from adrest.throttle import ThrottleMixin
 from adrest.utils import HttpError, Response, as_tuple
@@ -51,7 +51,11 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, Authe
             self.check_method_allowed(method)
 
             # Authentificate
-            self.identifier = self.authenticate()
+            # We do not restrict access for OPTIONS request.
+            if method is 'OPTIONS' and not AUTHENTICATE_OPTIONS_REQUEST:
+                self.identifier = 'anonymous'
+            else:
+                self.identifier = self.authenticate()
 
             # Throttle check
             self.throttle_check()
@@ -215,7 +219,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, Authe
 
 
 class TopResource(ResourceView):
-    """ TODO: Not implementated.
+    """ TODO: Not implemented.
     """
 
     log = False
