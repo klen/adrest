@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-06-15 0.2.93
+--------------------
+* Add OPTIONS method
+
 ## 2011-06-13 0.2.92
 --------------------
 * Fix access for nested objects
