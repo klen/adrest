@@ -20,6 +20,7 @@ if settings.ADREST_ACCESSLOG:
             ('POST', 'POST'),
             ('PUT', 'PUT'),
             ('DELETE', 'DELETE'),
+            ('OPTIONS', 'OPTIONS'),
         ))
         request = models.TextField()
         response = models.TextField()
@@ -44,9 +45,7 @@ if settings.ADREST_ACCESSLOG:
             status_code = response.status_code,
             request = '%s\n\n%s' % ( str(sender.request.META), str(getattr(sender.request, 'data', '')) ),
             identifier = sender.identifier or '',
-
-            # Truncate response to 5000 symbols
-            response = response.content[:5000].rsplit(None, 1)[0],
+            response = response.content[:5000],
         )
 
     api_request_finished.connect(save_log)
