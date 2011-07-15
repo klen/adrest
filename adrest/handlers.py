@@ -1,7 +1,7 @@
 from adrest import status
 from adrest.forms import PartitialForm
-from adrest.utils import HttpError, Paginator, Response
 from adrest.settings import LIMIT_PER_PAGE
+from adrest.utils import HttpError, Paginator
 
 
 class HandlerMixin(object):
@@ -51,10 +51,10 @@ class HandlerMixin(object):
                 assert owner.pk == getattr(instance, '%s_id' % name)
         instance.delete()
         return None
-    
+
     def options(self, request, **kwargs):
-        return Response()
-    
+        return 'OK'
+
     def get_filter_options(self, request, **kwargs):
         model_fields = [f.name for f in self.model._meta.fields]
         fields_converters = dict((f.name, f.to_python) for f in self.model._meta.fields )
