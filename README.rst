@@ -53,3 +53,4 @@ Licensed under a `GNU lesser general public license`_.
 
 
 .. _GNU lesser general public license: http://www.gnu.org/copyleft/lesser.html
+.. _klen: http://klen.github.com/
