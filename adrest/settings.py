@@ -11,3 +11,4 @@ DEBUG = getattr(settings, 'ADREST_DEBUG', False)
 # Limit request number per second from same identifier, null is not limited
 THROTTLE_AT = getattr(settings, 'ADREST_THROTTLE_AT', 120)
 THROTTLE_TIMEFRAME = getattr(settings, 'ADREST_THROTTLE_TIMEFRAME', 60)
+AUTHENTICATE_OPTIONS_REQUEST = False
