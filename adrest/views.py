@@ -22,7 +22,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, Authe
     api = None
 
     log = True
-    
+
     # Since we handle cross-origin XML HTTP requests, let OPTIONS be another default allowed method.
     allowed_methods = ('GET', 'OPTIONS')
 
@@ -52,7 +52,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, Authe
 
             # Authentificate
             # We do not restrict access for OPTIONS request.
-            if method is 'OPTIONS' and not AUTHENTICATE_OPTIONS_REQUEST:
+            if method == 'OPTIONS' and not AUTHENTICATE_OPTIONS_REQUEST:
                 self.identifier = 'anonymous'
             else:
                 self.identifier = self.authenticate()
