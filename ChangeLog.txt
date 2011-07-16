@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-06-16 0.2.96
+--------------------
+* Allow disable authentication on OPTIONS http methods
+
 ## 2011-06-15 0.2.95
 --------------------
 * Add OPTIONS method
