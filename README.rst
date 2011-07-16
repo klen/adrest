@@ -37,7 +37,7 @@ at https://github.com/klen/adrest/issues
 Contributing
 ============
 
-Development of django-netauth happens at github: https://github.com/klen/adrest
+Development of adrest happens at github: https://github.com/klen/adrest
 
 
 Contributors
