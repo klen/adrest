@@ -87,7 +87,8 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, Authe
         response.headers['Vary'] = 'Authenticate, Accept'
 
         # Serialize response
-        response = self.emit(request, response)
+        emitter = JSONEmitter if method == 'OPTIONS' else None
+        response = self.emit(request, response, emitter=emitter)
 
         # Send finished signal
         api_request_finished.send(self, request=self.request, response=response)

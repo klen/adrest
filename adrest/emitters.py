@@ -15,11 +15,11 @@ class EmitterMixin(object):
     emitters = tuple()
     template = None
 
-    def emit(self, request, response):
+    def emit(self, request, response, emitter = None):
         """ Takes a Response object and returns a Django HttpResponse.
         """
         try:
-            emitter = self._determine_emitter(request)
+            emitter = emitter or self._determine_emitter(request)
 
         except HttpError, e:
             emitter = self.default_emitter
@@ -29,11 +29,11 @@ class EmitterMixin(object):
         content = emitter(self).emit(response=response)
 
         # Build the HTTP Response
-        resp = HttpResponse(content, mimetype=emitter.media_type, status=response.status)
-        for (key, val) in response.headers.items():
-            resp[key] = val
+        result = HttpResponse(content, mimetype=emitter.media_type, status=response.status)
+        for key, val in response.headers.iteritems():
+            result[key] = val
 
-        return resp
+        return result
 
     @property
     def emitted_media_types(self):
@@ -128,4 +128,3 @@ class JSONEmitter(BaseEmmiter):
 
     def emit(self, response):
         return simplejson.dumps(response.content, cls=json.DjangoJSONEncoder, sort_keys=True)
-

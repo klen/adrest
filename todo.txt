@@ -1,1 +1,1 @@
-Add metaclass to resource. Define name and url in class initialization process.
+HttpResponse move from emitters. Drop Response.

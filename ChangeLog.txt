@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-07-18 0.2.97
+--------------------
+* In OPTIONS method always used only JSONEmitter
+
 ## 2011-06-16 0.2.96
 --------------------
 * Allow disable authentication on OPTIONS http methods
