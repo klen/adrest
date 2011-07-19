@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-07-19 0.2.98
+--------------------
+* Fix put method
+
 ## 2011-07-18 0.2.97
 --------------------
 * In OPTIONS method always used only JSONEmitter

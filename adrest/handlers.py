@@ -40,7 +40,7 @@ class HandlerMixin(object):
         if form.is_valid():
             return form.save()
 
-        raise HttpError(form.errors.as_text(), status=status.HTTP_404_NOT_FOUND)
+        raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, instance=None, **kwargs):
         if not instance:
