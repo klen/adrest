@@ -32,6 +32,8 @@ if settings.ADREST_ACCESSLOG:
     class AccessAdmin(admin.ModelAdmin):
         list_display = 'status_code', 'uri', 'method', 'identifier', 'created_at'
         list_filter = 'method',
+        search_fields = 'uri', 'identifier'
+        date_hierarchy = 'created_at'
     admin.site.register(Access, AccessAdmin)
 
     def save_log(sender, response=None, **kwargs):
@@ -75,8 +77,14 @@ if 'django.contrib.auth' in settings.INSTALLED_APPS:
         def save(self, **kwargs):
             self.key = self.key or str(uuid.uuid4()).replace('-', '')
             super(AccessKey, self).save(**kwargs)
+    
+    class AccessKeyAdmin(admin.ModelAdmin):
+        list_display = 'key', 'user', 'created'
+        list_filter = 'user',
+        search_fields = 'key', 'identifier', 'user'
+        date_hierarchy = 'created'
 
-    admin.site.register(AccessKey)
+    admin.site.register(AccessKeyAdmin)
 
     # Auto create key for created user
     def create_api_key(sender, created=False, instance=None, **kwargs):
