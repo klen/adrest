@@ -47,7 +47,7 @@ if settings.ADREST_ACCESSLOG:
             status_code = response.status_code,
             request = '%s\n\n%s' % ( str(sender.request.META), str(getattr(sender.request, 'data', '')) ),
             identifier = sender.identifier or '',
-            response = unicode(response.content)[:5000].rsplit(None, 2)[0],
+            response = response.content[:5000].rsplit(None, 2)[0],
         )
 
     api_request_finished.connect(save_log)
