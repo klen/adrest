@@ -80,7 +80,7 @@ if 'django.contrib.auth' in settings.INSTALLED_APPS:
 
     class AccessKeyAdmin(admin.ModelAdmin):
         list_display = 'key', 'user', 'created'
-        search_fields = 'key', 'identifier', 'user'
+        search_fields = 'key', 'user'
     admin.site.register(AccessKey, AccessKeyAdmin)
 
     # Auto create key for created user
