@@ -1,13 +1,14 @@
-from django.conf import settings
+from django.conf import settings as django_settings
 from django.contrib import admin
 from django.db import models
 
+from adrest import settings
 from adrest.signals import api_request_finished
 
 
 # Access log
 # -----------
-if settings.ADREST_ACCESSLOG:
+if settings.ACCESS_LOG:
 
     class Access(models.Model):
         """ Log api queries.
@@ -55,7 +56,7 @@ if settings.ADREST_ACCESSLOG:
 
 # Access keys
 # -----------
-if 'django.contrib.auth' in settings.INSTALLED_APPS:
+if 'django.contrib.auth' in django_settings.INSTALLED_APPS:
 
     import uuid
     from django.contrib.auth.models import User
@@ -89,5 +90,5 @@ if 'django.contrib.auth' in settings.INSTALLED_APPS:
             AccessKey.objects.create(user=instance)
 
     # Connect create handler to user save event
-    if settings.ADREST_ACCESSKEY:
+    if settings.AUTO_CREATE_ACCESSKEY:
         models.signals.post_save.connect(create_api_key, sender=User)

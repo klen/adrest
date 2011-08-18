@@ -2,6 +2,12 @@
 from django.conf import settings
 
 
+# Enable Adrest API logs
+ACCESS_LOG = getattr(settings, 'ADREST_ACCESS_LOG', False)
+
+# Auto create adrest access-key for created user
+AUTO_CREATE_ACCESSKEY = getattr(settings, 'ADREST_AUTO_CREATE_ACCESSKEY', False)
+
 # Max resources per page in list views
 LIMIT_PER_PAGE = int(getattr(settings, 'ADREST_LIMIT_PER_PAGE', 50))
 
