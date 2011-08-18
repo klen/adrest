@@ -222,12 +222,24 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
         return str(self.api or '')
 
 
-class TopResource(ResourceView):
+class ApiMapResource(ResourceView):
     """ TODO: Not implemented.
     """
     log = False
     emitters = JSONEmitter
     authenticators = AnonimousAuthenticator
 
-    def dispatch(self, request, *args, **kwargs):
-        return super(TopResource, self).dispatch(request, *args, **kwargs)
+    def get(self, *args, **Kwargs):
+        resources = set()
+        map = dict()
+        for rinfo in self.api._map.itervalues():
+            r = rinfo['resource']
+            if r.meta.urlname in resources:
+                continue
+            resources.add(r.meta.urlname)
+            map["api/%s/%s" % ( str(self.api), r.meta.urlregex)] = dict(
+                name = r.meta.urlname,
+                methods = r.allowed_methods,
+                model = r.model._meta.module_name if r.model else r.model,
+            )
+        return map

@@ -120,7 +120,7 @@ class EmitterMixin(object):
         """ Return the resource's most prefered emitter.
             (This emitter is used if the client does not send and Accept: header, or sends Accept: */*)
         """
-        return self.emitters[0]
+        return as_tuple(self.emitters)[0]
 
     def _determine_emitter(self, request):
         """ Simple return first emmiter.
