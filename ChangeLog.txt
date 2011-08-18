@@ -1,9 +1,10 @@
 CHANGES
 =======
 
-## 2011-08-18 0.4.2
+## 2011-08-18 0.4.3
 -------------------
 * Add some tests
+* Add resource map
 * Begin code refactoring
 
 ## 2011-08-04 0.3.11
