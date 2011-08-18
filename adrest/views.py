@@ -1,14 +1,15 @@
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.db.models.base import ModelBase
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
 from adrest import status
 from adrest.auth import AuthenticatorMixin, AnonimousAuthenticator
-from adrest.emitters import EmitterMixin, XMLTemplateEmitter, JSONTemplateEmitter, JSONEmitter
+from adrest.emitters import EmitterMixin, JSONEmitter
 from adrest.handlers import HandlerMixin
-from adrest.parsers import ParserMixin, XMLParser, JSONParser, FormParser
+from adrest.parsers import ParserMixin
 from adrest.settings import DEBUG, AUTHENTICATE_OPTIONS_REQUEST
 from adrest.signals import api_request_started, api_request_finished
 from adrest.throttle import ThrottleMixin
@@ -17,21 +18,78 @@ from adrest.utils import HttpError, Response, as_tuple
 
 LOG = logging.getLogger('adrest')
 
-class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, AuthenticatorMixin, View):
+
+class ResourceOptions(object):
+    """ Resource meta options.
+    """
+    def __init__(self):
+        self.name = self.urlname = self.urlregex = ''
+        self.parents = []
+
+
+class ResourceMetaClass(type):
+    """ MetaClass for ResourceView.
+        Create meta options.
+    """
+
+    def __new__(mcs, cls, bases, params):
+        params['_meta'] = mcs.get_meta(cls, **params)
+        allowed_methods = params.get('allowed_methods')
+        if allowed_methods:
+            params['allowed_methods'] = as_tuple(allowed_methods)
+        return super(ResourceMetaClass, mcs).__new__(mcs, cls, bases, params)
+
+    @staticmethod
+    def get_meta(cls_name, parent=None, model=None, form=None, api=None,
+            uri_params=None, prefix=None, **kwargs):
+        rname = "ResourceView"
+        meta = ResourceOptions()
+        if parent:
+            try:
+                pmeta = getattr(parent, '_meta')
+                meta.parents = pmeta.parents + [parent]
+            except AttributeError:
+                raise TypeError("%s.parent must be instance of %s" % (cls_name,
+                    rname))
+
+        if model:
+            if not isinstance(model, ModelBase):
+                raise TypeError(
+                        "%s.model must be instance of Model" % cls_name)
+            meta.name = model._meta.module_name
+        else:
+            name_bits = [bit for bit in cls_name.split('Resource') if bit]
+            meta.name = ''.join(name_bits).lower()
+
+        uri_params = uri_params or []
+        meta.urlname = '-'.join(([ parent._meta.urlname ] if parent else []) +
+                ([ prefix ] if prefix else []) +
+                list(uri_params) +
+                [ meta.name ])
+        meta.urlregex = '/'.join(
+                '%(name)s/(?P<%(name)s>[^/]+)' % dict(name = p)
+                for p in (
+                    [p._meta.name for p in meta.parents] + list(uri_params)))
+        meta.urlregex = meta.urlregex + '/' if meta.urlregex else ''
+        if prefix:
+            meta.urlregex = '%s%s/' % (meta.urlregex, prefix)
+        meta.urlregex += '%(name)s/(?:(?P<%(name)s>[^/]+)/)?$' % dict(
+                name = meta.name)
+        return meta
+
+
+class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
+        AuthenticatorMixin, View):
+
+    # Create _meta options
+    __metaclass__ = ResourceMetaClass
 
     api = None
-
     log = True
 
-    # Since we handle cross-origin XML HTTP requests, let OPTIONS be another default allowed method.
-    allowed_methods = ('GET', 'OPTIONS')
-
-    emitters = (XMLTemplateEmitter, JSONTemplateEmitter)
-
-    parsers = (FormParser, XMLParser, JSONParser)
-
-    callmap = { 'GET': 'get', 'POST': 'post',
-                'PUT': 'put', 'DELETE': 'delete', 'OPTIONS': 'options' }
+    # Since we handle cross-origin XML HTTP requests, let OPTIONS be another
+    # default allowed method.
+    allowed_methods = 'GET', 'OPTIONS'
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
@@ -83,7 +141,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, Authe
             response = self.handle_exception(e)
 
         # Always add these headers
-        response.headers['Allow'] = ', '.join(as_tuple(self.allowed_methods))
+        response.headers['Allow'] = ', '.join(self.allowed_methods)
         response.headers['Vary'] = 'Authenticate, Accept'
 
         # Serialize response
@@ -104,60 +162,8 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, Authe
         if not method in self.allowed_methods:
             raise HttpError('Method \'%s\' not allowed on this resource.' % method, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    @classmethod
-    def get_resource_name(cls):
-        if cls.model:
-            return cls.model._meta.module_name
-        class_name = cls.__name__
-        name_bits = [bit for bit in class_name.split('Resource') if bit]
-        return ''.join(name_bits).lower()
-
-    @classmethod
-    def get_urlname(cls):
-        parts = []
-
-        if cls.parent:
-            parts.append(cls.parent.get_urlname())
-
-        if cls.prefix:
-            parts.append(cls.prefix)
-
-        if cls.uri_params:
-            parts += list(cls.uri_params)
-
-        parts.append(cls.get_resource_name())
-        return '-'.join(parts)
-
-    @classmethod
-    def get_urlregex(cls):
-        parts = [p.get_resource_name() for p in cls.get_parents()]
-
-        if cls.uri_params:
-            parts += list(cls.uri_params)
-
-        regex = '/'.join('%(name)s/(?P<%(name)s>[^/]+)' % dict(name = p) for p in parts)
-        regex = regex + '/' if regex else ''
-        regex += '%(name)s/(?:(?P<%(name)s>[^/]+)/)?$' % dict(name = cls.get_resource_name())
-        if cls.prefix:
-            regex = '%s/%s' % (cls.prefix, regex)
-        return regex
-
-    @classmethod
-    def get_parents(cls):
-        parents = list()
-        while cls.parent:
-            parents.append(cls.parent)
-            cls = cls.parent
-        return reversed(parents)
-
-    @property
-    def version(self):
-        """ For templates rendering.
-        """
-        return self.api.str_version if self.api else ''
-
     def parse_resources(self, **kwargs):
-        models = [p.model for p in self.get_parents() if p.model]
+        models = [p.model for p in self._meta.parents if p.model]
         if self.model:
             models.append(self.model)
         models_dict = dict((m._meta.module_name, m) for m in models if m)
@@ -205,10 +211,11 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, Authe
             if owners.get(model._meta.module_name):
                 pass
 
-        kwargs['instance'] = kwargs.get(self.get_resource_name())
+        kwargs['instance'] = kwargs.get(self._meta.name)
         return kwargs
 
-    def handle_exception(self, e):
+    @staticmethod
+    def handle_exception(e):
         """ Handle code exception.
         """
         if DEBUG:
@@ -218,11 +225,14 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin, Authe
             LOG.error(str(e))
             return Response(str(e), status=500)
 
+    @property
+    def version(self):
+        return str(self.api or '')
+
 
 class TopResource(ResourceView):
     """ TODO: Not implemented.
     """
-
     log = False
     emitters = JSONEmitter
     authenticators = AnonimousAuthenticator

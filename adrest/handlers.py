@@ -14,6 +14,8 @@ class HandlerMixin(object):
     form_exclude = None
     prefix = ''
     uri_params = None
+    callmap = { 'GET': 'get', 'POST': 'post',
+                'PUT': 'put', 'DELETE': 'delete', 'OPTIONS': 'options' }
 
     def get(self, request, instance=None, **kwargs):
         assert self.model, "This auto method required in model."

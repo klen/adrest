@@ -22,28 +22,24 @@ class Api(object):
         except TypeError:
             self.str_version = str(version)
 
-        self._resources = dict()
+        self._map = dict()
 
-    def register(self, resource, uri=None, name=None, **kwargs):
+    def register(self, resource, urlregex=None, urlname=None, **kwargs):
         """ Register resource subclass with API.
         """
-        key = name or resource.get_urlname()
+        urlname = urlname or resource._meta.urlname
+        urlregex = urlregex or resource._meta.urlregex
 
-        if self._resources.get(key):
-            LOG.warning("A new resource '%r' is replacing the existing record for '%s'" % (resource, key))
+        if self._map.get(urlname):
+            LOG.warning("A new resource '%r' is replacing the existing record for '%s'" % (resource, urlname))
 
-        self._resources[key] = dict(
-                resource=resource,
-                uri=uri or resource.get_urlregex(),
-                name=name,
-                kwargs=kwargs )
+        self._map[urlname] = dict(resource=resource, urlregex=urlregex, urlname=urlname, kwargs=kwargs)
 
     @property
     def urls(self):
         """ Provides URLconf details for the ``Api`` and all registered
             ``Resources`` beneath it.
         """
-
         patterns = [
 
             # self top level map
@@ -51,22 +47,25 @@ class Api(object):
 
         ]
 
-        for key in sorted(self._resources.keys()):
+        for urlname in sorted(self._map.keys()):
 
-            value = self._resources[key]
+            resource_info = self._map[urlname]
 
             # Resource
-            resource = value['resource']
+            resource = resource_info['resource']
 
             # Params
             params = dict()
             params.update(self.kwargs)
-            params.update(value['kwargs'])
+            params.update(resource_info['kwargs'])
 
             # URL
-            name = 'api-%s-%s' % ( self.str_version, key)
-            uri = '^%s/%s' % ( self.str_version, value['uri'])
+            urlname = 'api-%s-%s' % ( self.str_version, urlname)
+            urlregex = '^%s/%s' % ( self.str_version, resource_info['urlregex'])
             view = resource.as_view(api=self, **params)
-            patterns.append(url(uri, view, name=name))
+            patterns.append(url(urlregex, view, name=urlname))
 
         return patterns
+
+    def __str__(self):
+        return self.str_version
