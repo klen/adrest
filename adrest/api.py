@@ -27,8 +27,8 @@ class Api(object):
     def register(self, resource, urlregex=None, urlname=None, **kwargs):
         """ Register resource subclass with API.
         """
-        urlname = urlname or resource._meta.urlname
-        urlregex = urlregex or resource._meta.urlregex
+        urlname = urlname or resource.meta.urlname
+        urlregex = urlregex or resource.meta.urlregex
 
         if self._map.get(urlname):
             LOG.warning("A new resource '%r' is replacing the existing record for '%s'" % (resource, urlname))
