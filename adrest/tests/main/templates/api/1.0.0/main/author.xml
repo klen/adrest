@@ -1,0 +1,3 @@
+<author>
+    <name>{{ content.name }}</name>
+</author>
