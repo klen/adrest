@@ -1,9 +1,10 @@
 import time
 
 from django.core.cache import cache
-from adrest.utils import HttpError
-from adrest.status import HTTP_503_SERVICE_UNAVAILABLE
+
 from adrest.settings import THROTTLE_AT, THROTTLE_TIMEFRAME
+from adrest.status import HTTP_503_SERVICE_UNAVAILABLE
+from adrest.utils import HttpError
 
 
 class BaseThrottle(object):
