@@ -9,12 +9,15 @@ class AuthorResource(ResourceView):
 class BookResource(ResourceView):
     model = Book
     parent = AuthorResource
+
+
+class BookPrefixResource(BookResource):
     prefix = 'test'
 
 
 class ArticleResource(ResourceView):
     model = Article
-    parent = BookResource
+    parent = BookPrefixResource
 
 
 class SomeOtherResource(ResourceView):

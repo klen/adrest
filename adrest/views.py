@@ -1,7 +1,7 @@
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.db.models.base import ModelBase
+from django.db.models.base import ModelBase, Model
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
@@ -32,38 +32,30 @@ class ResourceMetaClass(type):
         Create meta options.
     """
 
-    def __new__(mcs, cls, bases, params):
-        params['_meta'] = mcs.get_meta(cls, **params)
+    def __new__(mcs, cls_name, bases, params):
         allowed_methods = params.get('allowed_methods')
         if allowed_methods:
             params['allowed_methods'] = as_tuple(allowed_methods)
-        return super(ResourceMetaClass, mcs).__new__(mcs, cls, bases, params)
-
-    @staticmethod
-    def get_meta(cls_name, parent=None, model=None, form=None, api=None,
-            uri_params=None, prefix=None, **kwargs):
-        rname = "ResourceView"
-        meta = ResourceOptions()
-        if parent:
+        params['_meta'] = meta = ResourceOptions()
+        cls = super(ResourceMetaClass, mcs).__new__(mcs, cls_name, bases, params)
+        if cls.parent:
             try:
-                pmeta = getattr(parent, '_meta')
-                meta.parents = pmeta.parents + [parent]
+                pmeta = getattr(cls.parent, '_meta')
+                meta.parents = pmeta.parents + [cls.parent]
             except AttributeError:
-                raise TypeError("%s.parent must be instance of %s" % (cls_name,
-                    rname))
+                raise TypeError("%s.parent must be instance of %s" % (cls_name, "ResourceView"))
 
-        if model:
-            if not isinstance(model, ModelBase):
-                raise TypeError(
-                        "%s.model must be instance of Model" % cls_name)
-            meta.name = model._meta.module_name
+        if cls.model:
+            if not isinstance(cls.model, (ModelBase, Model)):
+                raise TypeError("%s.model must be instance of Model" % cls_name)
+            meta.name = cls.model._meta.module_name
         else:
             name_bits = [bit for bit in cls_name.split('Resource') if bit]
             meta.name = ''.join(name_bits).lower()
 
-        uri_params = uri_params or []
-        meta.urlname = '-'.join(([ parent._meta.urlname ] if parent else []) +
-                ([ prefix ] if prefix else []) +
+        uri_params = cls.uri_params or []
+        meta.urlname = '-'.join(([ cls.parent._meta.urlname ] if cls.parent else []) +
+                ([ cls.prefix ] if cls.prefix else []) +
                 list(uri_params) +
                 [ meta.name ])
         meta.urlregex = '/'.join(
@@ -71,11 +63,12 @@ class ResourceMetaClass(type):
                 for p in (
                     [p._meta.name for p in meta.parents] + list(uri_params)))
         meta.urlregex = meta.urlregex + '/' if meta.urlregex else ''
-        if prefix:
-            meta.urlregex = '%s%s/' % (meta.urlregex, prefix)
+        if cls.prefix:
+            meta.urlregex = '%s%s/' % (meta.urlregex, cls.prefix)
         meta.urlregex += '%(name)s/(?:(?P<%(name)s>[^/]+)/)?$' % dict(
                 name = meta.name)
-        return meta
+
+        return cls
 
 
 class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
