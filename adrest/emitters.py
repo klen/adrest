@@ -49,7 +49,7 @@ class TemplateEmmiter(BaseEmmiter):
         if isinstance(content, Paginator):
             template_name = 'api/paginator'
         else:
-            template_name = self.get_template_dir() + self.resource._meta.name
+            template_name = self.get_template_dir() + self.resource.meta.name
 
         template_name += '.%s' % self.media_type.split('/')[-1]
         return template_name

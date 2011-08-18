@@ -5,12 +5,11 @@ from django.db.models.base import ModelBase, Model
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
-from adrest import status
+from adrest import status, settings
 from adrest.auth import AuthenticatorMixin, AnonimousAuthenticator
 from adrest.emitters import EmitterMixin, JSONEmitter
 from adrest.handlers import HandlerMixin
 from adrest.parsers import ParserMixin
-from adrest.settings import DEBUG, AUTHENTICATE_OPTIONS_REQUEST
 from adrest.signals import api_request_started, api_request_finished
 from adrest.throttle import ThrottleMixin
 from adrest.utils import HttpError, Response, as_tuple
@@ -36,11 +35,11 @@ class ResourceMetaClass(type):
         allowed_methods = params.get('allowed_methods')
         if allowed_methods:
             params['allowed_methods'] = as_tuple(allowed_methods)
-        params['_meta'] = meta = ResourceOptions()
+        params['meta'] = meta = ResourceOptions()
         cls = super(ResourceMetaClass, mcs).__new__(mcs, cls_name, bases, params)
         if cls.parent:
             try:
-                pmeta = getattr(cls.parent, '_meta')
+                pmeta = getattr(cls.parent, 'meta')
                 meta.parents = pmeta.parents + [cls.parent]
             except AttributeError:
                 raise TypeError("%s.parent must be instance of %s" % (cls_name, "ResourceView"))
@@ -54,14 +53,14 @@ class ResourceMetaClass(type):
             meta.name = ''.join(name_bits).lower()
 
         uri_params = cls.uri_params or []
-        meta.urlname = '-'.join(([ cls.parent._meta.urlname ] if cls.parent else []) +
+        meta.urlname = '-'.join(([ cls.parent.meta.urlname ] if cls.parent else []) +
                 ([ cls.prefix ] if cls.prefix else []) +
                 list(uri_params) +
                 [ meta.name ])
         meta.urlregex = '/'.join(
                 '%(name)s/(?P<%(name)s>[^/]+)' % dict(name = p)
                 for p in (
-                    [p._meta.name for p in meta.parents] + list(uri_params)))
+                    [p.meta.name for p in meta.parents] + list(uri_params)))
         meta.urlregex = meta.urlregex + '/' if meta.urlregex else ''
         if cls.prefix:
             meta.urlregex = '%s%s/' % (meta.urlregex, cls.prefix)
@@ -74,7 +73,7 @@ class ResourceMetaClass(type):
 class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
         AuthenticatorMixin, View):
 
-    # Create _meta options
+    # Create meta options
     __metaclass__ = ResourceMetaClass
 
     api = None
@@ -103,7 +102,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
 
             # Authentificate
             # We do not restrict access for OPTIONS request.
-            if method == 'OPTIONS' and not AUTHENTICATE_OPTIONS_REQUEST:
+            if method == 'OPTIONS' and not settings.AUTHENTICATE_OPTIONS_REQUEST:
                 self.identifier = 'anonymous'
             else:
                 self.identifier = self.authenticate()
@@ -156,7 +155,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
             raise HttpError('Method \'%s\' not allowed on this resource.' % method, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def parse_resources(self, **kwargs):
-        models = [p.model for p in self._meta.parents if p.model]
+        models = [p.model for p in self.meta.parents if p.model]
         if self.model:
             models.append(self.model)
         models_dict = dict((m._meta.module_name, m) for m in models if m)
@@ -204,14 +203,14 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
             if owners.get(model._meta.module_name):
                 pass
 
-        kwargs['instance'] = kwargs.get(self._meta.name)
+        kwargs['instance'] = kwargs.get(self.meta.name)
         return kwargs
 
     @staticmethod
     def handle_exception(e):
         """ Handle code exception.
         """
-        if DEBUG:
+        if settings.DEBUG:
             raise
 
         else:
