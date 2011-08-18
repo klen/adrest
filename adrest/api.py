@@ -1,7 +1,7 @@
 import logging
 
 from django.conf.urls.defaults import url
-from adrest.views import TopResource
+from adrest.views import ApiMapResource
 
 
 LOG = logging.getLogger('adrest')
@@ -14,8 +14,9 @@ class Api(object):
         Especially useful for navigation, HATEOAS and for providing multiple
         versions of your API.
     """
-    def __init__(self, version, **kwargs):
+    def __init__(self, version, show_map=True, **kwargs):
         self.version = version
+        self.show_map = show_map
         self.kwargs = kwargs
         try:
             self.str_version = '.'.join(map(str, version))
@@ -40,12 +41,12 @@ class Api(object):
         """ Provides URLconf details for the ``Api`` and all registered
             ``Resources`` beneath it.
         """
-        patterns = [
-
-            # self top level map
-            url(r"^%s/?$" % self.str_version, TopResource.as_view(api=self), name="api_%s_top" % self.str_version),
-
-        ]
+        patterns = []
+        if self.show_map:
+            patterns.append(
+                # self top level map
+                url(r"^%s/?$" % self.str_version, ApiMapResource.as_view(api=self), name="api-%s-%s" % ( self.str_version, ApiMapResource.meta.urlname )),
+            )
 
         for urlname in sorted(self._map.keys()):
 

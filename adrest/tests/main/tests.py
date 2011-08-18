@@ -65,3 +65,14 @@ class AdrestTest(TestCase):
 
         response = self.client.post(uri)
         self.assertContains(response, 'false', status_code=405)
+
+
+class AdrestMapTest(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+
+    def test_methods(self):
+        uri = reverse("api-%s-apimap" % str(api))
+        response = self.client.get(uri)
+        self.assertContains(response, '{')
