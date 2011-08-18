@@ -5,32 +5,6 @@ from django.middleware.csrf import CsrfViewMiddleware
 
 from adrest import status
 from adrest.utils import as_tuple, HttpError
-import httplib
-
-
-class AuthenticatorMixin(object):
-    """ Adds pluggable authentication behaviour.
-    """
-    authenticators = None
-    auth = None
-    identifier = ''
-
-    def authenticate(self):
-        """ Attempt to authenticate the request, returning an authentication context or None.
-            An authentication context may be any object, although in many cases it will simply be a :class:`User` instance.
-        """
-
-        # Attempt authentication against each authenticator in turn,
-        auth_result = True
-        for authenticator in as_tuple(self.authenticators):
-            self.auth = authenticator(self)
-            auth_result = self.auth.authenticate()
-            if auth_result:
-                break
-        else:
-            raise HttpError("Authorization required.", status=status.HTTP_401_UNAUTHORIZED)
-
-        return auth_result
 
 
 class BaseAuthenticator(object):
@@ -125,3 +99,28 @@ try:
 
 except ImportError:
     pass
+
+
+class AuthenticatorMixin(object):
+    """ Adds pluggable authentication behaviour.
+    """
+    authenticators = AnonimousAuthenticator,
+    auth = None
+    identifier = ''
+
+    def authenticate(self):
+        """ Attempt to authenticate the request, returning an authentication context or None.
+            An authentication context may be any object, although in many cases it will simply be a :class:`User` instance.
+        """
+        auth_result = True
+        for authenticator in as_tuple(self.authenticators):
+            self.auth = authenticator(self)
+            auth_result = self.auth.authenticate()
+            if auth_result:
+                break
+        else:
+            raise HttpError("Authorization required.", status=status.HTTP_401_UNAUTHORIZED)
+
+        return auth_result
+
+
