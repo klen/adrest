@@ -232,14 +232,16 @@ class ApiMapResource(ResourceView):
     def get(self, *args, **Kwargs):
         resources = set()
         map = dict()
-        for rinfo in self.api._map.itervalues():
+        for key in sorted( self.api._map.keys() ):
+            rinfo = self.api._map[key]
             r = rinfo['resource']
             if r.meta.urlname in resources:
                 continue
-            resources.add(r.meta.urlname)
-            map["api/%s/%s" % ( str(self.api), r.meta.urlregex)] = dict(
-                name = r.meta.urlname,
+            resources.add(rinfo['urlname'])
+
+            map[rinfo['urlregex']] = dict(
+                name = rinfo['urlname'],
                 methods = r.allowed_methods,
-                model = r.model._meta.module_name if r.model else r.model,
+                model = r.model.__name__ if r.model else r.model,
             )
         return map
