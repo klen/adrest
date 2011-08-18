@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase, Client
 
 from api import api
-from resourses import AuthorResource, BookResource, ArticleResource, SomeOtherResource
+from resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
 from models import Author
 
 
@@ -18,23 +18,24 @@ class MetaTest(TestCase):
 
     def test_meta_parents(self):
         self.assertEqual(AuthorResource._meta.parents, [])
-        self.assertEqual(BookResource._meta.parents, [ AuthorResource ])
-        self.assertEqual(ArticleResource._meta.parents, [ AuthorResource, BookResource ])
+        self.assertEqual(BookPrefixResource._meta.parents, [ AuthorResource ])
+        self.assertEqual(ArticleResource._meta.parents, [ AuthorResource, BookPrefixResource ])
 
     def test_meta_name(self):
         self.assertEqual(AuthorResource._meta.name, 'author')
-        self.assertEqual(BookResource._meta.name, 'book')
+        self.assertEqual(BookPrefixResource._meta.name, 'book')
         self.assertEqual(SomeOtherResource._meta.name, 'someother')
 
     def test_meta_urlname(self):
         self.assertEqual(AuthorResource._meta.urlname, 'author')
-        self.assertEqual(BookResource._meta.urlname, 'author-test-book')
+        self.assertEqual(BookResource._meta.urlname, 'author-book')
+        self.assertEqual(BookPrefixResource._meta.urlname, 'author-test-book')
         self.assertEqual(ArticleResource._meta.urlname, 'author-test-book-article')
         self.assertEqual(SomeOtherResource._meta.urlname, 'author-device-someother')
 
     def test_meta_urlregex(self):
         self.assertEqual(AuthorResource._meta.urlregex, 'author/(?:(?P<author>[^/]+)/)?$')
-        self.assertEqual(BookResource._meta.urlregex, 'author/(?P<author>[^/]+)/test/book/(?:(?P<book>[^/]+)/)?$')
+        self.assertEqual(BookPrefixResource._meta.urlregex, 'author/(?P<author>[^/]+)/test/book/(?:(?P<book>[^/]+)/)?$')
         self.assertEqual(ArticleResource._meta.urlregex, 'author/(?P<author>[^/]+)/book/(?P<book>[^/]+)/article/(?:(?P<article>[^/]+)/)?$')
         self.assertEqual(SomeOtherResource._meta.urlregex, 'author/(?P<author>[^/]+)/device/(?P<device>[^/]+)/someother/(?:(?P<someother>[^/]+)/)?$')
 

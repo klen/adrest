@@ -1,4 +1,4 @@
-from resourses import AuthorResource, BookResource, ArticleResource, SomeOtherResource
+from resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource
 from adrest.api import Api
 
 
@@ -7,6 +7,6 @@ api = Api(
 )
 
 api.register(AuthorResource)
-api.register(BookResource)
+api.register(BookPrefixResource)
 api.register(ArticleResource)
 api.register(SomeOtherResource, urlname='test', urlregex='test/mem/$')
