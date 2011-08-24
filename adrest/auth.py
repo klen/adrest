@@ -23,7 +23,7 @@ class BaseAuthenticator(object):
         return self.identifier
 
     @staticmethod
-    def test_rights(resource, method):
+    def test_rights(resources, method):
         return True
 
 
@@ -127,9 +127,8 @@ class AuthenticatorMixin(object):
     def check_rights(self, resources, method):
         if self.auth:
             mresources = [resources.get(m._meta.module_name) for m in self.meta.models if resources.get(m._meta.module_name)]
-            for mr in mresources:
-                try:
-                    assert self.auth.test_rights(mr, method)
-                except AssertionError:
-                    raise HttpError("You cannot do it.", status=status.HTTP_403_FORBIDDEN)
+            try:
+                assert self.auth.test_rights(mresources, method)
+            except AssertionError:
+                raise HttpError("You cannot do it.", status=status.HTTP_403_FORBIDDEN)
         return True
