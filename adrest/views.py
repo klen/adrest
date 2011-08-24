@@ -24,6 +24,7 @@ class ResourceOptions(object):
     def __init__(self):
         self.name = self.urlname = self.urlregex = ''
         self.parents = []
+        self.models = []
 
 
 class ResourceMetaClass(type):
@@ -67,6 +68,7 @@ class ResourceMetaClass(type):
         meta.urlregex += '%(name)s/(?:(?P<%(name)s>[^/]+)/)?$' % dict(
                 name = meta.name)
 
+        meta.models = [o.model for o in meta.parents + [ cls ] if o.model]
         return cls
 
 
@@ -111,7 +113,10 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
             self.throttle_check()
 
             # Get required resources
-            resources = self.parse_resources(**kwargs)
+            resources = self.get_resources_from_uri(**kwargs)
+
+            # Check rights
+            self.check_rights(resources, method)
 
             # Parse content
             if method in ('POST', 'PUT'):
@@ -154,18 +159,17 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
         if not method in self.allowed_methods:
             raise HttpError('Method \'%s\' not allowed on this resource.' % method, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    def parse_resources(self, **kwargs):
-        models = [p.model for p in self.meta.parents if p.model]
-        if self.model:
-            models.append(self.model)
-        models_dict = dict((m._meta.module_name, m) for m in models if m)
-        owners = dict()
+    def get_resources_from_uri(self, **resources):
+        """ Parse form params from URI.
+        """
+        mdict = dict((m._meta.module_name, m) for m in self.meta.models)
 
-        for key, value in kwargs.iteritems():
+        # URL objects
+        for key, value in resources.iteritems():
             key = key.lower()
-            if models_dict.has_key(key) and value:
+            if mdict.has_key(key) and value:
                 try:
-                    owners[key] = models_dict.get(key).objects.get(pk=value)
+                    resources[key] = mdict.get(key).objects.get(pk=value)
 
                 except (ObjectDoesNotExist, ValueError):
                     raise HttpError("Resource not found.", status=status.HTTP_404_NOT_FOUND)
@@ -173,20 +177,13 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
                 except MultipleObjectsReturned:
                     raise HttpError("Resources conflict.", status=status.HTTP_409_CONFLICT)
 
-        kwargs.update(owners)
-
         # Check owners
-        it = (m._meta.module_name for m in models)
+        it = (m._meta.module_name for m in self.meta.models)
         try:
-            f_name = next(it)
-
-            if self.auth:
-                self.auth.test_owner(owners.get(f_name))
-
-            c_name = next(it)
+            f_name, c_name = next(it), next(it)
 
             while True:
-                ofm, ocm = owners.get(f_name), owners.get(c_name)
+                ofm, ocm = resources.get(f_name), resources.get(c_name)
 
                 # Test parent element linked from children
                 assert not ocm or getattr(ocm, '%s_id' % f_name, None) == ofm.pk
@@ -199,12 +196,10 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
         except StopIteration:
             pass
 
-        for model in reversed(models):
-            if owners.get(model._meta.module_name):
-                pass
-
-        kwargs['instance'] = kwargs.get(self.meta.name)
-        return kwargs
+        instance = resources.get(self.meta.name)
+        if instance:
+            resources['instance'] = instance
+        return resources
 
     @staticmethod
     def handle_exception(e):
@@ -223,7 +218,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
 
 
 class ApiMapResource(ResourceView):
-    """ TODO: Not implemented.
+    """ Simple JSON Api Map.
     """
     log = False
     emitters = JSONEmitter
@@ -231,7 +226,7 @@ class ApiMapResource(ResourceView):
 
     def get(self, *args, **Kwargs):
         resources = set()
-        map = dict()
+        api_map = dict()
         for key in sorted( self.api._map.keys() ):
             rinfo = self.api._map[key]
             r = rinfo['resource']
@@ -239,9 +234,9 @@ class ApiMapResource(ResourceView):
                 continue
             resources.add(rinfo['urlname'])
 
-            map[rinfo['urlregex']] = dict(
+            api_map[rinfo['urlregex']] = dict(
                 name = rinfo['urlname'],
                 methods = r.allowed_methods,
                 model = r.model.__name__ if r.model else r.model,
             )
-        return map
+        return api_map
