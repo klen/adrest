@@ -22,8 +22,9 @@ class BaseAuthenticator(object):
     def get_identifier(self):
         return self.identifier
 
-    def test_owner(self, instance):
-        pass
+    @staticmethod
+    def test_rights(resource, method):
+        return True
 
 
 class AnonimousAuthenticator(BaseAuthenticator):
@@ -105,22 +106,30 @@ class AuthenticatorMixin(object):
     """ Adds pluggable authentication behaviour.
     """
     authenticators = AnonimousAuthenticator,
-    auth = None
     identifier = ''
+    auth = None
 
     def authenticate(self):
         """ Attempt to authenticate the request, returning an authentication context or None.
             An authentication context may be any object, although in many cases it will simply be a :class:`User` instance.
         """
-        auth_result = True
         for authenticator in as_tuple(self.authenticators):
-            self.auth = authenticator(self)
-            auth_result = self.auth.authenticate()
-            if auth_result:
-                break
+            auth = authenticator(self)
+            result = auth.authenticate()
+            if result:
+                self.auth = auth
+                return result
         else:
             raise HttpError("Authorization required.", status=status.HTTP_401_UNAUTHORIZED)
 
-        return auth_result
+        return True
 
-
+    def check_rights(self, resources, method):
+        if self.auth:
+            mresources = [ m for m in self.meta.models if resources.get(m._meta.module_name) ]
+            for mr in mresources:
+                try:
+                    assert self.auth.test_rights(mr, method)
+                except AssertionError:
+                    raise HttpError("You cannot do it.", status=status.HTTP_403_FORBIDDEN)
+        return True
