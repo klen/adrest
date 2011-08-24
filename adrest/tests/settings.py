@@ -11,3 +11,4 @@ DATABASES =  {
 INSTALLED_APPS = 'django.contrib.auth', 'django.contrib.contenttypes', 'adrest', 'adrest.tests.main'
 DEBUG = TEMPLATE_DEBUG = True
 CACHE_BACKEND = 'locmem://'
+ADREST_ACCESS_LOG = True

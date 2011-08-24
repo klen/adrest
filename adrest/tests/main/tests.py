@@ -1,6 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.test import TestCase, Client
+from adrest.models import Access
 
 from .api import api
 from .resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
@@ -77,6 +78,12 @@ class AdrestTest(TestCase):
         uri = reverse("api-%s-%s" % (str(api), ArticleResource.meta.urlname), kwargs=dict(author=self.author.pk, book=self.book.pk))
         response = self.client.get(uri)
         self.assertContains(response, 'true')
+
+    def test_log(self):
+        uri = reverse("api-%s-%s" % (str(api), ArticleResource.meta.urlname), kwargs=dict(author=self.author.pk, book=self.book.pk))
+        self.client.get(uri)
+        access = Access.objects.get()
+        self.assertEqual(access.uri, uri)
 
 
 class AdrestMapTest(TestCase):
