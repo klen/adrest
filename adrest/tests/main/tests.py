@@ -2,9 +2,9 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.test import TestCase, Client
 
-from api import api
-from resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
-from models import Author
+from .api import api
+from .resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
+from .models import Author, Book, Article
 
 
 class MetaTest(TestCase):
@@ -12,6 +12,7 @@ class MetaTest(TestCase):
     def test_meta(self):
         self.assertTrue(AuthorResource.meta)
         self.assertTrue(AuthorResource.meta.parents is not None)
+        self.assertTrue(AuthorResource.meta.models is not None)
         self.assertTrue(AuthorResource.meta.name is not None)
         self.assertTrue(AuthorResource.meta.urlname is not None)
         self.assertTrue(AuthorResource.meta.urlregex is not None)
@@ -20,6 +21,11 @@ class MetaTest(TestCase):
         self.assertEqual(AuthorResource.meta.parents, [])
         self.assertEqual(BookPrefixResource.meta.parents, [ AuthorResource ])
         self.assertEqual(ArticleResource.meta.parents, [ AuthorResource, BookPrefixResource ])
+
+    def test_meta_models(self):
+        self.assertEqual(AuthorResource.meta.models, [ Author ])
+        self.assertEqual(BookPrefixResource.meta.models, [ Author, Book ])
+        self.assertEqual(ArticleResource.meta.models, [ Author, Book, Article ])
 
     def test_meta_name(self):
         self.assertEqual(AuthorResource.meta.name, 'author')
@@ -55,7 +61,8 @@ class AdrestTest(TestCase):
     def setUp(self):
         self.client = Client()
         user = User.objects.create(username='test')
-        Author.objects.create(name='John', user=user)
+        self.author = Author.objects.create(name='John', user=user)
+        self.book = Book.objects.create(author=self.author, title='test',)
 
     def test_methods(self):
         uri = reverse("api-%s-%s" % (str(api), AuthorResource.meta.urlname))
@@ -65,6 +72,11 @@ class AdrestTest(TestCase):
 
         response = self.client.post(uri)
         self.assertContains(response, 'false', status_code=405)
+
+    def test_owner(self):
+        uri = reverse("api-%s-%s" % (str(api), ArticleResource.meta.urlname), kwargs=dict(author=self.author.pk, book=self.book.pk))
+        response = self.client.get(uri)
+        self.assertContains(response, 'true')
 
 
 class AdrestMapTest(TestCase):

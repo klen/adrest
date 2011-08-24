@@ -14,7 +14,7 @@ class Publisher(models.Model):
 class Book(models.Model):
     title = models.CharField(max_length=100)
     author = models.ForeignKey(Author)
-    publisher = models.ForeignKey(Publisher)
+    publisher = models.ForeignKey(Publisher, null=True)
 
 
 class Article(models.Model):
