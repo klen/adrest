@@ -126,7 +126,7 @@ class AuthenticatorMixin(object):
 
     def check_rights(self, resources, method):
         if self.auth:
-            mresources = [ m for m in self.meta.models if resources.get(m._meta.module_name) ]
+            mresources = [resources.get(m._meta.module_name) for m in self.meta.models if resources.get(m._meta.module_name)]
             for mr in mresources:
                 try:
                     assert self.auth.test_rights(mr, method)
