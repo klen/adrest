@@ -1,7 +1,8 @@
-from adrest import status
 from adrest.forms import PartitialForm
 from adrest.settings import LIMIT_PER_PAGE
-from adrest.utils import HttpError, Paginator
+from adrest.utils import status
+from adrest.utils.exceptions import HttpError
+from adrest.utils.paginator import Paginator
 
 
 class HandlerMixin(object):
@@ -44,7 +45,8 @@ class HandlerMixin(object):
 
         raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, instance=None, **kwargs):
+    @staticmethod
+    def delete(request, instance=None, **kwargs):
         if not instance:
             raise HttpError("Bad request", status=status.HTTP_400_BAD_REQUEST)
 
@@ -54,7 +56,8 @@ class HandlerMixin(object):
         instance.delete()
         return None
 
-    def options(self, request, **kwargs):
+    @staticmethod
+    def options(request, **kwargs):
         return 'OK'
 
     def get_filter_options(self, request, **kwargs):

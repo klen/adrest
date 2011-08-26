@@ -1,48 +1,9 @@
 from urllib import urlencode
 
-from django.core.handlers.wsgi import STATUS_CODE_TEXT
 from django.core.paginator import InvalidPage, Paginator as DjangoPaginator
 
-from adrest.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
-
-
-def as_tuple(obj):
-    """Given obj return a tuple"""
-    if obj is None:
-        return ()
-    elif isinstance(obj, list):
-        return tuple(obj)
-    elif isinstance(obj, tuple):
-        return obj
-    return (obj,)
-
-
-class HttpError(Exception):
-    """ Represent Http Error.
-    """
-    def __init__(self, message, status=HTTP_400_BAD_REQUEST):
-        self.message = message
-        self.status = status
-        super(HttpError, self).__init__(message)
-
-    def __str__(self):
-        return self.message
-
-
-class Response(object):
-    """ Not emmited response.
-    """
-    def __init__(self, content, status=HTTP_200_OK, headers=None):
-        self.status = status
-        self.content = content
-        self.headers = headers or dict()
-
-    @property
-    def status_text(self):
-        """ Return reason text corrosponding to our HTTP response status code.
-            Provided for convienience.
-        """
-        return STATUS_CODE_TEXT.get(self.status, '')
+from . import status as http_status
+from .exceptions import HttpError
 
 
 class Paginator(object):
@@ -57,7 +18,7 @@ class Paginator(object):
         try:
             self.page = self.paginator.page(page_num)
         except InvalidPage:
-            raise HttpError("Invalid page", status=HTTP_400_BAD_REQUEST)
+            raise HttpError("Invalid page", status=http_status.HTTP_400_BAD_REQUEST)
 
     @property
     def count(self):

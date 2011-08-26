@@ -1,7 +1,8 @@
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
-from django.test import TestCase, Client
+from django.test import TestCase, Client, RequestFactory
 from adrest.models import Access
+from adrest.utils import serializer, paginator
 
 from .api import api
 from .resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
@@ -95,3 +96,27 @@ class AdrestMapTest(TestCase):
         uri = reverse("api-%s-apimap" % str(api))
         response = self.client.get(uri)
         self.assertContains(response, '{')
+
+
+class SerializerTest(TestCase):
+
+    def setUp(self):
+        self.rf = RequestFactory()
+        for i in range(1, 100):
+            user = User.objects.create(username='test%s' % i)
+            self.author = Author.objects.create(name='John %s' % i, user=user)
+            self.book = Book.objects.create(author=self.author, title='test %s' % i)
+
+    def test_json(self):
+        authors = Author.objects.all()
+        test = serializer.json_dumps(authors)
+        self.assertTrue("main.author" in test)
+        request = self.rf.get("/")
+        pg = paginator.Paginator(request, authors, 10)
+        test = serializer.json_dumps(pg)
+        self.assertTrue("count" in test)
+
+    def test_xml(self):
+        authors = Author.objects.all()
+        test = serializer.xml_dumps(authors)
+        self.assertTrue("author" in test)

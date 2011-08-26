@@ -3,8 +3,6 @@ import time
 from django.core.cache import cache
 
 from adrest.settings import THROTTLE_AT, THROTTLE_TIMEFRAME
-from adrest.status import HTTP_503_SERVICE_UNAVAILABLE
-from adrest.utils import HttpError
 
 
 class BaseThrottle(object):
@@ -14,7 +12,8 @@ class BaseThrottle(object):
         self.throttle_at = throttle_at
         self.timeframe = timeframe
 
-    def convert_identifier_to_key(self, identifier):
+    @staticmethod
+    def convert_identifier_to_key(identifier):
         """ Takes an identifier (like a username or IP address) and converts it
             into a key usable by the cache system.
         """
@@ -22,7 +21,8 @@ class BaseThrottle(object):
             char for char in identifier if char.isalnum() or char in ( '_', '.', '-' )
         )
 
-    def should_be_throttled(self, identifier, **kwargs):
+    @staticmethod
+    def should_be_throttled(identifier, **kwargs):
         """ Returns whether or not the user has exceeded their throttle limit.
         """
         return 0
@@ -46,14 +46,3 @@ class CacheThrottle(BaseThrottle):
 
         cache.set(key, (count+1, expiration), (expiration - now))
         return 0
-
-
-class ThrottleMixin(object):
-
-    throttle = BaseThrottle
-
-    def throttle_check(self):
-        throttle = self.throttle()
-        wait = throttle.should_be_throttled(self.identifier)
-        if wait:
-            raise HttpError("Throttled, wait %d seconds." % wait, status=HTTP_503_SERVICE_UNAVAILABLE)
