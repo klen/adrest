@@ -115,6 +115,10 @@ class SerializerTest(TestCase):
         pg = paginator.Paginator(request, authors, 10)
         test = serializer.json_dumps(pg)
         self.assertTrue("count" in test)
+        books = Book.objects.all()
+        test = serializer.json_dumps(books)
+        self.assertTrue("author" in test)
+        self.assertFalse("publisher" in test)
 
     def test_xml(self):
         authors = Author.objects.all()

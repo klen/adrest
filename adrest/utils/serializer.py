@@ -16,6 +16,14 @@ class JSONEncoder(DjangoJSONEncoder):
         self.serializer.use_natural_keys = False
         super(JSONEncoder, self).__init__(*args, **kwargs)
 
+    def handle_fk_field(self, o, field):
+        """ Handle field, without base requests.
+        """
+        key = getattr(o, field.column, None)
+        if not key is None:
+            self.serializer._current[field.name] = key
+        return key
+
     def default(self, o):
 
         if isinstance(o, QuerySet):
@@ -28,7 +36,7 @@ class JSONEncoder(DjangoJSONEncoder):
                     if field.rel is None:
                         self.serializer.handle_field(o, field)
                     else:
-                        self.serializer.handle_fk_field(o, field)
+                        self.handle_fk_field(o, field)
             for field in o._meta.many_to_many:
                 if field.serialize:
                     self.serializer.handle_m2m_field(o, field)
