@@ -54,7 +54,8 @@ class JSONEncoder(DjangoJSONEncoder):
                 prev = o.previous,
                 resources = o.resources,
             )
-        super(JSONEncoder, self).default(o)
+
+        return super(JSONEncoder, self).default(o)
 
 
 json_dumps = curry(dumps, cls=JSONEncoder)
