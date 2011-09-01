@@ -116,6 +116,9 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
             # Get required resources
             resources = self.get_resources_from_uri(**kwargs)
 
+            # Check owners
+            self.check_owners(**resources)
+
             # Check rights
             self.check_rights(resources, method)
 
@@ -178,6 +181,13 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
                 except MultipleObjectsReturned:
                     raise HttpError("Resources conflict.", status=status.HTTP_409_CONFLICT)
 
+        instance = resources.get(self.meta.name)
+        if instance:
+            resources['instance'] = instance
+        return resources
+
+    def check_owners(self, **resources):
+
         # Check owners
         it = (m._meta.module_name for m in self.meta.models)
         try:
@@ -197,10 +207,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
         except StopIteration:
             pass
 
-        instance = resources.get(self.meta.name)
-        if instance:
-            resources['instance'] = instance
-        return resources
+        return True
 
     @staticmethod
     def handle_exception(e):
