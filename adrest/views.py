@@ -227,8 +227,8 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
                 # object in resources -- it's OK
                 # ELSE -- it's not ok, stop check!
                 parent_in_child = getattr(ocm, '%s_id' % f_name, None)
-                assert not ocm or \
-                        (parent_in_child and parent_in_child == ofm.pk)
+                assert (not ocm) or (not parent_in_child) or \
+                        parent_in_child and parent_in_child == ofm.pk
 
                 # Swap and get one more model name from iterator
                 f_name, c_name = c_name, next(it)
