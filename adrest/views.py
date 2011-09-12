@@ -88,7 +88,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
 
     # If children object in hierarchy has FK=Null to parent, allow to get this
     # object (default: True)
-    allow_public_objects = False
+    allow_public_access = False
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
@@ -225,13 +225,13 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
                 ofm, ocm = resources.get(f_name), resources.get(c_name)
 
                 # Test parent element linked from children
-                # If no children and allow_pulic_objects=Ture -- it's ok, nothing to check at this iteraton, else -- fail
+                # If no children and allow_pulic_access=True -- it's ok, nothing to check at this iteraton, else -- fail
                 # If children haven't link to parent -- it's ok, object available for public
                 # If children have FK field named as parent model and it's value equivalent to 
                 # object in resources -- it's OK
                 # ELSE -- it's not ok, stop check!
                 parent_in_child = getattr(ocm, '%s_id' % f_name, None)
-                assert (not ocm) or (self.allow_public_objects and not parent_in_child) or \
+                assert (not ocm) or (self.allow_public_access and not parent_in_child) or \
                         parent_in_child and parent_in_child == ofm.pk
 
                 # Swap and get one more model name from iterator
