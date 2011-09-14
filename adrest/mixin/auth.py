@@ -32,5 +32,5 @@ class AuthenticatorMixin(object):
             try:
                 assert self.auth.test_rights(mresources, method)
             except AssertionError:
-                raise HttpError("You cannot do it.", status=status.HTTP_403_FORBIDDEN)
+                raise HttpError("Access forbidden.", status=status.HTTP_403_FORBIDDEN)
         return True

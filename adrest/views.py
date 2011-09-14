@@ -239,7 +239,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
 
         except (AssertionError, ObjectDoesNotExist):
             # 403 Error if there is error in parent-children relationship
-            raise HttpError("Access forbiden.", status=status.HTTP_403_FORBIDDEN)
+            raise HttpError("Access forbidden.", status=status.HTTP_403_FORBIDDEN)
 
         except StopIteration:
             pass
