@@ -215,27 +215,27 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
         # Build iterator with all models for this Resource
         # Models list generated automatically based on "parent" and "model field 
         # in Resource description
-        it = (m._meta.module_name for m in self.meta.models)
+        it = reversed( [m._meta.module_name for m in self.meta.models] )
         try:
             # Get two models names
-            f_name, c_name = next(it), next(it)
+            c_name, f_name = next(it), next(it)
 
             while True:
                 # Get objects from resources array for two models
                 ofm, ocm = resources.get(f_name), resources.get(c_name)
 
                 # Test parent element linked from children
-                # If no children and allow_pulic_access=True -- it's ok, nothing to check at this iteraton, else -- fail
-                # If children haven't link to parent -- it's ok, object available for public
+                # If children haven't link to parent and it's allowed by allow_public_access -- it's ok, object available for public
                 # If children have FK field named as parent model and it's value equivalent to 
-                # object in resources -- it's OK
+                #   object in resources -- it's OK
                 # ELSE -- it's not ok, stop check!
                 parent_in_child = getattr(ocm, '%s_id' % f_name, None)
-                assert (not ocm) or (self.allow_public_access and not parent_in_child) or \
-                        parent_in_child and parent_in_child == ofm.pk
+                assert (not ocm) or \
+                       (self.allow_public_access and self.allow_public_access == c_name and not parent_in_child) or \
+                       (parent_in_child and ofm and parent_in_child == ofm.pk)
 
                 # Swap and get one more model name from iterator
-                f_name, c_name = c_name, next(it)
+                f_name, c_name = next(it), f_name
 
         except (AssertionError, ObjectDoesNotExist):
             # 403 Error if there is error in parent-children relationship
