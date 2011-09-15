@@ -82,18 +82,34 @@ try:
 
 
     class AccessKeyAuthenticator(BaseAuthenticator):
-        """ Use AcessKey identification.
+        """ Use AccessKey identification.
         """
+
         def authenticate(self):
+            """ Authenticate user using AccessKey from HTTP Header or GET params.
+            """
             request = self.resource.request
             try:
                 access_key = request.META.get('HTTP_AUTHORIZATION') or request.REQUEST['key']
                 api_key = AccessKey.objects.get(key=access_key)
-                request.user = api_key.user
-                self.identifier = request.user.username
+                if self.test_user(api_key.user):
+                    request.user = api_key.user
+                    self.identifier = request.user.username
             except(KeyError, ObjectDoesNotExist):
                 pass
             return self.get_identifier()
+
+        def test_user(self, user):
+            """ In this method you can implement User class check if you have
+                several User classes with FK to AccessKey.
+
+                With this you can use multiple AccessKeyAuthenticator classes for
+                the resource and get the right class according to the test in this
+                function.
+
+                By default: doesn't care, if we find User by AccessKey, authenticate him
+            """
+            return True
 
 except ImportError:
     pass
