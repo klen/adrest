@@ -2,6 +2,7 @@ import logging
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models.base import ModelBase, Model
+from django.forms.models import ModelChoiceField
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
@@ -279,9 +280,17 @@ class ApiMapResource(ResourceView):
                 continue
             resources.add(rinfo['urlname'])
 
-            api_map[rinfo['urlregex']] = dict(
+            result = dict(
                 name = rinfo['urlname'],
                 methods = r.allowed_methods,
                 model = r.model.__name__ if r.model else r.model,
             )
+            form = r.get_form()
+            if form:
+                result['fields'] = dict(
+                    ( name, dict(required = f.required, help = f.help_text))
+                        for name, f in form.base_fields.iteritems()
+                        if not (isinstance(f, ModelChoiceField) and f.choices.queryset.model in r.meta.models)
+                )
+            api_map[rinfo['urlregex']] = result
         return api_map

@@ -83,12 +83,13 @@ class HandlerMixin(object):
         """
         return Paginator(request, qs, self.limit_per_page)
 
-    def get_form(self):
-        if not self.form:
+    @classmethod
+    def get_form(cls):
+        if cls.model and not cls.form:
             class DynForm(PartitialForm):
                 class Meta():
-                    model = self.model
-                    fields = self.form_fields
-                    exclude = self.form_exclude
+                    model = cls.model
+                    fields = cls.form_fields
+                    exclude = cls.form_exclude
             return DynForm
-        return self.form
+        return cls.form
