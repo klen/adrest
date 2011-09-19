@@ -86,6 +86,10 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
     # default allowed method.
     allowed_methods = 'GET', 'OPTIONS'
 
+    # If children object in hierarchy has FK=Null to parent, allow to get this
+    # object (default: True)
+    allow_public_access = False
+
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
 
@@ -119,7 +123,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
             # Check owners
             self.check_owners(**resources)
 
-            # Check rights
+            # Check rights for resources with this method
             self.check_rights(resources, method)
 
             # Parse content
@@ -155,7 +159,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
         return response
 
     def check_method_allowed(self, method):
-        """ Ensure the request method is permitted for this resource, raising a ResourceException if it is not.
+        """ Ensure the request HTTP method is permitted for this resource, raising a ResourceException if it is not.
         """
         if not method in self.callmap.keys():
             raise HttpError('Unknown or unsupported method \'%s\'' % method, status=status.HTTP_501_NOT_IMPLEMENTED)
@@ -165,12 +169,20 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
 
     def get_resources_from_uri(self, **resources):
         """ Parse form params from URI.
+
+            For example, /author/1/book/2 converted to resources array with ORM
+            objects Book with pk=2 and Author with pk=1
+
         """
+
+        # Generate pairs (model_name, model_class) and convert it to dictionary
         mdict = dict((m._meta.module_name, m) for m in self.meta.models)
 
         # URL objects
         for key, value in resources.iteritems():
             key = key.lower()
+            # If recource view associated with this model and we have its value
+            # in URI -- try to convert it in real ORM object
             if mdict.has_key(key) and value:
                 try:
                     resources[key] = mdict.get(key).objects.get(pk=value)
@@ -181,28 +193,53 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
                 except MultipleObjectsReturned:
                     raise HttpError("Resources conflict.", status=status.HTTP_409_CONFLICT)
 
+        # If we get ORM object resource with model_name like this resource model
+        # name, add it to resource as "instance"
+        # For example: ResourceView.model=Author, request was /author/1/
+        # resources['instance'] = Author_object_with_pk=1
         instance = resources.get(self.meta.name)
         if instance:
             resources['instance'] = instance
         return resources
 
     def check_owners(self, **resources):
+        """ Recursive scanning of the fact that the child has FK
+            to the parent and in resources we have right objects.
 
-        # Check owners
-        it = (m._meta.module_name for m in self.meta.models)
+            We check that in request like /author/1/book/2/page/3
+
+            Page object with pk=3 has ForeignKey field linked to Book object with pk=2
+            and Book with pk=2 has ForeignKey field linked to Author object with pk=1.
+        """
+
+        # Build iterator with all models for this Resource
+        # Models list generated automatically based on "parent" and "model field 
+        # in Resource description
+        it = reversed( [m._meta.module_name for m in self.meta.models] )
         try:
-            f_name, c_name = next(it), next(it)
+            # Get two models names
+            c_name, f_name = next(it), next(it)
 
             while True:
+                # Get objects from resources array for two models
                 ofm, ocm = resources.get(f_name), resources.get(c_name)
 
                 # Test parent element linked from children
-                assert not ocm or getattr(ocm, '%s_id' % f_name, None) == ofm.pk
+                # If children haven't link to parent and it's allowed by allow_public_access -- it's ok, object available for public
+                # If children have FK field named as parent model and it's value equivalent to 
+                #   object in resources -- it's OK
+                # ELSE -- it's not ok, stop check!
+                parent_in_child = getattr(ocm, '%s_id' % f_name, None)
+                assert (not ocm) or \
+                       (self.allow_public_access and self.allow_public_access == c_name and not parent_in_child) or \
+                       (parent_in_child and ofm and parent_in_child == ofm.pk)
 
-                f_name, c_name = c_name, next(it)
+                # Swap and get one more model name from iterator
+                f_name, c_name = next(it), f_name
 
         except (AssertionError, ObjectDoesNotExist):
-            raise HttpError("Access forbiden.", status=status.HTTP_403_FORBIDDEN)
+            # 403 Error if there is error in parent-children relationship
+            raise HttpError("Access forbidden.", status=status.HTTP_403_FORBIDDEN)
 
         except StopIteration:
             pass
