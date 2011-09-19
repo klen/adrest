@@ -213,7 +213,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
         """
 
         # Build iterator with all models for this Resource
-        # Models list generated automatically based on "parent" and "model field 
+        # Models list generated automatically based on "parent" and "model field
         # in Resource description
         it = reversed( [m._meta.module_name for m in self.meta.models] )
         try:
@@ -226,7 +226,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
 
                 # Test parent element linked from children
                 # If children haven't link to parent and it's allowed by allow_public_access -- it's ok, object available for public
-                # If children have FK field named as parent model and it's value equivalent to 
+                # If children have FK field named as parent model and it's value equivalent to
                 #   object in resources -- it's OK
                 # ELSE -- it's not ok, stop check!
                 parent_in_child = getattr(ocm, '%s_id' % f_name, None)
@@ -272,7 +272,7 @@ class ApiMapResource(ResourceView):
     def get(self, *args, **Kwargs):
         resources = set()
         api_map = dict()
-        for key in sorted( self.api._map.keys() ):
+        for key, rinfo in sorted(self.api._map.iteritems(), key=lambda x: x[1].get('urlregex')):
             rinfo = self.api._map[key]
             r = rinfo['resource']
             if r.meta.urlname in resources:
