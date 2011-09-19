@@ -296,5 +296,6 @@ class ApiMapResource(ResourceView):
                         for name, f in form.base_fields.iteritems()
                         if not (isinstance(f, ModelChoiceField) and f.choices.queryset.model in r.meta.models)
                 )
-            api_map[rinfo['urlregex']] = result
+            key = rinfo['urlregex'].replace("(?P", "").replace("[^/]+)", "")
+            api_map[key] = result
         return api_map
