@@ -1,9 +1,13 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 from django.contrib.auth.models import User
 from django.db import models
 
 
 class Author(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100,
+            help_text = u"Имя автора")
     user = models.ForeignKey(User)
 
 

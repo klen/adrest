@@ -1,8 +1,12 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models.base import ModelBase, Model
 from django.forms.models import ModelChoiceField
+from django.utils.encoding import smart_unicode
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
@@ -288,7 +292,7 @@ class ApiMapResource(ResourceView):
             form = r.get_form()
             if form:
                 result['fields'] = dict(
-                    ( name, dict(required = f.required, help = str(f.help_text) if f.help_text else ''))
+                    (name, dict(required = f.required, help = smart_unicode(f.help_text)))
                         for name, f in form.base_fields.iteritems()
                         if not (isinstance(f, ModelChoiceField) and f.choices.queryset.model in r.meta.models)
                 )
