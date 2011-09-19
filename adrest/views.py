@@ -292,7 +292,7 @@ class ApiMapResource(ResourceView):
             form = r.get_form()
             if form:
                 result['fields'] = dict(
-                    (name, dict(required = f.required, help = smart_unicode(f.help_text)))
+                    (name, dict(required = f.required, help = smart_unicode(f.help_text + '')))
                         for name, f in form.base_fields.iteritems()
                         if not (isinstance(f, ModelChoiceField) and f.choices.queryset.model in r.meta.models)
                 )
