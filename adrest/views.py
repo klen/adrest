@@ -288,7 +288,7 @@ class ApiMapResource(ResourceView):
             form = r.get_form()
             if form:
                 result['fields'] = dict(
-                    ( name, dict(required = f.required, help = f.help_text))
+                    ( name, dict(required = f.required, help = f.help_text.encode() if f.help_text else ''))
                         for name, f in form.base_fields.iteritems()
                         if not (isinstance(f, ModelChoiceField) and f.choices.queryset.model in r.meta.models)
                 )
