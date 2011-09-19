@@ -1,23 +1,27 @@
 CHANGES
 =======
 
-## 2011-09-12 0.5.4
+## 2011-09-19 0.5.4
 -------------------
 * Fix check owner code (if child FK to parent is None -- it's, nobody owns this
 child, so everyone can get it)
 
+
 ## 2011-09-01 0.5.3
 -------------------
 * Extract check owners method
+
 
 ## 2011-08-26 0.5.2
 -------------------
 * Upgrade JSON emitter
 * Add XML emitter
 
+
 ## 2011-08-24 0.4.7
 -------------------
 * Add some tests
+
 
 ## 2011-08-18 0.4.4
 -------------------
@@ -25,58 +29,72 @@ child, so everyone can get it)
 * Add map of api resources
 * Begin code refactoring
 
+
 ## 2011-08-04 0.3.11
 --------------------
 * Fix access key admin
+
 
 ## 2011-07-22 0.3.1
 -------------------
 * Fix access log bug
 
+
 ## 2011-07-19 0.2.98
 --------------------
 * Fix put method
+
 
 ## 2011-07-18 0.2.97
 --------------------
 * In OPTIONS method always used only JSONEmitter
 
+
 ## 2011-06-16 0.2.96
 --------------------
 * Allow disable authentication on OPTIONS http methods
+
 
 ## 2011-06-15 0.2.95
 --------------------
 * Add OPTIONS method
 
+
 ## 2011-06-13 0.2.92
 --------------------
 * Fix access for nested objects
+
 
 ## 2011-05-27 0.2.9
 -------------------
 * Fix DEBUG mode
 
+
 ## 2011-05-23 0.2.7
 -------------------
 * Fix statuses. https://github.com/klen/adrest/issues/4
+
 
 ## 2011-05-03 0.2.6
 -------------------
 * Fix handlers and forms
 
+
 ## 2011-05-03 0.2.5
 -------------------
 * Add form_exclude option to resource
+
 
 ## 2011-04-27 0.2.4
 -------------------
 * Some more frendly Access logs
 
+
 ## 2011-04-25 0.2.3
 -------------------
 * Fix accesslog truncate content
 * Improve access log admin
+
 
 ## 2011-04-25 0.2.1
 -------------------
