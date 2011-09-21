@@ -37,7 +37,7 @@
             {% for uri, info in content.1 %}
             <div class="uri">
                 <a href="#" class="toggle"> {% if info.fields or info.resource %}+{% else %}-{% endif %} {{ uri }}</a>
-                <span class="uri_methods"> {% for m in info.methods %}{{ m }}&nbsp;{% endfor %}<br/> </span>
+                <span class="uri_methods"> {% for m in info.methods %}{{ m }}&nbsp;{% endfor %}</span>
                 <span class="uri_auth">{% for a in info.auth %} {{ a }} {% endfor %}</span>
 
                 {% if info.fields or info.resource %}
