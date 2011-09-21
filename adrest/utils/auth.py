@@ -24,14 +24,33 @@ class BaseAuthenticator(object):
         return True
 
 
+class MetaAnonimous(type):
+    def __str__(mcs):
+        return "Anonimous access"
+
+
+class MetaByKey(type):
+    def __str__(mcs):
+        return "Authorization by key"
+
+
+class MetaByLogin(type):
+    def __str__(mcs):
+        return "Authorization by login and password"
+
+
+class MetaBySession(type):
+    def __str__(mcs):
+        return "Authorization by session"
+
+
 class AnonimousAuthenticator(BaseAuthenticator):
     """ Always return true.
     """
+    __metaclass__ = MetaAnonimous
+
     def get_identifier(self):
         return self.resource.request.META.get('REMOTE_ADDR', 'anonymous')
-
-    def __str__(self):
-        return 'Anonimous access.'
 
 
 class BasicAuthenticator(BaseAuthenticator):
@@ -55,6 +74,8 @@ class UserAuthenticator(BaseAuthenticator):
     username_fieldname = 'username'
     password_fieldname = 'password'
 
+    __metaclass__ = MetaByLogin
+
     def authenticate(self):
         request = self.resource.request
         try:
@@ -66,13 +87,12 @@ class UserAuthenticator(BaseAuthenticator):
             pass
         return self.get_identifier()
 
-    def __str__(self):
-        return 'Authentication by login and password.'
-
 
 class UserLoggedInAuthenticator(BaseAuthenticator):
     """ Use Djagno's built-in request session for authentication.
     """
+    __metaclass__ = MetaBySession
+
     def authenticate(self):
         request = self.resource.request
         if getattr(request, 'user', None) and request.user.is_active:
@@ -80,9 +100,6 @@ class UserLoggedInAuthenticator(BaseAuthenticator):
             if resp is None:  # csrf passed
                 self.identifier = request.user.username
         return self.get_identifier()
-
-    def __str__(self):
-        return 'Authentication by session.'
 
 try:
     from adrest.models import AccessKey
@@ -92,6 +109,7 @@ try:
     class AccessKeyAuthenticator(BaseAuthenticator):
         """ Use AccessKey identification.
         """
+        __metaclass__ = MetaByKey
 
         def authenticate(self):
             """ Authenticate user using AccessKey from HTTP Header or GET params.
@@ -118,9 +136,6 @@ try:
                 By default: doesn't care, if we find User by AccessKey, authenticate him
             """
             return True
-
-        def __str__(self):
-            return 'Authentication by key.'
 
 except ImportError:
     pass
