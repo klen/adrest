@@ -56,6 +56,12 @@ class JSONTemplateEmitter(TemplateEmmiter):
     media_type = 'application/json'
 
 
+class HTMLTemplateEmmiter(TemplateEmmiter):
+    """ HTML content.
+    """
+    media_type = 'text/html'
+
+
 class XMLTemplateEmitter(TemplateEmmiter):
     """ Emitter which serializes to XML.
     """

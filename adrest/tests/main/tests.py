@@ -95,7 +95,10 @@ class AdrestMapTest(TestCase):
     def test_methods(self):
         uri = reverse("api-%s-apimap" % str(api))
         response = self.client.get(uri)
-        self.assertContains(response, '{')
+        self.assertContains(response, 'MAP')
+
+        response = self.client.get(uri, HTTP_ACCEPT="application/json")
+        self.assertNotContains(response, 'MAP')
 
 
 class SerializerTest(TestCase):

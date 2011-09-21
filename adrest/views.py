@@ -12,7 +12,7 @@ from django.views.generic import View
 
 from .utils import status
 from .utils.auth import AnonimousAuthenticator
-from .utils.emmiter import JSONEmitter
+from .utils.emmiter import HTMLTemplateEmmiter, JSONEmitter
 from .utils.exceptions import HttpError
 from .utils.tools import as_tuple
 from .utils.response import Response
@@ -271,8 +271,9 @@ class ApiMapResource(ResourceView):
     """ Simple JSON Api Map.
     """
     log = False
-    emitters = JSONEmitter
+    emitters = HTMLTemplateEmmiter, JSONEmitter
     authenticators = AnonimousAuthenticator
+    template = 'api/apimap.html'
 
     def get(self, *args, **Kwargs):
         resources = set()
@@ -298,4 +299,4 @@ class ApiMapResource(ResourceView):
                 )
             key = rinfo['urlregex'].replace("(?P", "").replace("[^/]+)", "").replace("?:", "").replace("$", "")
             api_map[key] = result
-        return api_map
+        return (api_map, self.api.str_version)
