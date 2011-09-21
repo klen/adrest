@@ -1,0 +1,17 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title>API version {{ content.1 }}</title>
+    </head>
+    <body>
+        <h1>API v.{{ content.1 }} MAP</h1>
+        <ul>
+            {% for r, v in content.0.iteritems %}
+            <li>
+                <a href="#">{{ r }}</a>
+                {{ v }}
+            {% endfor %}
+        </ul>
+    </body>
+</html>
