@@ -299,13 +299,13 @@ class ApiMapResource(ResourceView):
             key = rinfo['urlregex'].replace("(?P", "").replace("[^/]+)", "").replace("?:", "").replace("$", "")
 
             if rinfo['kwargs'].get('authenticators'):
-                result['auth'] = [str(a) for a in rinfo['kwargs'].get('authenticators')]
+                result['auth'] = [str(a) for a in as_tuple(rinfo['kwargs'].get('authenticators'))]
 
             elif self.api.kwargs.get('authenticators'):
-                result['auth'] = [str(a) for a in self.api.kwargs.get('authenticators')]
+                result['auth'] = [str(a) for a in as_tuple(self.api.kwargs.get('authenticators'))]
 
             elif r.authenticators:
-                result['auth'] = [str(a) for a in r.authenticators]
+                result['auth'] = [str(a) for a in as_tuple(r.authenticators)]
 
             api_map.append((key, result))
 
