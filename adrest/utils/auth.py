@@ -30,6 +30,9 @@ class AnonimousAuthenticator(BaseAuthenticator):
     def get_identifier(self):
         return self.resource.request.META.get('REMOTE_ADDR', 'anonymous')
 
+    def __str__(self):
+        return 'Anonimous access.'
+
 
 class BasicAuthenticator(BaseAuthenticator):
     """ Use HTTP Basic authentication.
@@ -63,6 +66,9 @@ class UserAuthenticator(BaseAuthenticator):
             pass
         return self.get_identifier()
 
+    def __str__(self):
+        return 'Authentication by login and password.'
+
 
 class UserLoggedInAuthenticator(BaseAuthenticator):
     """ Use Djagno's built-in request session for authentication.
@@ -75,6 +81,8 @@ class UserLoggedInAuthenticator(BaseAuthenticator):
                 self.identifier = request.user.username
         return self.get_identifier()
 
+    def __str__(self):
+        return 'Authentication by session.'
 
 try:
     from adrest.models import AccessKey
@@ -110,6 +118,9 @@ try:
                 By default: doesn't care, if we find User by AccessKey, authenticate him
             """
             return True
+
+        def __str__(self):
+            return 'Authentication by key.'
 
 except ImportError:
     pass

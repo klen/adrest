@@ -2,16 +2,63 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-        <title>API version {{ content.1 }}</title>
+        <title>API version {{ content.0 }}</title>
+        <link rel="stylesheet" href="http://blueprintcss.org/blueprint/screen.css" type="text/css" media="screen, projection">
+		<link rel="stylesheet" href="http://blueprintcss.org/blueprint/print.css" type="text/css" media="print">    
+		<!--[if lt IE 8]><link rel="stylesheet" href="http://blueprintcss.org/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+        <script>
+            $(function(){
+                $('.toggle').click(function(e){
+                    $(this).parent().toggleClass('show');
+                });
+            });
+        </script>
+        <style>
+            .toggle {
+                text-decoration: none;
+                border-bottom: 1px dotted;
+                font-size: 1.2em;
+            }
+            .uri { margin-bottom: 1em; font-weight: bold; }
+            .uri_methods {
+                margin-left: 1em; color: #999;
+            }
+            .info { display: none; font-weight: bold; margin-left: 1em; }
+            .show .info { display: block; }
+            .required { font-weight: bold; color: red; }
+        </style>
     </head>
     <body>
-        <h1>API v.{{ content.1 }} MAP</h1>
-        <ul>
-            {% for r, v in content.0.iteritems %}
-            <li>
-                <a href="#">{{ r }}</a>
-                {{ v }}
+        <div class="container">
+            <h1>API v.{{ content.0 }} MAP</h1>
+            <hr>
+
+            {% for uri, info in content.1 %}
+            <div class="uri">
+                <a href="#" class="toggle"> {% if info.fields or info.resource %}+{% else %}-{% endif %} {{ uri }}</a>
+                <span class="uri_methods"> {% for m in info.methods %}{{ m }}&nbsp;{% endfor %}<br/> </span>
+                <span class="uri_auth">{% for a in info.auth%} {{ a }} {% endfor %}</span>
+
+                {% if info.fields or info.resource %}
+                    <div class="info">
+                        {% if info.resource %}Resource: {{ info.resource }}<br/> {% endif %}
+                        {% if info.fields %}
+                            Fields:
+                            <table>
+                                {% for f, v in info.fields %}
+                                    <tr>
+                                        <td {% if v.required %} class="required" {% endif %}>
+                                            {{ f }}
+                                        </td>
+                                        <td> {{ v.help }} </td>
+                                {% endfor %}
+                            </table>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
             {% endfor %}
-        </ul>
+        </div>
     </body>
 </html>

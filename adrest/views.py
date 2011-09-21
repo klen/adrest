@@ -276,27 +276,37 @@ class ApiMapResource(ResourceView):
     template = 'api/apimap.html'
 
     def get(self, *args, **Kwargs):
-        resources = set()
-        api_map = dict()
+        api_map = []
         for key, rinfo in sorted(self.api._map.iteritems(), key=lambda x: x[1].get('urlregex')):
             rinfo = self.api._map[key]
             r = rinfo['resource']
-            if r.meta.urlname in resources:
-                continue
-            resources.add(rinfo['urlname'])
 
             result = dict(
                 name = rinfo['urlname'],
                 methods = r.allowed_methods,
-                model = r.model.__name__ if r.model else r.model,
             )
+
+            if r.model:
+                result['resource'] = r.model.__name__
+
             form = r.get_form()
-            if form:
-                result['fields'] = dict(
+            if form and ('POST' in r.allowed_methods or 'PUT' in r.allowed_methods):
+                result['fields'] = [
                     (name, dict(required = f.required, help = smart_unicode(f.help_text + '')))
                         for name, f in form.base_fields.iteritems()
                         if not (isinstance(f, ModelChoiceField) and f.choices.queryset.model in r.meta.models)
-                )
+                ]
             key = rinfo['urlregex'].replace("(?P", "").replace("[^/]+)", "").replace("?:", "").replace("$", "")
-            api_map[key] = result
-        return (api_map, self.api.str_version)
+
+            if rinfo['kwargs'].get('authenticators'):
+                result['auth'] = rinfo['kwargs'].get('authenticators')
+
+            elif self.api.kwargs.get('authenticators'):
+                result['auth'] = self.api.kwargs.get('authenticators')
+
+            elif r.authenticators:
+                result['auth'] = r.authenticators
+
+            api_map.append((key, result))
+
+        return (self.api.str_version, api_map)
