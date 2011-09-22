@@ -1,5 +1,5 @@
 from django.db.models import Model
-from django.db.models.fields.related import RelatedField
+from django.db.models.fields.related import RelatedField, ManyToManyField
 from django.forms.models import ModelForm
 
 
@@ -14,7 +14,8 @@ class PartitialForm(ModelForm):
             elif instance and not data.has_key(name):
                 field = instance._meta.get_field(name)
                 if isinstance(field, RelatedField):
-                    data[name] = getattr(instance, '%s_id' % name)
+                    if not isinstance(field, ManyToManyField):
+                        data[name] = getattr(instance, '%s_id' % name)
                 else:
                     data[name] = getattr(instance, name)
         self.data = data
