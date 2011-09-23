@@ -96,6 +96,7 @@ class AdrestMapTest(TestCase):
         uri = reverse("api-%s-apimap" % str(api))
         response = self.client.get(uri)
         self.assertContains(response, 'MAP')
+        self.assertContains(response, 'nickname')
 
         response = self.client.get(uri, HTTP_ACCEPT="application/json")
         self.assertNotContains(response, 'MAP')

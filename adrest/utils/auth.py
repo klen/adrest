@@ -23,6 +23,10 @@ class BaseAuthenticator(object):
     def test_rights(resources, method):
         return True
 
+    @staticmethod
+    def get_fields():
+        return []
+
 
 class MetaAnonimous(type):
     def __str__(mcs):
@@ -84,8 +88,12 @@ class UserAuthenticator(BaseAuthenticator):
             request.user = authenticate(username=username, password=password)
             self.identifier = request.user.username if request.user else ''
         except KeyError:
-            pass
+            return False
         return self.get_identifier()
+
+    @classmethod
+    def get_fields(cls):
+        return [(cls.username_fieldname, dict(required=True)), (cls.password_fieldname, dict(required=True))]
 
 
 class UserLoggedInAuthenticator(BaseAuthenticator):
@@ -122,10 +130,11 @@ try:
                     request.user = api_key.user
                     self.identifier = request.user.username
             except(KeyError, ObjectDoesNotExist):
-                pass
+                return False
             return self.get_identifier()
 
-        def test_user(self, user):
+        @staticmethod
+        def test_user(user):
             """ In this method you can implement User class check if you have
                 several User classes with FK to AccessKey.
 

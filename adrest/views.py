@@ -284,6 +284,7 @@ class ApiMapResource(ResourceView):
             result = dict(
                 name = rinfo['urlname'],
                 methods = r.allowed_methods,
+                fields = []
             )
 
             if r.model:
@@ -291,21 +292,23 @@ class ApiMapResource(ResourceView):
 
             form = r.get_form()
             if form and ('POST' in r.allowed_methods or 'PUT' in r.allowed_methods):
-                result['fields'] = [
+                result['fields'] += [
                     (name, dict(required = f.required, help = smart_unicode(f.help_text + '')))
                         for name, f in form.base_fields.iteritems()
                         if not (isinstance(f, ModelChoiceField) and f.choices.queryset.model in r.meta.models)
                 ]
             key = rinfo['urlregex'].replace("(?P", "").replace("[^/]+)", "").replace("?:", "").replace("$", "")
 
-            if rinfo['kwargs'].get('authenticators'):
-                result['auth'] = [str(a) for a in as_tuple(rinfo['kwargs'].get('authenticators'))]
+            authenticators = as_tuple(
+                rinfo['kwargs'].get('authenticators')
+                or self.api.kwargs.get('authenticators')
+                or r.authenticators
+            )
 
-            elif self.api.kwargs.get('authenticators'):
-                result['auth'] = [str(a) for a in as_tuple(self.api.kwargs.get('authenticators'))]
+            for a in authenticators:
+                result['fields'] += a.get_fields()
 
-            elif r.authenticators:
-                result['auth'] = [str(a) for a in as_tuple(r.authenticators)]
+            result['auth'] = map(str, authenticators)
 
             api_map.append((key, result))
 
