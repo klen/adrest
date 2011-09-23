@@ -135,6 +135,7 @@ class AdrestMapTest(TestCase):
 
         response = self.client.get(uri, HTTP_ACCEPT="application/json")
         self.assertNotContains(response, 'MAP')
+        self.assertContains(response, '"price", {"required": false')
 
 
 class SerializerTest(TestCase):

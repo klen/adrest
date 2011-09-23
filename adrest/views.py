@@ -293,7 +293,7 @@ class ApiMapResource(ResourceView):
             form = r.get_form()
             if form and ('POST' in r.allowed_methods or 'PUT' in r.allowed_methods):
                 result['fields'] += [
-                    (name, dict(required = f.required, help = smart_unicode(f.help_text + '')))
+                    (name, dict(required = f.required and f.initial is None, help = smart_unicode(f.help_text + '')))
                         for name, f in form.base_fields.iteritems()
                         if not (isinstance(f, ModelChoiceField) and f.choices.queryset.model in r.meta.models)
                 ]
