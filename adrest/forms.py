@@ -1,21 +1,19 @@
 from django.db.models import Model
-from django.db.models.fields.related import RelatedField, ManyToManyField
+from django.db.models.fields import AutoField
+from django.db.models.fields.related import ManyToManyField
 from django.forms.models import ModelForm
+
+
+def get_initial_from_model(model, instance):
+    gen = ((f.name, f.value_from_object(instance) if instance else f.get_default()) for f in model._meta.fields if not isinstance(f, (ManyToManyField, AutoField)))
+    return dict(v for v in gen if not v[1] is None)
 
 
 class PartitialForm(ModelForm):
 
     def __init__(self, data=None, instance=None, **kwargs):
-        super(PartitialForm, self).__init__(data, instance=instance)
-        for name in self.fields.keys():
-            if kwargs.get(name):
-                value = kwargs.get(name)
-                data[name] = value if not isinstance(value, Model) else value.pk
-            elif instance and not data.has_key(name):
-                field = instance._meta.get_field(name)
-                if isinstance(field, RelatedField):
-                    if not isinstance(field, ManyToManyField):
-                        data[name] = getattr(instance, '%s_id' % name)
-                else:
-                    data[name] = getattr(instance, name)
-        self.data = data
+        resources = dict((k, v if not isinstance(v, Model) else v.pk) for k, v in kwargs.iteritems())
+        formdata = get_initial_from_model(self._meta.model, instance)
+        formdata.update(data or dict())
+        formdata.update(resources)
+        super(PartitialForm, self).__init__(formdata, instance=instance)

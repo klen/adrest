@@ -21,7 +21,8 @@ class Publisher(models.Model):
 class Book(models.Model):
     title = models.CharField(max_length=100)
     author = models.ForeignKey(Author)
-    publisher = models.ForeignKey(Publisher, null=True)
+    price = models.PositiveIntegerField(default=0, blank=True)
+    publisher = models.ForeignKey(Publisher, null=True, blank=True)
 
 
 class Article(models.Model):

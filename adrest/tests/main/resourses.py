@@ -1,12 +1,14 @@
 from adrest.views import ResourceView
-from models import Author, Book, Article
+from .models import Author, Book, Article
 
 
 class AuthorResource(ResourceView):
+    allowed_methods = 'GET', 'POST'
     model = Author
 
 
 class BookResource(ResourceView):
+    allowed_methods = 'GET', 'POST', 'PUT'
     model = Book
     parent = AuthorResource
 

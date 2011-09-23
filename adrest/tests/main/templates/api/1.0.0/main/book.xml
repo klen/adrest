@@ -1,0 +1,4 @@
+<book>
+    <title>{{ content.title }}</title>
+    <price>{{ content.price }}</price>
+</book>

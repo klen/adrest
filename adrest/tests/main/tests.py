@@ -9,6 +9,9 @@ from .resourses import AuthorResource, BookPrefixResource, ArticleResource, Some
 from .models import Author, Book, Article
 
 
+def api_reverse(resource, **kwargs):
+    return reverse('api-%s-%s' % (str(api), resource.meta.urlname), kwargs=kwargs)
+
 class MetaTest(TestCase):
 
     def test_meta(self):
@@ -67,24 +70,56 @@ class AdrestTest(TestCase):
         self.book = Book.objects.create(author=self.author, title='test',)
 
     def test_methods(self):
-        uri = reverse("api-%s-%s" % (str(api), AuthorResource.meta.urlname))
+        uri = api_reverse(AuthorResource)
         self.assertEqual(uri, '/1.0.0/author/')
         response = self.client.get(uri)
         self.assertContains(response, 'true')
 
-        response = self.client.post(uri)
+        response = self.client.put(uri)
         self.assertContains(response, 'false', status_code=405)
 
     def test_owner(self):
-        uri = reverse("api-%s-%s" % (str(api), ArticleResource.meta.urlname), kwargs=dict(author=self.author.pk, book=self.book.pk))
+        uri = api_reverse(ArticleResource, author=self.author.pk, book=self.book.pk)
         response = self.client.get(uri)
         self.assertContains(response, 'true')
 
     def test_log(self):
-        uri = reverse("api-%s-%s" % (str(api), ArticleResource.meta.urlname), kwargs=dict(author=self.author.pk, book=self.book.pk))
+        uri = api_reverse(ArticleResource, author=self.author.pk, book=self.book.pk)
         self.client.get(uri)
         access = Access.objects.get()
         self.assertEqual(access.uri, uri)
+
+
+class ResourceTest(TestCase):
+
+    def setUp(self):
+        for i in range(5):
+            user = User.objects.create(username='test%s' % i )
+            self.author = Author.objects.create(name='author%s' % i, user=user)
+
+        for i in range(5):
+            Book.objects.create(author=self.author, title="book%s" % i)
+
+    def test_author(self):
+        uri = api_reverse(AuthorResource)
+        response = self.client.get(uri)
+        self.assertContains(response, 'count="5"')
+
+        response = self.client.post(uri, data=dict(name = "new author", user=User.objects.create(username="new user").pk))
+        self.assertContains(response, 'new author')
+
+    def test_book(self):
+        uri = api_reverse(BookPrefixResource, author = self.author.pk)
+        response = self.client.get(uri)
+        self.assertContains(response, 'count="5"')
+
+        response = self.client.post(uri, data=dict(title = "new book"))
+        self.assertContains(response, '<price>0</price>')
+
+        uri = api_reverse(BookPrefixResource, author = self.author.pk, book = 1)
+        response = self.client.put(uri, data=dict(price = 100))
+        self.assertContains(response, '<price>100</price>')
+
 
 
 class AdrestMapTest(TestCase):
