@@ -61,20 +61,21 @@ class HandlerMixin(object):
         return 'OK'
 
     def get_filter_options(self, request, **kwargs):
-        model_fields = [f.name for f in self.model._meta.fields]
-        fields_converters = dict((f.name, f.to_python) for f in self.model._meta.fields )
+        model_fields = set(f.name for f in self.model._meta.fields)
 
         # Make filters from URL variables
         filter_options = dict((k, v) for k, v in kwargs.items() if k in model_fields)
 
-        # Replace value in filters by objects (if exsits)
-        filter_options.update( dict((k, v) for k, v in kwargs.items() if k in model_fields) )
-
-        # FIXME Im realy need this?
-        for filter_name, value in request.GET.items():
-            field_name = filter_name.split("__")[0]
-            if field_name in model_fields and not filter_options.has_key(field_name):
-                filter_options[str(filter_name)] = fields_converters[field_name](value)
+        # Make filters from GET variables
+        for field in request.GET.iterkeys():
+            if not field in model_fields or filter_options.has_key(field):
+                continue
+            l = request.GET.getlist(field)
+            converter = self.model._meta.get_field(field).to_python
+            if len(l) == 1:
+                filter_options[field] = converter(l[0])
+            else:
+                filter_options["%s__in" % field] = map(converter, l)
 
         return filter_options
 

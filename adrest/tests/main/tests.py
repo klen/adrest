@@ -9,7 +9,7 @@ from .resourses import AuthorResource, BookPrefixResource, ArticleResource, Some
 from .models import Author, Book, Article
 
 
-def api_reverse(resource, **kwargs):
+def api_reverse(resource, append="", **kwargs):
     return reverse('api-%s-%s' % (str(api), resource.meta.urlname), kwargs=kwargs)
 
 class MetaTest(TestCase):
@@ -120,6 +120,13 @@ class ResourceTest(TestCase):
         response = self.client.put(uri, data=dict(price = 100))
         self.assertContains(response, '<price>100</price>')
 
+    def test_filter(self):
+        uri = api_reverse(BookPrefixResource, author = self.author.pk)
+        response = self.client.get(uri, data=dict(title="book2"))
+        self.assertContains(response, 'count="1"')
+
+        response = self.client.get(uri + "?title=book2&title=book3")
+        self.assertContains(response, 'count="2"')
 
 
 class AdrestMapTest(TestCase):
