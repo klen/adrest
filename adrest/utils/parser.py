@@ -33,9 +33,14 @@ class FormParser(BaseParser):
     media_type = 'application/x-www-form-urlencoded'
 
     def parse(self):
-        source = dict(self.resource.request.REQUEST.iteritems())
-        if self.resource.request.method == "PUT" and not source:
+        request = self.resource.request
+        source = dict(request.REQUEST.iteritems())
+        if request.method == "PUT" and not source:
             # Fix django bug: request.GET, .POST are empty on PUT request
-            source = dict( QueryDict(self.resource.request.raw_post_data, encoding=self.resource.request.encoding).iteritems() )
+            request.method = "POST"
+            del request._files
+            request._load_post_and_files()
+            request.method = "PUT"
+            source = dict(request.POST.iteritems())
         return source
 

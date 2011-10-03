@@ -3,14 +3,12 @@ from django.contrib.auth.models import User
 from django.test import TestCase, Client, RequestFactory
 from adrest.models import Access
 from adrest.utils import serializer, paginator
+from adrest.tests.utils import AdrestTestCase
 
 from .api import api
 from .resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
 from .models import Author, Book, Article
 
-
-def api_reverse(resource, append="", **kwargs):
-    return reverse('api-%s-%s' % (str(api), resource.meta.urlname), kwargs=kwargs)
 
 class MetaTest(TestCase):
 
@@ -61,16 +59,18 @@ class ApiTest(TestCase):
         self.assertEqual(urlpattern.name, "api-%s-%s" % (str(api), AuthorResource.meta.name ))
 
 
-class AdrestTest(TestCase):
+class AdrestTest(AdrestTestCase):
+
+    api = api
 
     def setUp(self):
-        self.client = Client()
         user = User.objects.create(username='test')
         self.author = Author.objects.create(name='John', user=user)
         self.book = Book.objects.create(author=self.author, title='test',)
+        super(AdrestTest, self).setUp()
 
     def test_methods(self):
-        uri = api_reverse(AuthorResource)
+        uri = self.reverse(AuthorResource)
         self.assertEqual(uri, '/1.0.0/author/')
         response = self.client.get(uri)
         self.assertContains(response, 'true')
@@ -79,20 +79,23 @@ class AdrestTest(TestCase):
         self.assertContains(response, 'false', status_code=405)
 
     def test_owner(self):
-        uri = api_reverse(ArticleResource, author=self.author.pk, book=self.book.pk)
+        uri = self.reverse(ArticleResource, author=self.author.pk, book=self.book.pk)
         response = self.client.get(uri)
         self.assertContains(response, 'true')
 
     def test_log(self):
-        uri = api_reverse(ArticleResource, author=self.author.pk, book=self.book.pk)
+        uri = self.reverse(ArticleResource, author=self.author.pk, book=self.book.pk)
         self.client.get(uri)
         access = Access.objects.get()
         self.assertEqual(access.uri, uri)
 
 
-class ResourceTest(TestCase):
+class ResourceTest(AdrestTestCase):
+
+    api = api
 
     def setUp(self):
+        super(ResourceTest, self).setUp()
         for i in range(5):
             user = User.objects.create(username='test%s' % i )
             self.author = Author.objects.create(name='author%s' % i, user=user)
@@ -101,7 +104,7 @@ class ResourceTest(TestCase):
             Book.objects.create(author=self.author, title="book%s" % i)
 
     def test_author(self):
-        uri = api_reverse(AuthorResource)
+        uri = self.reverse(AuthorResource)
         response = self.client.get(uri)
         self.assertContains(response, 'count="5"')
 
@@ -109,19 +112,19 @@ class ResourceTest(TestCase):
         self.assertContains(response, 'new author')
 
     def test_book(self):
-        uri = api_reverse(BookPrefixResource, author = self.author.pk)
+        uri = self.reverse(BookPrefixResource, author = self.author.pk)
         response = self.client.get(uri)
         self.assertContains(response, 'count="5"')
 
         response = self.client.post(uri, data=dict(title = "new book"))
         self.assertContains(response, '<price>0</price>')
 
-        uri = api_reverse(BookPrefixResource, author = self.author.pk, book = 1)
+        uri = self.reverse(BookPrefixResource, author = self.author.pk, book = 1)
         response = self.client.put(uri, data=dict(price = 100))
         self.assertContains(response, '<price>100</price>')
 
     def test_filter(self):
-        uri = api_reverse(BookPrefixResource, author = self.author.pk)
+        uri = self.reverse(BookPrefixResource, author = self.author.pk)
         response = self.client.get(uri, data=dict(title="book2"))
         self.assertContains(response, 'count="1"')
 
