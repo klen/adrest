@@ -110,17 +110,17 @@ class ResourceTest(AdrestTestCase):
         self.assertContains(response, 'new author')
 
     def test_book(self):
-        response = self.get_resource(BookPrefixResource, author = self.author.pk)
+        response = self.get_resource(BookPrefixResource, author=self.author)
         self.assertContains(response, 'count="5"')
 
-        response = self.post_resource(BookPrefixResource, author = self.author.pk, data=dict(title = "new book"))
+        response = self.post_resource(BookPrefixResource, author = self.author, data=dict(title = "new book"))
         self.assertContains(response, '<price>0</price>')
 
-        response = self.put_resource(BookPrefixResource, author = self.author.pk, book = 1, data=dict(price = 100))
+        response = self.put_resource(BookPrefixResource, author = self.author, book = 1, data=dict(price = 100))
         self.assertContains(response, '<price>100</price>')
 
     def test_filter(self):
-        uri = self.reverse(BookPrefixResource, author = self.author.pk)
+        uri = self.reverse(BookPrefixResource, author=self.author)
         response = self.client.get(uri, data=dict(title="book2"))
         self.assertContains(response, 'count="1"')
 

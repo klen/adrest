@@ -7,9 +7,7 @@ class CustomUserAuth(UserAuthenticator):
     username_fieldname = 'nickname'
 
 
-api = Api(
-        version = (1, 0, 0),
-)
+api = Api(version=(1, 0, 0))
 
 api.register(AuthorResource, authenticators=(AnonimousAuthenticator, CustomUserAuth))
 api.register(BookPrefixResource)
