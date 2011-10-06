@@ -4,6 +4,7 @@ from django.test import TestCase, Client, RequestFactory
 from adrest.models import Access
 from adrest.utils import serializer, paginator
 from adrest.tests.utils import AdrestTestCase
+from adrest.tests.simple.tests import SimpleTestCase
 
 from .api import api
 from .resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
