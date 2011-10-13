@@ -11,9 +11,9 @@ def get_initial_from_model(model, instance):
 
 class PartitialForm(ModelForm):
 
-    def __init__(self, data=None, instance=None, **kwargs):
+    def __init__(self, data=None, instance=None, initial=None, prefix=None, label_suffix=':', empty_permitted=False, **kwargs):
         resources = dict((k, v if not isinstance(v, Model) else v.pk) for k, v in kwargs.iteritems())
         formdata = get_initial_from_model(self._meta.model, instance)
         formdata.update(data or dict())
         formdata.update(resources)
-        super(PartitialForm, self).__init__(formdata, instance=instance)
+        super(PartitialForm, self).__init__(formdata, instance=instance, prefix=prefix, label_suffix=label_suffix, empty_permitted=empty_permitted)

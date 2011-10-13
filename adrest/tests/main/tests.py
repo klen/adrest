@@ -11,6 +11,9 @@ from .resourses import AuthorResource, BookPrefixResource, ArticleResource, Some
 from .models import Author, Book, Article
 
 
+assert SimpleTestCase
+
+
 class MetaTest(TestCase):
 
     def test_meta(self):

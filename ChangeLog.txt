@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-10-13 0.6.5
+-------------------
+* Fix prefix on partitial form
+
 ## 2011-10-05 0.6.4
 -------------------
 * Allow to create api without version
