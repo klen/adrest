@@ -20,7 +20,7 @@ class BaseThrottle(object):
         """
         key = ''.join(c for c in identifier if c.isalnum() or c in '_.-')
         if len(key) > 230:
-            key = key[:200] + '-' + hashlib.md5(key).hexdigest()
+            key = key[:150] + '-' + hashlib.md5(key).hexdigest()
 
         return "%s_accesses" % key
 
