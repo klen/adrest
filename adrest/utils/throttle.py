@@ -1,4 +1,5 @@
 import time
+import hashlib
 
 from django.core.cache import cache
 
@@ -17,9 +18,11 @@ class BaseThrottle(object):
         """ Takes an identifier (like a username or IP address) and converts it
             into a key usable by the cache system.
         """
-        return "%s_accesses" % ''.join(
-            char for char in identifier if char.isalnum() or char in ( '_', '.', '-' )
-        )
+        key = ''.join(c for c in identifier if c.isalnum() or c in '_.-')
+        if len(key) > 230:
+            identifier = identifier[:200] + '-' + hashlib.md5(identifier).hexdigest()
+
+        return "%s_accesses" % key
 
     @staticmethod
     def should_be_throttled(identifier, **kwargs):

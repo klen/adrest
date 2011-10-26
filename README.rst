@@ -21,9 +21,35 @@ Installation
 Setup
 =====
 
+Adrest settings (default values): ::
+
+    # Enable logs
+    ADREST_ACCESS_LOG = False
+
+    # Auto create adrest access key for User
+    ADREST_AUTO_CREATE_ACCESSKEY = False
+
+    # Max resources per page in list views
+    ADREST_LIMIT_PER_PAGE = 50
+
+    # Display django standart technical 500 page
+    ADREST_DEBUG = False
+
+    # Limit request number per second from same identifier, null is not limited
+    ADREST_THROTTLE_AT = 120
+    ADREST_THROTTLE_TIMEFRAME = 60
+
+    # We do not restrict access for OPTIONS request
+    ADREST_AUTHENTICATE_OPTIONS_REQUEST = False
+
+.. note::
+    Add 'adrest' to INSTALLED_APPS
+
 
 Use adrest
 ==========
+
+See test/examples in ADREST sources.
 
 
 Bug tracker
