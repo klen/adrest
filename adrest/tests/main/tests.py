@@ -91,6 +91,7 @@ class AdrestTest(AdrestTestCase):
         self.client.get(uri)
         access = Access.objects.get()
         self.assertEqual(access.uri, uri)
+        self.assertEqual(access.version, str(api))
 
 
 class ResourceTest(AdrestTestCase):

@@ -16,6 +16,7 @@ if settings.ACCESS_LOG:
         created_at = models.DateTimeField(auto_now_add=True)
         uri = models.CharField(max_length=100)
         status_code = models.PositiveIntegerField()
+        version = models.CharField(max_length=25)
         method = models.CharField(max_length=10, choices=(
             ('GET', 'GET'),
             ('POST', 'POST'),
@@ -45,6 +46,7 @@ if settings.ACCESS_LOG:
         Access.objects.create(
             uri = sender.request.path_info,
             method = sender.request.method,
+            version = str(sender.api),
             status_code = response.status_code,
             request = '%s\n\n%s' % ( str(sender.request.META), str(getattr(sender.request, 'data', '')) ),
             identifier = sender.identifier or '',

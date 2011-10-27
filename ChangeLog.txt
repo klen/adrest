@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+## 2011-10-27 0.7.0
+-------------------
+* Add version to access log
+    (Manual migration: ALTER TABLE adrest_access ADD COLUMN version varchar(25);)
+
 ## 2011-10-26 0.6.62
 --------------------
 * Fix throttle cache key length
