@@ -28,12 +28,15 @@ if settings.ACCESS_LOG:
         response = models.TextField()
         identifier = models.CharField(max_length=255)
 
+        class Meta():
+            verbose_name_plural = "Access"
+
         def __unicode__(self):
             return "%s - %s" % (self.status_code, self.uri)
 
     class AccessAdmin(admin.ModelAdmin):
-        list_display = 'status_code', 'uri', 'method', 'identifier', 'created_at'
-        list_filter = 'method',
+        list_display = 'status_code', 'uri', 'method', 'identifier', 'created_at', 'version'
+        list_filter = 'method', 'version'
         search_fields = 'uri', 'identifier'
         date_hierarchy = 'created_at'
     admin.site.register(Access, AccessAdmin)
