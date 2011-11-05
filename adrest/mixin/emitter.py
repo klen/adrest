@@ -1,7 +1,7 @@
 import mimeparse
 from django.http import HttpResponse
 
-from adrest.utils.emmiter import XMLTemplateEmitter, JSONTemplateEmitter
+from adrest.utils.emitter import XMLTemplateEmitter, JSONEmitter
 from adrest.utils.exceptions import HttpError
 from adrest.utils.response import Response
 from adrest.utils.tools import as_tuple
@@ -9,7 +9,7 @@ from adrest.utils.tools import as_tuple
 
 class EmitterMixin(object):
 
-    emitters = XMLTemplateEmitter, JSONTemplateEmitter
+    emitters = XMLTemplateEmitter, JSONEmitter
     template = None
 
     def emit(self, request, response, emitter=None):

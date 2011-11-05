@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -12,10 +11,10 @@ from django.views.generic import View
 
 from .utils import status
 from .utils.auth import AnonimousAuthenticator
-from .utils.emmiter import HTMLTemplateEmmiter, JSONEmitter
+from .utils.emitter import HTMLTemplateEmitter, JSONEmitter
 from .utils.exceptions import HttpError
-from .utils.tools import as_tuple
 from .utils.response import Response
+from .utils.tools import as_tuple
 from adrest import settings
 from adrest.mixin import ThrottleMixin, ParserMixin, HandlerMixin, EmitterMixin, AuthenticatorMixin
 from adrest.signals import api_request_started, api_request_finished
@@ -271,7 +270,7 @@ class ApiMapResource(ResourceView):
     """ Simple JSON Api Map.
     """
     log = False
-    emitters = HTMLTemplateEmmiter, JSONEmitter
+    emitters = HTMLTemplateEmitter, JSONEmitter
     authenticators = AnonimousAuthenticator
     template = 'api/apimap.html'
 

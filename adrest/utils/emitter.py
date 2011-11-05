@@ -7,7 +7,7 @@ from .paginator import Paginator
 from .serializer import json_dumps, xml_dumps
 
 
-class BaseEmmiter(object):
+class BaseEmitter(object):
 
     media_type = None
 
@@ -15,7 +15,7 @@ class BaseEmmiter(object):
         self.resource = resource
 
 
-class TemplateEmmiter(BaseEmmiter):
+class TemplateEmitter(BaseEmitter):
     """ All emitters must extend this class, set the media_type attribute, and
         override the emit() function.
     """
@@ -50,19 +50,19 @@ class TemplateEmmiter(BaseEmmiter):
         return template_name
 
 
-class JSONTemplateEmitter(TemplateEmmiter):
+class JSONTemplateEmitter(TemplateEmitter):
     """ Emitter which serializes to JSON.
     """
     media_type = 'application/json'
 
 
-class HTMLTemplateEmmiter(TemplateEmmiter):
+class HTMLTemplateEmitter(TemplateEmitter):
     """ HTML content.
     """
     media_type = 'text/html'
 
 
-class XMLTemplateEmitter(TemplateEmmiter):
+class XMLTemplateEmitter(TemplateEmitter):
     """ Emitter which serializes to XML.
     """
     media_type = 'application/xml'
@@ -74,7 +74,7 @@ class XMLTemplateEmitter(TemplateEmmiter):
         return '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>' % ( success, self.resource.version, ts, output )
 
 
-class JSONEmitter(BaseEmmiter):
+class JSONEmitter(BaseEmitter):
 
     media_type = 'application/json'
 
@@ -83,7 +83,7 @@ class JSONEmitter(BaseEmmiter):
         return json_dumps(response.content)
 
 
-class XMLEmitter(BaseEmmiter):
+class XMLEmitter(BaseEmitter):
 
     media_type = 'application/xml'
 
