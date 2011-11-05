@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-11-05 0.7.2
+-------------------
+* Minor fix
+
 ## 2011-10-28 0.7.1
 -------------------
 * Add version information to django access admin
