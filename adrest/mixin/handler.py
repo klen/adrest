@@ -18,6 +18,12 @@ class HandlerMixin(object):
     callmap = { 'GET': 'get', 'POST': 'post',
                 'PUT': 'put', 'DELETE': 'delete', 'OPTIONS': 'options' }
 
+    def __init__(self, *args, **kwargs):
+        self.queryset = self.queryset.all() if self.queryset else (
+            self.model.objects.all() if self.model else None
+        )
+        super(HandlerMixin, self).__init__(*args, **kwargs)
+
     def get(self, request, instance=None, **kwargs):
         assert self.model, "This auto method required in model."
         if instance:

@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-11-05 0.7.3
+-------------------
+* Fix precache queryset in handlers
+
 ## 2011-11-05 0.7.2
 -------------------
 * Minor fix

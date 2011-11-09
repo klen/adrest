@@ -25,3 +25,12 @@ class ArticleResource(ResourceView):
 class SomeOtherResource(ResourceView):
     parent = AuthorResource
     uri_params = 'device',
+
+
+class CustomResource(ResourceView):
+    model = Book
+    queryset = Book.objects.all()
+    template = 'api/custom.xml'
+
+    def get(self, request, **kwargs):
+        return list(self.queryset)

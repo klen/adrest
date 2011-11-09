@@ -7,7 +7,7 @@ from adrest.tests.utils import AdrestTestCase
 from adrest.tests.simple.tests import SimpleTestCase
 
 from .api import api
-from .resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
+from .resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource, CustomResource
 from .models import Author, Book, Article
 
 
@@ -131,6 +131,14 @@ class ResourceTest(AdrestTestCase):
 
         response = self.client.get(uri + "?title=book2&title=book3")
         self.assertContains(response, 'count="2"')
+
+    def test_custom(self):
+        uri = self.reverse(CustomResource)
+        response = self.client.get(uri)
+        self.assertContains(response, 'count="5"')
+        Book.objects.create(author=self.author, title="book")
+        response = self.client.get(uri)
+        self.assertContains(response, 'count="6"')
 
 
 class AdrestMapTest(TestCase):

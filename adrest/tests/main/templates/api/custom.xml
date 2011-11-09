@@ -1,0 +1,5 @@
+<tests count="{{ content|length }}">
+    {% for book in content %}
+        {% include "api/1.0.0/main/book.xml" with content=book %} 
+    {% endfor %}
+</tests>
