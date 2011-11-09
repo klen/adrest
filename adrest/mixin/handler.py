@@ -19,7 +19,7 @@ class HandlerMixin(object):
                 'PUT': 'put', 'DELETE': 'delete', 'OPTIONS': 'options' }
 
     def __init__(self, *args, **kwargs):
-        self.queryset = self.queryset.all() if self.queryset else (
+        self.queryset = self.queryset.all() if not self.queryset is None else (
             self.model.objects.all() if self.model else None
         )
         super(HandlerMixin, self).__init__(*args, **kwargs)
@@ -30,8 +30,7 @@ class HandlerMixin(object):
             return instance
 
         filter_options = self.get_filter_options(request, **kwargs)
-        query = self.queryset if not self.queryset is None else self.model.objects.all()
-        return self.paginate(request, query.filter( **filter_options ))
+        return self.paginate(request, self.queryset.filter(**filter_options))
 
     def post(self, request, **kwargs):
         form_class = self.get_form()
