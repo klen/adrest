@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse
+import random
 from django.contrib.auth.models import User
 from django.test import TestCase, Client, RequestFactory
 from adrest.models import Access
@@ -70,7 +71,7 @@ class AdrestTest(AdrestTestCase):
     def setUp(self):
         user = User.objects.create(username='test')
         self.author = Author.objects.create(name='John', user=user)
-        self.book = Book.objects.create(author=self.author, title='test',)
+        self.book = Book.objects.create(author=self.author, title='test', status=1)
         super(AdrestTest, self).setUp()
 
     def test_methods(self):
@@ -105,7 +106,7 @@ class ResourceTest(AdrestTestCase):
             self.author = Author.objects.create(name='author%s' % i, user=user)
 
         for i in range(5):
-            Book.objects.create(author=self.author, title="book%s" % i)
+            Book.objects.create(author=self.author, title="book%s" % i, status = random.choice((1, 2, 3)))
 
     def test_author(self):
         response = self.get_resource(AuthorResource)
@@ -118,7 +119,7 @@ class ResourceTest(AdrestTestCase):
         response = self.get_resource(BookPrefixResource, author=self.author)
         self.assertContains(response, 'count="5"')
 
-        response = self.post_resource(BookPrefixResource, author = self.author, data=dict(title = "new book"))
+        response = self.post_resource(BookPrefixResource, author = self.author, data=dict(title = "new book", status=2))
         self.assertContains(response, '<price>0</price>')
 
         response = self.put_resource(BookPrefixResource, author = self.author, book = 1, data=dict(price = 100))
@@ -129,6 +130,12 @@ class ResourceTest(AdrestTestCase):
         response = self.client.get(uri, data=dict(title="book2"))
         self.assertContains(response, 'count="1"')
 
+        response = self.client.get(uri, data=dict(status=[1, 2, 3]))
+        self.assertContains(response, 'count="5"')
+
+        response = self.client.get(uri, data=dict(status=[1, 3]))
+        self.assertNotContains(response, '<status>2</status>')
+
         response = self.client.get(uri + "?title=book2&title=book3")
         self.assertContains(response, 'count="2"')
 
@@ -136,7 +143,7 @@ class ResourceTest(AdrestTestCase):
         uri = self.reverse(CustomResource)
         response = self.client.get(uri)
         self.assertContains(response, 'count="5"')
-        Book.objects.create(author=self.author, title="book")
+        Book.objects.create(author=self.author, title="book", status=1)
         response = self.client.get(uri)
         self.assertContains(response, 'count="6"')
 
@@ -164,7 +171,7 @@ class SerializerTest(TestCase):
         for i in range(1, 100):
             user = User.objects.create(username='test%s' % i)
             self.author = Author.objects.create(name='John %s' % i, user=user)
-            self.book = Book.objects.create(author=self.author, title='test %s' % i)
+            self.book = Book.objects.create(author=self.author, title='test %s' % i, status=random.choice((1, 2, 3)))
 
     def test_json(self):
         authors = Author.objects.all()

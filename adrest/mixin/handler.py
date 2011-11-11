@@ -68,21 +68,22 @@ class HandlerMixin(object):
     def get_filter_options(self, request, **kwargs):
         model_fields = set(f.name for f in self.model._meta.fields)
 
-        # Make filters from URL variables
+        # Make filters from URL variables or params
         filter_options = dict((k, v) for k, v in kwargs.items() if k in model_fields)
 
         # Make filters from GET variables
         for field in request.GET.iterkeys():
             if not field in model_fields or filter_options.has_key(field):
                 continue
-            l = request.GET.getlist(field)
             converter = self.model._meta.get_field(field).to_python
-            if len(l) == 1:
-                filter_options[field] = converter(l[0])
-            else:
-                filter_options["%s__in" % field] = map(converter, l)
+            filter_options[field] = map(converter, request.GET.getlist(field))
 
-        return filter_options
+        return dict(
+            (k, v) if not isinstance(v, (list, tuple))
+            else ("%s__in" % k, v) if len(v) > 1
+            else (k, v[0])
+            for k, v in filter_options.iteritems()
+        )
 
     def paginate(self, request, qs):
         """ Paginate queryset.

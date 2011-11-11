@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-11-11 0.7.5
+-------------------
+* Fix filter_options
+
 ## 2011-11-05 0.7.4
 -------------------
 * Fix precache queryset in handlers
