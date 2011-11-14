@@ -19,4 +19,4 @@ THROTTLE_AT = getattr(settings, 'ADREST_THROTTLE_AT', 120)
 THROTTLE_TIMEFRAME = getattr(settings, 'ADREST_THROTTLE_TIMEFRAME', 60)
 
 # We do not restrict access for OPTIONS request.
-AUTHENTICATE_OPTIONS_REQUEST = getattr(settings, 'ADREST_AUTHENTICATE_OPTIONS_REQUEST', False)
+ALLOW_OPTIONS = getattr(settings, 'ADREST_ALLOW_OPTIONS', False)

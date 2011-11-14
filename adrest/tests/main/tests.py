@@ -94,6 +94,12 @@ class AdrestTest(AdrestTestCase):
         self.assertEqual(access.uri, uri)
         self.assertEqual(access.version, str(api))
 
+    def test_options(self):
+        uri = self.reverse(ArticleResource, author=self.author.pk, book=self.book.pk)
+        self.assertTrue('OPTIONS' in ArticleResource.allowed_methods)
+        response = self.client.options(uri)
+        self.assertContains(response, 'OK')
+
 
 class ResourceTest(AdrestTestCase):
 

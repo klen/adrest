@@ -12,3 +12,4 @@ INSTALLED_APPS = 'django.contrib.auth', 'django.contrib.contenttypes', 'adrest',
 DEBUG = TEMPLATE_DEBUG = True
 CACHE_BACKEND = 'locmem://'
 ADREST_ACCESS_LOG = True
+ADREST_ALLOW_OPTIONS = True

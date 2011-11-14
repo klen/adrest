@@ -86,9 +86,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
     api = None
     log = True
 
-    # Since we handle cross-origin XML HTTP requests, let OPTIONS be another
-    # default allowed method.
-    allowed_methods = 'GET', 'OPTIONS'
+    allowed_methods = 'GET',
 
     # If children object in hierarchy has FK=Null to parent, allow to get this
     # object (default: True)
@@ -113,7 +111,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
 
             # Authentificate
             # We do not restrict access for OPTIONS request.
-            if method == 'OPTIONS' and not settings.AUTHENTICATE_OPTIONS_REQUEST:
+            if method == 'OPTIONS' and settings.ALLOW_OPTIONS:
                 self.identifier = 'anonymous'
             else:
                 self.identifier = self.authenticate()
@@ -312,3 +310,9 @@ class ApiMapResource(ResourceView):
             api_map.append((key, result))
 
         return (self.api.str_version, api_map)
+
+
+# Since we handle cross-origin XML HTTP requests, let OPTIONS be another
+# default allowed method.
+if settings.ALLOW_OPTIONS:
+    ResourceView.allowed_methods += 'OPTIONS',
