@@ -1,7 +1,7 @@
 CHANGES
 =======
 
-## 2011-11-23 0.7.8
+## 2011-11-23 0.7.9
 -------------------
 * Reverse uri in tests by resource name
 
