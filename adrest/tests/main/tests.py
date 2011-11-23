@@ -1,15 +1,16 @@
-from django.core.urlresolvers import reverse
 import random
+
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
 from django.test import TestCase, Client, RequestFactory
-from adrest.models import Access
-from adrest.utils import serializer, paginator
-from adrest.tests.utils import AdrestTestCase
-from adrest.tests.simple.tests import SimpleTestCase
 
 from .api import api
-from .resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource, CustomResource
 from .models import Author, Book, Article
+from .resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
+from adrest.models import Access
+from adrest.tests.simple.tests import SimpleTestCase
+from adrest.tests.utils import AdrestTestCase
+from adrest.utils import serializer, paginator
 
 
 assert SimpleTestCase
@@ -75,7 +76,7 @@ class AdrestTest(AdrestTestCase):
         super(AdrestTest, self).setUp()
 
     def test_methods(self):
-        uri = self.reverse(AuthorResource)
+        uri = self.reverse('author')
         self.assertEqual(uri, '/1.0.0/author/')
         response = self.client.get(uri)
         self.assertContains(response, 'true')
@@ -84,18 +85,18 @@ class AdrestTest(AdrestTestCase):
         self.assertContains(response, 'false', status_code=405)
 
     def test_owner(self):
-        response = self.get_resource(ArticleResource, author=self.author.pk, book=self.book.pk)
+        response = self.get_resource('author-test-book-article', author=self.author.pk, book=self.book.pk)
         self.assertContains(response, 'true')
 
     def test_log(self):
-        uri = self.reverse(ArticleResource, author=self.author.pk, book=self.book.pk)
+        uri = self.reverse('author-test-book-article', author=self.author.pk, book=self.book.pk)
         self.client.get(uri)
         access = Access.objects.get()
         self.assertEqual(access.uri, uri)
         self.assertEqual(access.version, str(api))
 
     def test_options(self):
-        uri = self.reverse(ArticleResource, author=self.author.pk, book=self.book.pk)
+        uri = self.reverse('author-test-book-article', author=self.author.pk, book=self.book.pk)
         self.assertTrue('OPTIONS' in ArticleResource.allowed_methods)
         response = self.client.options(uri)
         self.assertContains(response, 'OK')
@@ -115,24 +116,24 @@ class ResourceTest(AdrestTestCase):
             Book.objects.create(author=self.author, title="book%s" % i, status = random.choice((1, 2, 3)))
 
     def test_author(self):
-        response = self.get_resource(AuthorResource)
+        response = self.get_resource('author')
         self.assertContains(response, 'count="5"')
 
-        response = self.post_resource(AuthorResource, data=dict(name = "new author", user=User.objects.create(username="new user").pk))
+        response = self.post_resource('author', data=dict(name = "new author", user=User.objects.create(username="new user").pk))
         self.assertContains(response, 'new author')
 
     def test_book(self):
-        response = self.get_resource(BookPrefixResource, author=self.author)
+        response = self.get_resource('author-test-book', author=self.author)
         self.assertContains(response, 'count="5"')
 
-        response = self.post_resource(BookPrefixResource, author = self.author, data=dict(title = "new book", status=2))
+        response = self.post_resource('author-test-book', author = self.author, data=dict(title = "new book", status=2))
         self.assertContains(response, '<price>0</price>')
 
-        response = self.put_resource(BookPrefixResource, author = self.author, book = 1, data=dict(price = 100))
+        response = self.put_resource('author-test-book', author = self.author, book = 1, data=dict(price = 100))
         self.assertContains(response, '<price>100</price>')
 
     def test_filter(self):
-        uri = self.reverse(BookPrefixResource, author=self.author)
+        uri = self.reverse('author-test-book', author=self.author)
         response = self.client.get(uri, data=dict(title="book2"))
         self.assertContains(response, 'count="1"')
 
@@ -146,7 +147,7 @@ class ResourceTest(AdrestTestCase):
         self.assertContains(response, 'count="2"')
 
     def test_custom(self):
-        uri = self.reverse(CustomResource)
+        uri = self.reverse('book')
         response = self.client.get(uri)
         self.assertContains(response, 'count="5"')
         Book.objects.create(author=self.author, title="book", status=1)

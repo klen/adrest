@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-11-23 0.7.8
+-------------------
+* Reverse uri in tests by resource name
+
 ## 2011-11-14 0.7.7
 -------------------
 * Fix settings and cross domain 'OPTIONS'

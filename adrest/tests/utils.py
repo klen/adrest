@@ -12,6 +12,9 @@ class AdrestTestCase(TestCase):
         self.client = Client()
 
     def reverse(self, resource, **kwargs):
+        if isinstance(resource, basestring):
+            assert self.api._map.get(resource), "Invalid resource name: %s" % resource
+            resource = self.api._map.get(resource)['resource']
         kwargs = dict((k, getattr(v, "pk", v)) for k, v in kwargs.iteritems())
         name_ver = '' if not str(self.api) else '%s-' % str(self.api)
         return reverse('api-%s%s' % (name_ver, resource.meta.urlname), kwargs=kwargs)
