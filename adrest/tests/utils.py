@@ -24,12 +24,14 @@ class AdrestTestCase(TestCase):
         name_ver = '' if not str(self.api) else '%s-' % str(self.api)
         return reverse('api-%s%s' % (name_ver, urlname), kwargs=kwargs)
 
-    def get_resource(self, resource, method='get', data=None, key=None, **kwargs):
+    def get_resource(self, resource, method='get', data=None, key=None, headers=None, **kwargs):
         uri = self.reverse(resource, **kwargs)
         method = getattr(self.client, method)
         if isinstance(key, Model):
             key = key.key
-        return method(uri, data=data or dict(), HTTP_AUTHORIZATION=key)
+        headers = dict() if headers is None else headers
+        headers['HTTP_AUTHORIZATION'] = key
+        return method(uri, data=data or dict(), **headers)
 
     put_resource = curry(get_resource, method='put')
     post_resource = curry(get_resource, method='post')

@@ -1,7 +1,7 @@
 CHANGES
 =======
 
-## 2011-12-23 0.7.91
+## 2011-12-23 0.7.92
 --------------------
 * Model in resource maybe in string format
 
