@@ -4,6 +4,7 @@ import logging
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models.base import ModelBase, Model
+from django.db.models import get_model
 from django.forms.models import ModelChoiceField
 from django.utils.encoding import smart_unicode
 from django.views.decorators.csrf import csrf_exempt
@@ -51,6 +52,12 @@ class ResourceMetaClass(type):
                 raise TypeError("%s.parent must be instance of %s" % (cls_name, "ResourceView"))
 
         if cls.model:
+            if isinstance(cls.model, basestring):
+                assert '.' in cls.model, ("'model_class' must be either a model"
+                                        " or a model name in the format"
+                                        " app_label.model_name")
+                cls.model = get_model(*cls.model.split("."))
+
             if not isinstance(cls.model, (ModelBase, Model)):
                 raise TypeError("%s.model must be instance of Model" % cls_name)
             meta.name = cls.model._meta.module_name

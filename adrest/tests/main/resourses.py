@@ -1,15 +1,15 @@
+from .models import Book
 from adrest.views import ResourceView
-from .models import Author, Book, Article
 
 
 class AuthorResource(ResourceView):
     allowed_methods = 'GET', 'POST'
-    model = Author
+    model = 'main.author'
 
 
 class BookResource(ResourceView):
     allowed_methods = 'GET', 'POST', 'PUT'
-    model = Book
+    model = 'main.book'
     parent = AuthorResource
 
 
@@ -18,7 +18,7 @@ class BookPrefixResource(BookResource):
 
 
 class ArticleResource(ResourceView):
-    model = Article
+    model = 'main.article'
     parent = BookPrefixResource
 
 
@@ -28,7 +28,7 @@ class SomeOtherResource(ResourceView):
 
 
 class CustomResource(ResourceView):
-    model = Book
+    model = 'main.book'
     queryset = Book.objects.all()
     template = 'api/custom.xml'
 

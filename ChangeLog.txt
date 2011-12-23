@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2011-12-23 0.7.91
+--------------------
+* Model in resource maybe in string format
+
 ## 2011-11-23 0.7.9
 -------------------
 * Reverse uri in tests by resource name
