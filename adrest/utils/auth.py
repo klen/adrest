@@ -49,8 +49,8 @@ class MetaBySession(type):
 
 
 class AnonimousAuthenticator(BaseAuthenticator):
-    """ Always return true.
-    """
+    " Always return true "
+
     __metaclass__ = MetaAnonimous
 
     def get_identifier(self):

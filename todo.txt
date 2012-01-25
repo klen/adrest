@@ -1,3 +1,2 @@
 HttpResponse move from emitters. Drop Response.
-Rename emmiter
-And add custom serializer to JSONEmmiter
+Add custom serializer to JSONEmmiter

@@ -312,7 +312,7 @@ class ApiMapResource(ResourceView):
             for a in authenticators:
                 result['fields'] += a.get_fields()
 
-            result['auth'] = map(str, authenticators)
+            result['auth'] = set(map(str, authenticators))
 
             api_map.append((key, result))
 

@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+## 2012-01-25 0.7.93
+--------------------
+* Minor fix of api map
+* Set is now json serialized
+
 ## 2011-12-23 0.7.92
 --------------------
 * Model in resource maybe in string format

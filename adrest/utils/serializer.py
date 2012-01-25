@@ -26,6 +26,9 @@ class JSONEncoder(DjangoJSONEncoder):
 
     def default(self, o):
 
+        if isinstance(o, set):
+            return list(o)
+
         if isinstance(o, QuerySet):
             return list(o)
 
