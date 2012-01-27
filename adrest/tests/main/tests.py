@@ -3,6 +3,8 @@ import random
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.test import TestCase, Client, RequestFactory
+from django.views.generic import View
+from django.http import HttpResponse
 
 from .api import api
 from .models import Author, Book, Article
@@ -10,31 +12,62 @@ from .resourses import AuthorResource, BookPrefixResource, ArticleResource, Some
 from adrest.models import Access
 from adrest.tests.simple.tests import SimpleTestCase
 from adrest.tests.utils import AdrestTestCase
-from adrest.utils import serializer, paginator
+from adrest.utils import serializer, paginator, emitter, parser
+from adrest.mixin.emitter import EmitterMixin
 
 
 assert SimpleTestCase
+
+
+class MixinTest(TestCase):
+
+    def setUp(self):
+        self.rf = RequestFactory()
+
+    def test_emitter(self):
+        request = self.rf.get("/")
+        class Test(View, EmitterMixin):
+            def get(self, request):
+                content = self.emit('test')
+                response = HttpResponse(content)
+                return response
+        test = Test()
+        response = test.dispatch(request)
+        self.assertContains(response, 'test')
 
 
 class MetaTest(TestCase):
 
     def test_meta(self):
         self.assertTrue(AuthorResource.meta)
-        self.assertTrue(AuthorResource.meta.parents is not None)
-        self.assertTrue(AuthorResource.meta.models is not None)
-        self.assertTrue(AuthorResource.meta.name is not None)
-        self.assertTrue(AuthorResource.meta.urlname is not None)
-        self.assertTrue(AuthorResource.meta.urlregex is not None)
+        self.assertEqual(AuthorResource.meta.name, 'author')
+        self.assertEqual(AuthorResource.meta.urlname, 'author')
+        self.assertEqual(AuthorResource.meta.urlregex, 'author/(?:(?P<author>[^/]+)/)?$')
+        self.assertEqual(AuthorResource.meta.parents, [])
+        self.assertEqual(AuthorResource.meta.models, [Author])
+        self.assertEqual(AuthorResource.meta.emitters_dict, {
+            emitter.JSONEmitter.media_type: emitter.JSONEmitter,
+        })
+        self.assertEqual(AuthorResource.meta.emitters_types, [
+            emitter.JSONEmitter.media_type,
+        ])
+        self.assertEqual(AuthorResource.meta.default_emitter, emitter.JSONEmitter)
+        self.assertEqual(AuthorResource.meta.parsers_dict, {
+            parser.FormParser.media_type: parser.FormParser,
+            parser.XMLParser.media_type: parser.XMLParser,
+            parser.JSONParser.media_type: parser.JSONParser,
+        })
+        self.assertEqual(AuthorResource.meta.default_parser, parser.FormParser)
 
     def test_meta_parents(self):
         self.assertEqual(AuthorResource.meta.parents, [])
-        self.assertEqual(BookPrefixResource.meta.parents, [ AuthorResource ])
-        self.assertEqual(ArticleResource.meta.parents, [ AuthorResource, BookPrefixResource ])
+        self.assertEqual(BookPrefixResource.meta.parents, [AuthorResource])
+        self.assertEqual(ArticleResource.meta.parents, [AuthorResource, BookPrefixResource])
 
     def test_meta_models(self):
-        self.assertEqual(AuthorResource.meta.models, [ Author ])
-        self.assertEqual(BookPrefixResource.meta.models, [ Author, Book ])
-        self.assertEqual(ArticleResource.meta.models, [ Author, Book, Article ])
+        self.assertEqual(AuthorResource.meta.models, [Author])
+        self.assertEqual(BookPrefixResource.meta.models, [Author, Book])
+        self.assertEqual(ArticleResource.meta.models, [Author, Book, Article])
 
     def test_meta_name(self):
         self.assertEqual(AuthorResource.meta.name, 'author')
@@ -86,6 +119,10 @@ class AdrestTest(AdrestTestCase):
 
     def test_owner(self):
         response = self.get_resource('author-test-book-article', author=self.author.pk, book=self.book.pk)
+        self.assertContains(response, 'false', status_code=401)
+
+        response = self.get_resource('author-test-book-article', key = self.author.user.accesskey_set.get(),
+                author=self.author.pk, book=self.book.pk)
         self.assertContains(response, 'true')
 
     def test_log(self):
@@ -150,9 +187,22 @@ class ResourceTest(AdrestTestCase):
         uri = self.reverse('book')
         response = self.client.get(uri)
         self.assertContains(response, 'count="5"')
-        Book.objects.create(author=self.author, title="book", status=1)
+        book = Book.objects.create(author=self.author, title="book", status=1)
         response = self.client.get(uri)
         self.assertContains(response, 'count="6"')
+
+        response = self.delete_resource('author-test-book-article', key = self.author.user.accesskey_set.get(),
+                author=self.author.pk, book=book.pk)
+        self.assertContains(response, 'Some error', status_code=500)
+
+        response = self.put_resource('author-test-book-article', key = self.author.user.accesskey_set.get(),
+                author=self.author.pk, book=book.pk)
+        self.assertContains(response, 'Assertion error', status_code=400)
+
+    def test_some_other(self):
+        response = self.get_resource('test')
+        self.assertContains(response, '<someother>True</someother>')
+        self.assertContains(response, '<method>GET</method>')
 
 
 class AdrestMapTest(TestCase):

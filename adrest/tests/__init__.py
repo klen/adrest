@@ -7,4 +7,4 @@ if __name__ == '__main__':
 
     from adrest.tests import settings
 
-    execute_manager(settings, ['', 'test', 'main'])
+    execute_manager(settings, ['', 'test', 'main', '--failfast'])

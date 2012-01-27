@@ -1,4 +1,3 @@
-from django.http import QueryDict
 from django.utils import simplejson as json
 
 from . import status
@@ -6,34 +5,40 @@ from .exceptions import HttpError
 
 
 class BaseParser(object):
+
     media_type = None
 
     def __init__(self, resource):
         self.resource = resource
 
-    def parse(self):
-        return self.resource.request.raw_post_data
+    @staticmethod
+    def parse(request):
+        return request.raw_post_data
 
 
 class JSONParser(BaseParser):
+
     media_type = 'application/json'
 
-    def parse(self):
+    @staticmethod
+    def parse(request):
         try:
-            return json.loads(self.resource.request.raw_post_data)
+            return json.loads(request.raw_post_data)
         except ValueError, e:
             raise HttpError('JSON parse error - %s' % str(e), status=status.HTTP_400_BAD_REQUEST)
 
 
 class XMLParser(BaseParser):
+
     media_type = 'application/xml'
 
 
 class FormParser(BaseParser):
+
     media_type = 'application/x-www-form-urlencoded'
 
-    def parse(self):
-        request = self.resource.request
+    @staticmethod
+    def parse(request):
         source = dict(request.REQUEST.iteritems())
         if request.method == "PUT" and not source:
             # Fix django bug: request.GET, .POST are empty on PUT request
@@ -43,4 +48,3 @@ class FormParser(BaseParser):
             request.method = "PUT"
             source = dict(request.POST.iteritems())
         return source
-

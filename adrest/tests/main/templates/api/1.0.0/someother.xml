@@ -1,0 +1,2 @@
+<someother>{{ content }}</someother>
+<method>{{ request.method }}</method>

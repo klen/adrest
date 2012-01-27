@@ -34,7 +34,9 @@ class Api(object):
         if self._map.get(urlname):
             LOG.warning("A new resource '%r' is replacing the existing record for '%s'" % (resource, urlname))
 
-        self._map[urlname] = dict(resource=resource, urlregex=urlregex, urlname=urlname, kwargs=kwargs)
+        params = dict(**self.kwargs)
+        params.update(kwargs)
+        self._map[urlname] = dict(resource=resource, urlregex=urlregex, urlname=urlname, params=params)
 
     @property
     def urls(self):
@@ -54,22 +56,24 @@ class Api(object):
                 url(r"^%s$" % url_vprefix, ApiMapResource.as_view(api=self), name="api-%s%s" % (name_vprefix, ApiMapResource.meta.urlname)),
             )
 
+        part = 0
         for urlname in sorted(self._map.keys()):
 
-            resource_info = self._map[urlname]
+            info = self._map[urlname]
 
             # Resource
-            resource = resource_info['resource']
-
-            # Params
-            params = dict()
-            params.update(self.kwargs)
-            params.update(resource_info['kwargs'])
+            resource = info['resource']
 
             # URL
             urlname = 'api-%s%s' % ( name_vprefix, urlname)
-            urlregex = '^%s%s' % ( url_vprefix, resource_info['urlregex'])
-            view = resource.as_view(api=self, **params)
+            urlregex = '^%s%s' % ( url_vprefix, info['urlregex'])
+
+            params = info.get('params')
+            if params:
+                part += 1
+                params['name'] = ''.join(bit for bit in resource.__name__.split('Resource') if bit).lower()
+                resource = type('%s%s' % (resource.__name__, part), (resource,), params)
+            view = resource.as_view(api=self)
             patterns.append(url(urlregex, view, name=urlname))
 
         return patterns

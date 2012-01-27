@@ -1,58 +1,52 @@
 import mimeparse
-from django.http import HttpResponse
 
-from adrest.utils.emitter import XMLTemplateEmitter, JSONEmitter
-from adrest.utils.exceptions import HttpError
-from adrest.utils.response import Response
+from adrest.utils import MetaOptions
+from adrest.utils.emitter import JSONEmitter, BaseEmitter
 from adrest.utils.tools import as_tuple
+
+
+class EmitterMeta(type):
+
+    def __new__(mcs, name, bases, params):
+
+        params['meta'] = params.get('meta', MetaOptions())
+        cls = super(EmitterMeta, mcs).__new__(mcs, name, bases, params)
+        cls.emitters = as_tuple(cls.emitters)
+        cls.meta.default_emitter = cls.emitters[0] if cls.emitters else None
+        for e in cls.emitters:
+            assert issubclass(e, BaseEmitter), "Emitter must be subclass of BaseEmitter"
+            cls.meta.emitters_dict[e.media_type] = e
+            cls.meta.emitters_types.append(e.media_type)
+        return cls
 
 
 class EmitterMixin(object):
 
-    emitters = XMLTemplateEmitter, JSONEmitter
+    __metaclass__ = EmitterMeta
+
+    emitters = JSONEmitter
     template = None
 
-    def emit(self, request, response, emitter=None):
-        """ Takes a Response object and returns a Django HttpResponse.
-        """
-        try:
-            emitter = emitter or self._determine_emitter(request)
+    def emit(self, content, request=None, emitter=None):
+        " Takes a Response object and returns a Django HttpResponse "
 
-        except HttpError, e:
-            emitter = self.default_emitter
-            response = Response(content=e.message, status=e.status)
+        # Get emitter for request
+        emitter = emitter or self._determine_emitter(request)
 
         # Serialize the response content
-        content = emitter(self).emit(response=response)
-
-        # Build the HTTP Response
-        result = HttpResponse(content, mimetype=emitter.media_type, status=response.status)
-        for key, val in response.headers.iteritems():
-            result[key] = val
-
-        return result
-
-    @property
-    def emitted_media_types(self):
-        """ Return an list of all the media types that this resource can emit.
-        """
-        return [emitter.media_type for emitter in self.emitters]
-
-    @property
-    def default_emitter(self):
-        """ Return the resource's most prefered emitter.
-            (This emitter is used if the client does not send and Accept: header, or sends Accept: */*)
-        """
-        return as_tuple(self.emitters)[0]
+        return emitter(self).emit(content, request=request)
 
     def _determine_emitter(self, request):
-        """ Simple return first emmiter.
-        """
-        emiters_dict = dict((e.media_type, e) for e in as_tuple(self.emitters))
-        types = emiters_dict.keys()
+        " Return must fine emitter for request "
+        if not request:
+            return self.meta.default_emitter
+
+        if request.method == 'OPTIONS':
+            return JSONEmitter
+
         accept = request.META.get('HTTP_ACCEPT', '*/*')
-        if accept != '*/*':
-            base_format = mimeparse.best_match(types, request.META['HTTP_ACCEPT'])
-            if base_format:
-                return emiters_dict.get(base_format) or self.default_emitter
-        return self.default_emitter
+        if accept == '*/*':
+            return self.meta.default_emitter
+
+        base_format = mimeparse.best_match(self.meta.emitters_types, accept)
+        return self.meta.emitters_dict.get(base_format, self.meta.default_emitter)

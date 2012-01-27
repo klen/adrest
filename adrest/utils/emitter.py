@@ -2,9 +2,11 @@ from datetime import datetime
 from time import mktime
 
 from django.template import RequestContext, loader
+from django.http import HttpResponse
 
 from .paginator import Paginator
 from .serializer import json_dumps, xml_dumps
+from adrest.utils.status import HTTP_200_OK
 
 
 class BaseEmitter(object):
@@ -14,27 +16,42 @@ class BaseEmitter(object):
     def __init__(self, resource):
         self.resource = resource
 
+    def emit(self, content, request=None):
+
+        if not isinstance(content, HttpResponse):
+            return HttpResponse(
+                    self.serialize(content, request=request),
+                    mimetype=self.media_type,
+                    status=HTTP_200_OK)
+
+        response = content
+        response.content = self.serialize(response.content, response=response, request=request)
+        return response
+
+    @staticmethod
+    def serialize(content, response=None, request=None):
+        return content
+
 
 class TemplateEmitter(BaseEmitter):
     """ All emitters must extend this class, set the media_type attribute, and
         override the emit() function.
     """
-    def emit(self, response):
-        if response.content is None:
-            return ''
-        if response.status == 200:
-            context = RequestContext(self.resource.request, dict(
-                content = response.content,
-                emitter = self,
-                resource = self.resource))
-            template = loader.get_template(self.get_template(response.content))
-            return template.render(context)
-        return response.content
+    def serialize(self, content, response=None, request=None):
+        if getattr(response, 'status_code', HTTP_200_OK) == HTTP_200_OK:
+            template = loader.get_template(self.get_template(content))
+            content = template.render(RequestContext(request, dict(
+                    content = content,
+                    emitter = self,
+                    resource = self.resource,
+                )))
+        return content
 
     def get_template_dir(self):
-        path = 'api/%s/' % ( self.resource.version or '' )
-        if self.resource.model:
-            path += self.resource.model._meta.app_label + '/'
+        path = 'api/%s/' % (getattr(self.resource, 'version', ''))
+        model = getattr(self.resource, 'model', None)
+        if model:
+            path += model._meta.app_label + '/'
         return path
 
     def get_template(self, content=None):
@@ -67,11 +84,11 @@ class XMLTemplateEmitter(TemplateEmitter):
     """
     media_type = 'application/xml'
 
-    def emit(self, response):
-        output = super(XMLTemplateEmitter, self).emit(response)
+    def serialize(self, content, response=None, request=None):
+        content = super(XMLTemplateEmitter, self).serialize(content, response=response, request=request)
+        success = 'true' if getattr(response, 'status_code', HTTP_200_OK) == HTTP_200_OK else 'false'
         ts = int(mktime(datetime.now().timetuple()))
-        success = 'true' if response.status == 200 else 'false'
-        return '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>' % ( success, self.resource.version, ts, output )
+        return '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>' % (success, self.resource.version, ts, content)
 
 
 class JSONEmitter(BaseEmitter):
@@ -79,8 +96,8 @@ class JSONEmitter(BaseEmitter):
     media_type = 'application/json'
 
     @staticmethod
-    def emit(response):
-        return json_dumps(response.content)
+    def serialize(content, **kwargs):
+        return json_dumps(content)
 
 
 class XMLEmitter(BaseEmitter):
@@ -88,5 +105,5 @@ class XMLEmitter(BaseEmitter):
     media_type = 'application/xml'
 
     @staticmethod
-    def emit(response):
-        return xml_dumps(response.content)
+    def serialize(content, **kwargs):
+        return xml_dumps(content)

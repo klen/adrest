@@ -1,99 +1,99 @@
 #!/usr/bin/env python
 # coding: utf-8
 import logging
+import traceback
 
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.db.models.base import ModelBase, Model
-from django.db.models import get_model
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 from django.forms.models import ModelChoiceField
 from django.utils.encoding import smart_unicode
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
+from django.http import HttpResponse
 
-from .utils import status
+from .utils import status, MetaOptions
 from .utils.auth import AnonimousAuthenticator
 from .utils.emitter import HTMLTemplateEmitter, JSONEmitter
 from .utils.exceptions import HttpError
-from .utils.response import Response
 from .utils.tools import as_tuple
 from adrest import settings
-from adrest.mixin import ThrottleMixin, ParserMixin, HandlerMixin, EmitterMixin, AuthenticatorMixin
+from adrest.mixin import auth, emitter, handler, parser, throttle
 from adrest.signals import api_request_started, api_request_finished
 
 
 LOG = logging.getLogger('adrest')
 
 
-class ResourceOptions(object):
-    """ Resource meta options.
-    """
-    def __init__(self):
-        self.name = self.urlname = self.urlregex = ''
-        self.parents = []
-        self.models = []
-
-
-class ResourceMetaClass(type):
+class ResourceMetaClass(handler.HandlerMeta, throttle.ThrottleMeta, emitter.EmitterMeta,
+        parser.ParserMeta, auth.AuthMeta):
     """ MetaClass for ResourceView.
         Create meta options.
     """
 
-    def __new__(mcs, cls_name, bases, params):
-        allowed_methods = params.get('allowed_methods')
-        if allowed_methods:
-            params['allowed_methods'] = as_tuple(allowed_methods)
-        params['meta'] = meta = ResourceOptions()
-        cls = super(ResourceMetaClass, mcs).__new__(mcs, cls_name, bases, params)
+    def __new__(mcs, name, bases, params):
+        params['meta'] = params.get('meta', MetaOptions())
+
+        cls = super(ResourceMetaClass, mcs).__new__(mcs, name, bases, params)
+        cls.allowed_methods = as_tuple(cls.allowed_methods)
+        if settings.ALLOW_OPTIONS:
+            cls.allowed_methods += 'OPTIONS',
+
         if cls.parent:
             try:
-                pmeta = getattr(cls.parent, 'meta')
-                meta.parents = pmeta.parents + [cls.parent]
+                cls.meta.parents += cls.parent.meta.parents + [cls.parent]
             except AttributeError:
-                raise TypeError("%s.parent must be instance of %s" % (cls_name, "ResourceView"))
+                raise TypeError("%s.parent must be instance of %s" % (name, "ResourceView"))
 
-        if cls.model:
-            if isinstance(cls.model, basestring):
-                assert '.' in cls.model, ("'model_class' must be either a model"
-                                        " or a model name in the format"
-                                        " app_label.model_name")
-                cls.model = get_model(*cls.model.split("."))
-
-            if not isinstance(cls.model, (ModelBase, Model)):
-                raise TypeError("%s.model must be instance of Model" % cls_name)
-            meta.name = cls.model._meta.module_name
-        else:
-            name_bits = [bit for bit in cls_name.split('Resource') if bit]
-            meta.name = ''.join(name_bits).lower()
-
+        cls.meta.name = cls.meta.name or cls.name or ''.join(bit for bit in name.split('Resource') if bit).lower()
         uri_params = cls.uri_params or []
-        meta.urlname = '-'.join(([ cls.parent.meta.urlname ] if cls.parent else []) +
+        cls.meta.urlname = '-'.join(
+                ([cls.parent.meta.urlname] if cls.parent else []) +
                 ([ cls.prefix ] if cls.prefix else []) +
                 list(uri_params) +
-                [ meta.name ])
-        meta.urlregex = '/'.join(
+                [cls.meta.name])
+        cls.meta.urlregex = '/'.join(
                 '%(name)s/(?P<%(name)s>[^/]+)' % dict(name = p)
                 for p in (
-                    [p.meta.name for p in meta.parents] + list(uri_params)))
-        meta.urlregex = meta.urlregex + '/' if meta.urlregex else ''
+                    [p.meta.name for p in cls.meta.parents] + list(uri_params)))
+        cls.meta.urlregex = cls.meta.urlregex + '/' if cls.meta.urlregex else ''
         if cls.prefix:
-            meta.urlregex = '%s%s/' % (meta.urlregex, cls.prefix)
-        meta.urlregex += '%(name)s/(?:(?P<%(name)s>[^/]+)/)?$' % dict(
-                name = meta.name)
+            cls.meta.urlregex = '%s%s/' % (cls.meta.urlregex, cls.prefix)
+        cls.meta.urlregex += '%(name)s/(?:(?P<%(name)s>[^/]+)/)?$' % dict(
+                name = cls.meta.name)
 
-        meta.models = [o.model for o in meta.parents + [ cls ] if o.model]
+        cls.meta.models = [o.model for o in cls.meta.parents + [ cls ] if o.model]
         return cls
 
 
-class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
-        AuthenticatorMixin, View):
+class ResourceView(handler.HandlerMixin,
+        throttle.ThrottleMixin,
+        emitter.EmitterMixin,
+        parser.ParserMixin,
+        auth.AuthMixin,
+        View):
 
     # Create meta options
     __metaclass__ = ResourceMetaClass
 
+    # Allowed methods
+    allowed_methods = 'GET',
+
+    # Name (Defaul by model name or class name)
+    name = None
+
+    # Link to api if connected
     api = None
+
+    # Saves access log if enabled
     log = True
 
-    allowed_methods = 'GET',
+    # Link to parent resource
+    parent = None
+
+    # URL name and regex prefix
+    prefix = ''
+
+    # Some custom URI params here
+    uri_params = None
 
     # If children object in hierarchy has FK=Null to parent, allow to get this
     # object (default: True)
@@ -101,9 +101,6 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
-
-        # Save request for later use
-        self.request = request
 
         # Send started signal
         api_request_started.send(self, request = request)
@@ -121,7 +118,7 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
             if method == 'OPTIONS' and settings.ALLOW_OPTIONS:
                 self.identifier = 'anonymous'
             else:
-                self.identifier = self.authenticate()
+                self.identifier = self.authenticate(request)
 
             # Throttle check
             self.throttle_check()
@@ -133,11 +130,11 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
             self.check_owners(**resources)
 
             # Check rights for resources with this method
-            self.check_rights(resources, method)
+            self.check_rights(resources, request=request)
 
             # Parse content
             if method in ('POST', 'PUT'):
-                request.data = self.parse()
+                request.data = self.parse(request)
                 if isinstance(request.data, basestring):
                     request.data = dict()
 
@@ -146,24 +143,25 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
 
             # Get function data
             content = func(request, *args, **resources)
-            response = Response(content)
 
-        except HttpError, e:
-            response = Response(e.message, status=e.status)
+            # Serialize response
+            response = self.emit(content, request=request)
+            try:
+                response["Allow"] = ', '.join(self.allowed_methods),
+                response["Vary"] = 'Authenticate, Accept'
+
+            except TypeError:
+                raise ValueError("Emitter must return HttpResponse")
+
+        except (HttpError, AssertionError, ValidationError), e:
+            content = HttpResponse(unicode(e), status=getattr(e, 'status', status.HTTP_400_BAD_REQUEST))
+            response = self.emit(content, request=request)
 
         except Exception, e:
             response = self.handle_exception(e)
 
-        # Always add these headers
-        response.headers['Allow'] = ', '.join(self.allowed_methods)
-        response.headers['Vary'] = 'Authenticate, Accept'
-
-        # Serialize response
-        emitter = JSONEmitter if method == 'OPTIONS' else None
-        response = self.emit(request, response, emitter=emitter)
-
         # Send finished signal
-        api_request_finished.send(self, request=self.request, response=response)
+        api_request_finished.send(self, request=request, response=response)
 
         return response
 
@@ -263,8 +261,9 @@ class ResourceView(HandlerMixin, ThrottleMixin, EmitterMixin, ParserMixin,
             raise
 
         else:
+            traceback.print_exc()
             LOG.error(str(e))
-            return Response(str(e), status=500)
+            return HttpResponse(str(e), status=500)
 
     @property
     def version(self):
@@ -294,7 +293,7 @@ class ApiMapResource(ResourceView):
             if r.model:
                 result['resource'] = r.model.__name__
 
-            form = r.get_form()
+            form = r.form
             if form and ('POST' in r.allowed_methods or 'PUT' in r.allowed_methods):
                 result['fields'] += [
                     (name, dict(required = f.required and f.initial is None, help = smart_unicode(f.help_text + '')))
@@ -303,11 +302,7 @@ class ApiMapResource(ResourceView):
                 ]
             key = rinfo['urlregex'].replace("(?P", "").replace("[^/]+)", "").replace("?:", "").replace("$", "")
 
-            authenticators = as_tuple(
-                rinfo['kwargs'].get('authenticators')
-                or self.api.kwargs.get('authenticators')
-                or r.authenticators
-            )
+            authenticators = as_tuple(rinfo['params'].get('authenticators') or r.authenticators)
 
             for a in authenticators:
                 result['fields'] += a.get_fields()
@@ -317,9 +312,3 @@ class ApiMapResource(ResourceView):
             api_map.append((key, result))
 
         return (self.api.str_version, api_map)
-
-
-# Since we handle cross-origin XML HTTP requests, let OPTIONS be another
-# default allowed method.
-if settings.ALLOW_OPTIONS:
-    ResourceView.allowed_methods += 'OPTIONS',

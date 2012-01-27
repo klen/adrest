@@ -1,2 +1,2 @@
-HttpResponse move from emitters. Drop Response.
+Fix accesslog for long texts
 Add custom serializer to JSONEmmiter

@@ -18,13 +18,23 @@ class BookPrefixResource(BookResource):
 
 
 class ArticleResource(ResourceView):
+    allowed_methods = 'GET', 'PUT', 'DELETE'
     model = 'main.article'
     parent = BookPrefixResource
+
+    def put(self, request, **kwargs):
+        assert False, "Assertion error"
+
+    def delete(self, request, **kwargs):
+        raise Exception("Some error")
 
 
 class SomeOtherResource(ResourceView):
     parent = AuthorResource
     uri_params = 'device',
+
+    def get(self, request, **kwargs):
+        return True
 
 
 class CustomResource(ResourceView):

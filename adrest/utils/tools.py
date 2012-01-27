@@ -1,10 +1,10 @@
 def as_tuple(obj):
-    """ Given obj return a tuple.
-    """
-    if isinstance(obj, tuple):
-        return obj
-    elif obj is None:
+    " Given obj return a tuple "
+
+    if not obj:
         return tuple()
-    elif isinstance(obj, list):
+
+    if isinstance(obj, (tuple, set, list)):
         return tuple(obj)
-    return (obj,)
+
+    return obj,

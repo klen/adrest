@@ -1,24 +1,56 @@
+from django.db.models import get_model, Model
+
 from adrest.forms import PartitialForm
 from adrest.settings import LIMIT_PER_PAGE
-from adrest.utils import status
+from adrest.utils import status, MetaOptions
 from adrest.utils.exceptions import HttpError
 from adrest.utils.paginator import Paginator
 
 
+class HandlerMeta(type):
+    def __new__(mcs, name, bases, params):
+
+        params['meta'] = params.get('meta', MetaOptions())
+        cls = super(HandlerMeta, mcs).__new__(mcs, name, bases, params)
+
+        # Create model from string
+        if isinstance(cls.model, basestring):
+            assert '.' in cls.model, ("'model_class' must be either a model"
+                                    " or a model name in the format"
+                                    " app_label.model_name")
+            cls.model = get_model(*cls.model.split("."))
+
+        if cls.model:
+            assert issubclass(cls.model, Model), "'model' attribute must be subclass of Model "
+            cls.meta.name = cls.model._meta.module_name
+
+        # Create form if not exist
+        if cls.model and not cls.form:
+            class DynForm(PartitialForm):
+                class Meta():
+                    model = cls.model
+                    fields = cls.form_fields
+                    exclude = cls.form_exclude
+            cls.form = DynForm
+
+        return cls
+
+
 class HandlerMixin(object):
+
+    __metaclass__ = HandlerMeta
+
     limit_per_page = LIMIT_PER_PAGE
-    parent = None
     model = None
     queryset = None
     form = None
     form_fields = None
     form_exclude = None
-    prefix = ''
-    uri_params = None
     callmap = { 'GET': 'get', 'POST': 'post',
                 'PUT': 'put', 'DELETE': 'delete', 'OPTIONS': 'options' }
 
     def __init__(self, *args, **kwargs):
+        " Copy self queryset for disable cache "
         self.queryset = self.queryset.all() if not self.queryset is None else (
             self.model.objects.all() if self.model else None
         )
@@ -33,8 +65,7 @@ class HandlerMixin(object):
         return self.paginate(request, self.queryset.filter(**filter_options))
 
     def post(self, request, **kwargs):
-        form_class = self.get_form()
-        form = form_class(data=request.data, **kwargs)
+        form = self.form(data=request.data, **kwargs)
         if form.is_valid():
             return form.save()
         raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
@@ -43,8 +74,7 @@ class HandlerMixin(object):
         if not instance:
             raise HttpError("Bad request", status=status.HTTP_404_NOT_FOUND)
 
-        form_class = self.get_form()
-        form = form_class(data=request.data, instance=instance, **kwargs)
+        form = self.form(data=request.data, instance=instance, **kwargs)
         if form.is_valid():
             return form.save()
 
@@ -89,14 +119,3 @@ class HandlerMixin(object):
         """ Paginate queryset.
         """
         return Paginator(request, qs, self.limit_per_page)
-
-    @classmethod
-    def get_form(cls):
-        if cls.model and not cls.form:
-            class DynForm(PartitialForm):
-                class Meta():
-                    model = cls.model
-                    fields = cls.form_fields
-                    exclude = cls.form_exclude
-            return DynForm
-        return cls.form

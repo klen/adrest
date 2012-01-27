@@ -13,14 +13,14 @@ class BaseAuthenticator(object):
         self.resource = resource
         self.identifier = ''
 
-    def authenticate(self):
-        return self.get_identifier()
+    def authenticate(self, request=None):
+        return self.get_identifier(request)
 
-    def get_identifier(self):
+    def get_identifier(self, request=None):
         return self.identifier
 
     @staticmethod
-    def test_rights(resources, method):
+    def test_rights(resources, request=None):
         return True
 
     @staticmethod
@@ -28,40 +28,19 @@ class BaseAuthenticator(object):
         return []
 
 
-class MetaAnonimous(type):
-    def __str__(mcs):
-        return "Anonimous access"
-
-
-class MetaByKey(type):
-    def __str__(mcs):
-        return "Authorization by key"
-
-
-class MetaByLogin(type):
-    def __str__(mcs):
-        return "Authorization by login and password"
-
-
-class MetaBySession(type):
-    def __str__(mcs):
-        return "Authorization by session"
-
-
 class AnonimousAuthenticator(BaseAuthenticator):
     " Always return true "
+    __metaclass__ = type('MetaAnonimous', (type,), dict(__str__ = lambda m: "Anonymous access"))
 
-    __metaclass__ = MetaAnonimous
-
-    def get_identifier(self):
-        return self.resource.request.META.get('REMOTE_ADDR', 'anonymous')
+    def get_identifier(self, request=None):
+        return request.META.get('REMOTE_ADDR', 'anonymous')
 
 
 class BasicAuthenticator(BaseAuthenticator):
-    """ Use HTTP Basic authentication.
-    """
-    def authenticate(self):
-        request = self.resource.request
+    " Use HTTP Basic authentication "
+    __metaclass__ = type('MetaAuth', (type,), dict(__str__ = lambda m: "HTTP authorization"))
+
+    def authenticate(self, request=None):
         if 'HTTP_AUTHORIZATION' in request.META:
             auth = request.META['HTTP_AUTHORIZATION'].split()
             if len(auth) == 2 and auth[0].lower() == "basic":
@@ -73,15 +52,14 @@ class BasicAuthenticator(BaseAuthenticator):
 
 
 class UserAuthenticator(BaseAuthenticator):
-    """ Django user authenticate.
-    """
+    " Django user authenticate "
+    __metaclass__ = type('MetaByLogin', (type,), dict(__str__ = lambda m: "Authorization by login and password"))
+
     username_fieldname = 'username'
     password_fieldname = 'password'
 
-    __metaclass__ = MetaByLogin
 
-    def authenticate(self):
-        request = self.resource.request
+    def authenticate(self, request=None):
         try:
             username = request.REQUEST.get(self.username_fieldname)
             password = request.REQUEST.get(self.password_fieldname)
@@ -99,10 +77,9 @@ class UserAuthenticator(BaseAuthenticator):
 class UserLoggedInAuthenticator(BaseAuthenticator):
     """ Use Djagno's built-in request session for authentication.
     """
-    __metaclass__ = MetaBySession
+    __metaclass__ = type('MetaBySession', (type,), dict(__str__ = lambda m: "Authorization by session"))
 
-    def authenticate(self):
-        request = self.resource.request
+    def authenticate(self, request=None):
         if getattr(request, 'user', None) and request.user.is_active:
             resp = CsrfViewMiddleware().process_view(request, None, (), {})
             if resp is None:  # csrf passed
@@ -115,14 +92,12 @@ try:
 
 
     class AccessKeyAuthenticator(BaseAuthenticator):
-        """ Use AccessKey identification.
-        """
-        __metaclass__ = MetaByKey
+        " Use AccessKey identification "
+        __metaclass__ = type('MetaByKey', (type,), dict(__str__ = lambda m: "Authorization by API key"))
 
-        def authenticate(self):
+        def authenticate(self, request=None):
             """ Authenticate user using AccessKey from HTTP Header or GET params.
             """
-            request = self.resource.request
             try:
                 access_key = request.META.get('HTTP_AUTHORIZATION') or request.REQUEST['key']
                 api_key = AccessKey.objects.get(key=access_key)
@@ -147,4 +122,4 @@ try:
             return True
 
 except ImportError:
-    pass
+    assert True
