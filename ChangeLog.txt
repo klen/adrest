@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-01-30 1.0.1
+-------------------
+* Add API errors email notifications
+
 ## 2012-01-27 1.0.0
 -------------------
 * Global refactoring

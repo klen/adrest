@@ -1,6 +1,8 @@
 " Adrest API settings. "
 from django.conf import settings
 
+from adrest.utils.tools import as_tuple
+
 
 # Enable Adrest API logs
 ACCESS_LOG = getattr(settings, 'ADREST_ACCESS_LOG', False)
@@ -13,6 +15,7 @@ LIMIT_PER_PAGE = int(getattr(settings, 'ADREST_LIMIT_PER_PAGE', 50))
 
 # Display django standart technical 500 page
 DEBUG = getattr(settings, 'ADREST_DEBUG', False)
+MAIL_ERRORS = as_tuple(getattr(settings, 'ADREST_MAIL_ERRORS', 500))
 
 # Limit request number per second from same identifier, null is not limited
 THROTTLE_AT = getattr(settings, 'ADREST_THROTTLE_AT', 120)

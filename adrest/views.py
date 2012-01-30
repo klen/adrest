@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
-import logging
+import sys
 import traceback
+from logging import getLogger
 
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
+from django.core.mail import mail_admins
 from django.forms.models import ModelChoiceField
+from django.http import HttpResponse
 from django.utils.encoding import smart_unicode
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
-from django.http import HttpResponse
 
 from .utils import status, MetaOptions
 from .utils.auth import AnonimousAuthenticator
@@ -20,7 +22,7 @@ from adrest.mixin import auth, emitter, handler, parser, throttle
 from adrest.signals import api_request_started, api_request_finished
 
 
-LOG = logging.getLogger('adrest')
+logger = getLogger('django.request')
 
 
 class ResourceMetaClass(handler.HandlerMeta, throttle.ThrottleMeta, emitter.EmitterMeta,
@@ -158,7 +160,9 @@ class ResourceView(handler.HandlerMixin,
             response = self.emit(content, request=request)
 
         except Exception, e:
-            response = self.handle_exception(e)
+            response = self.handle_exception(e, request=request)
+
+        errors_mail(response, request)
 
         # Send finished signal
         api_request_finished.send(self, request=request, response=response)
@@ -254,16 +258,17 @@ class ResourceView(handler.HandlerMixin,
         return True
 
     @staticmethod
-    def handle_exception(e):
+    def handle_exception(e, request=None, exc_info=None):
         """ Handle code exception.
         """
         if settings.DEBUG:
             raise
 
-        else:
-            traceback.print_exc()
-            LOG.error(str(e))
-            return HttpResponse(str(e), status=500)
+        logger.warning('ADREST API Error: %s' % request.path,
+            exc_info=exc_info
+        )
+
+        return HttpResponse(str(e), status=500)
 
     @property
     def version(self):
@@ -312,3 +317,14 @@ class ApiMapResource(ResourceView):
             api_map.append((key, result))
 
         return (self.api.str_version, api_map)
+
+
+def errors_mail(response, request):
+
+    if not response.status_code in settings.MAIL_ERRORS:
+        return False
+
+    subject = 'ADREST API Error (%s): %s' % (response.status_code, request.path)
+    stack_trace = '\n'.join(traceback.format_exception(*sys.exc_info()))
+    message = "%s\n\n%s" % (stack_trace, repr(request))
+    return mail_admins(subject, message, fail_silently=True)

@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase, Client, RequestFactory
 from django.views.generic import View
 from django.http import HttpResponse
+from django.core import mail
 
 from .api import api
 from .models import Author, Book, Article
@@ -193,10 +194,15 @@ class ResourceTest(AdrestTestCase):
 
         response = self.delete_resource('author-test-book-article', key = self.author.user.accesskey_set.get(),
                 author=self.author.pk, book=book.pk)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[-1].subject, '[Django] ADREST API Error (500): /1.0.0/author/5/book/6/article/')
+
         self.assertContains(response, 'Some error', status_code=500)
 
         response = self.put_resource('author-test-book-article', key = self.author.user.accesskey_set.get(),
                 author=self.author.pk, book=book.pk)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[-1].subject, '[Django] ADREST API Error (400): /1.0.0/author/5/book/6/article/')
         self.assertContains(response, 'Assertion error', status_code=400)
 
     def test_some_other(self):
