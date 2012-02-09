@@ -1,4 +1,5 @@
 from django.db.models import get_model, Model
+from django.http import HttpResponse
 
 from adrest.forms import PartitialForm
 from adrest.settings import LIMIT_PER_PAGE
@@ -80,8 +81,7 @@ class HandlerMixin(object):
 
         raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
 
-    @staticmethod
-    def delete(request, instance=None, **kwargs):
+    def delete(self, request, instance=None, **kwargs):
         if not instance:
             raise HttpError("Bad request", status=status.HTTP_400_BAD_REQUEST)
 
@@ -89,7 +89,7 @@ class HandlerMixin(object):
             if hasattr(instance, '%s_id' % name):
                 assert owner.pk == getattr(instance, '%s_id' % name)
         instance.delete()
-        return None
+        return HttpResponse("%s has been deleted." % self.meta.name.capitalize())
 
     @staticmethod
     def options(request, **kwargs):

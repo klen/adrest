@@ -13,9 +13,9 @@ class AdrestTestCase(TestCase):
 
     def reverse(self, resource, **kwargs):
         if isinstance(resource, basestring):
-            assert self.api._map.get(resource), "Invalid resource name: %s" % resource
-            urlname = self.api._map.get(resource)['urlname']
-            resource = self.api._map.get(resource)['resource']
+            urlname = resource
+            assert self.api._map.get(urlname), "Invalid resource name: %s" % urlname
+            _, resource = self.api._map.get(urlname)
 
         else:
             urlname = resource.meta.urlname

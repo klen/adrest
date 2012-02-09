@@ -17,19 +17,17 @@ class BaseEmitter(object):
         self.resource = resource
 
     def emit(self, content, request=None):
-
         if not isinstance(content, HttpResponse):
-            return HttpResponse(
-                    self.serialize(content, request=request),
+            return HttpResponse(self.serialize(content, request=request),
                     mimetype=self.media_type,
                     status=HTTP_200_OK)
 
         response = content
-        response.content = self.serialize(response.content, response=response, request=request)
+        response.content = self.serialize(content, request=request)
         return response
 
     @staticmethod
-    def serialize(content, response=None, request=None):
+    def serialize(content, request=None):
         return content
 
 
@@ -37,15 +35,17 @@ class TemplateEmitter(BaseEmitter):
     """ All emitters must extend this class, set the media_type attribute, and
         override the emit() function.
     """
-    def serialize(self, content, response=None, request=None):
-        if getattr(response, 'status_code', HTTP_200_OK) == HTTP_200_OK:
-            template = loader.get_template(self.get_template(content))
-            content = template.render(RequestContext(request, dict(
-                    content = content,
-                    emitter = self,
-                    resource = self.resource,
-                )))
-        return content
+    def serialize(self, content, request=None):
+
+        if isinstance(content, HttpResponse):
+            return content
+
+        template = loader.get_template(self.get_template(content))
+        return template.render(RequestContext(request, dict(
+                content = content,
+                emitter = self,
+                resource = self.resource,
+            )))
 
     def get_template_dir(self):
         path = 'api/%s/' % (getattr(self.resource, 'version', ''))
@@ -83,12 +83,17 @@ class XMLTemplateEmitter(TemplateEmitter):
     """ Emitter which serializes to XML.
     """
     media_type = 'application/xml'
+    template = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>'
 
-    def serialize(self, content, response=None, request=None):
-        content = super(XMLTemplateEmitter, self).serialize(content, response=response, request=request)
-        success = 'true' if getattr(response, 'status_code', HTTP_200_OK) == HTTP_200_OK else 'false'
+    def serialize(self, content, request=None):
         ts = int(mktime(datetime.now().timetuple()))
-        return '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>' % (success, self.resource.version, ts, content)
+        if isinstance(content, HttpResponse):
+            return self.template % (
+                'true' if content.status_code == HTTP_200_OK else 'false',
+                self.resource.version, ts, content.content)
+        else:
+            content = super(XMLTemplateEmitter, self).serialize(content, request=request)
+            return self.template % ('true', self.resource.version, ts, content)
 
 
 class JSONEmitter(BaseEmitter):

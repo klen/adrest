@@ -28,7 +28,7 @@ class EmitterMixin(object):
     template = None
 
     def emit(self, content, request=None, emitter=None):
-        " Takes a Response object and returns a Django HttpResponse "
+        " Serialize reponse "
 
         # Get emitter for request
         emitter = emitter or self._determine_emitter(request)

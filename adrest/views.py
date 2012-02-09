@@ -156,8 +156,8 @@ class ResourceView(handler.HandlerMixin,
                 raise ValueError("Emitter must return HttpResponse")
 
         except (HttpError, AssertionError, ValidationError), e:
-            content = HttpResponse(unicode(e), status=getattr(e, 'status', status.HTTP_400_BAD_REQUEST))
-            response = self.emit(content, request=request)
+            response = HttpResponse(unicode(e), status=getattr(e, 'status', status.HTTP_400_BAD_REQUEST))
+            response = self.emit(response, request=request)
 
         except Exception, e:
             response = self.handle_exception(e, request=request)
@@ -284,39 +284,32 @@ class ApiMapResource(ResourceView):
     template = 'api/apimap.html'
 
     def get(self, *args, **Kwargs):
-        api_map = []
-        for key, rinfo in sorted(self.api._map.iteritems(), key=lambda x: x[1].get('urlregex')):
-            rinfo = self.api._map[key]
-            r = rinfo['resource']
+        return self.api.str_version, list(self.gen_apimap())
 
-            result = dict(
-                name = rinfo['urlname'],
-                methods = r.allowed_methods,
+    def gen_apimap(self):
+        for urlname in sorted(self.api._map.iterkeys()):
+            urlregex, resource = self.api._map[urlname]
+            info = dict(
+                name = urlname,
+                methods = resource.allowed_methods,
                 fields = []
             )
+            if resource.model:
+                info['resource'] = resource.model.__name__
 
-            if r.model:
-                result['resource'] = r.model.__name__
-
-            form = r.form
-            if form and ('POST' in r.allowed_methods or 'PUT' in r.allowed_methods):
-                result['fields'] += [
+            if resource.form and ('POST' in resource.allowed_methods or 'PUT' in resource.allowed_methods):
+                info['fields'] += [
                     (name, dict(required = f.required and f.initial is None, help = smart_unicode(f.help_text + '')))
-                        for name, f in form.base_fields.iteritems()
-                        if not (isinstance(f, ModelChoiceField) and f.choices.queryset.model in r.meta.models)
+                        for name, f in resource.form.base_fields.iteritems()
+                        if not (isinstance(f, ModelChoiceField) and f.choices.queryset.model in resource.meta.models)
                 ]
-            key = rinfo['urlregex'].replace("(?P", "").replace("[^/]+)", "").replace("?:", "").replace("$", "")
 
-            authenticators = as_tuple(rinfo['params'].get('authenticators') or r.authenticators)
+            for a in resource.authenticators:
+                info['fields'] += a.get_fields()
 
-            for a in authenticators:
-                result['fields'] += a.get_fields()
-
-            result['auth'] = set(map(str, authenticators))
-
-            api_map.append((key, result))
-
-        return (self.api.str_version, api_map)
+            info['auth'] = set(map(str, resource.authenticators))
+            key = urlregex.replace("(?P", "").replace("[^/]+)", "").replace("?:", "").replace("$", "")
+            yield key, info
 
 
 def errors_mail(response, request):
