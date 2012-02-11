@@ -11,11 +11,11 @@ from .api import api
 from .models import Author, Book, Article
 from .resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
 from adrest.models import Access
-from adrest.tests.simple.tests import SimpleTestCase
 from adrest.tests.utils import AdrestTestCase
 from adrest.utils import serializer, paginator, emitter, parser
 from adrest.mixin.emitter import EmitterMixin
 
+from .simple.tests import SimpleTestCase
 
 assert SimpleTestCase
 
