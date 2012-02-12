@@ -1,5 +1,5 @@
+from .api import API
 from adrest.tests.utils import AdrestTestCase
-from .simple.api import API
 
 
 class SimpleTestCase(AdrestTestCase):

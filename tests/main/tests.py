@@ -1,24 +1,20 @@
-import re
 import random
+import re
 
 from django.contrib.auth.models import User
+from django.core import mail
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.test import TestCase, Client, RequestFactory
 from django.views.generic import View
-from django.http import HttpResponse
-from django.core import mail
 
 from .api import api
 from .models import Author, Book, Article
 from .resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
+from adrest.mixin.emitter import EmitterMixin
 from adrest.models import Access
 from adrest.tests.utils import AdrestTestCase
 from adrest.utils import serializer, paginator, emitter, parser
-from adrest.mixin.emitter import EmitterMixin
-
-from .simple.tests import SimpleTestCase
-
-assert SimpleTestCase
 
 
 class MixinTest(TestCase):

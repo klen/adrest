@@ -34,7 +34,7 @@ _install:
 	sudo pip install -U .
 
 test:
-    pythom setup.py test
+	python setup.py test
 
 doc:
 	python setup.py build_sphinx --source-dir=docs/ --build-dir=docs/_build --all-files
