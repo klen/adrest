@@ -21,6 +21,13 @@ def read( fname ):
         return ''
 
 
+def run_tests():
+    """Run tests without install library into python path
+    """
+    from tests import run_tests
+    return run_tests()
+
+
 META_DATA = dict(
     name=PROJECT,
     version=version,
@@ -37,7 +44,7 @@ META_DATA = dict(
     package_data = { '': PACKAGE_DATA, },
 
     install_requires = ('mimeparse',),
-
+    test_suite = '__main__.run_tests'
 )
 
 

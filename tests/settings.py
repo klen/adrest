@@ -9,7 +9,7 @@ DATABASES =  {
                     'TEST_CHARSET': 'utf8',
                 }
             }
-INSTALLED_APPS = 'django.contrib.auth', 'django.contrib.contenttypes', 'adrest', 'adrest.tests.main', 'adrest.tests.simple'
+INSTALLED_APPS = 'django.contrib.auth', 'django.contrib.contenttypes', 'adrest', 'tests.main', 'tests.simple'
 DEBUG = TEMPLATE_DEBUG = True
 CACHE_BACKEND = 'locmem://'
 ADREST_ACCESS_LOG = True

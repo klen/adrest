@@ -2,6 +2,7 @@ from django.core.serializers import get_serializer
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Model
 from django.db.models.query import QuerySet
+from django.http import HttpResponse
 from django.utils.encoding import smart_unicode
 from django.utils.functional import curry
 from django.utils.simplejson import dumps, loads
@@ -31,6 +32,9 @@ class JSONEncoder(DjangoJSONEncoder):
 
         if isinstance(o, QuerySet):
             return list(o)
+
+        if isinstance(o, HttpResponse):
+            return o.content
 
         if isinstance(o, Model):
             self.serializer.start_object(o)
