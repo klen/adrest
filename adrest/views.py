@@ -17,6 +17,7 @@ from .utils.auth import AnonimousAuthenticator
 from .utils.emitter import HTMLTemplateEmitter, JSONEmitter
 from .utils.exceptions import HttpError
 from .utils.tools import as_tuple
+from .utils.paginator import Paginator
 from adrest import settings
 from adrest.mixin import auth, emitter, handler, parser, throttle
 from adrest.signals import api_request_started, api_request_finished
@@ -151,6 +152,16 @@ class ResourceView(handler.HandlerMixin,
             try:
                 response["Allow"] = ', '.join(self.allowed_methods),
                 response["Vary"] = 'Authenticate, Accept'
+
+                # Add pagination headers
+                # http://www.w3.org/Protocols/9707-link-header.html
+                if isinstance(content, Paginator):
+                    linked_resources = []
+                    if content.next:
+                        linked_resources.append('<%s>; rel="next"' % content.next)
+                    if content.previous:
+                        linked_resources.append('<%s>; rel="previous"' % content.previous)
+                    response["Link"] = ", ".join(linked_resources)
 
             except TypeError:
                 raise ValueError("Emitter must return HttpResponse")
