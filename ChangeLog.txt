@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+## 2012-02-12 1.0.3
+-------------------
+* More information in mail about errors
+* Tests refactoring (@lispython)
+* Fixed json emmiter (@lispython)
+* Added pagination headers (@lispython)
+
 ## 2012-01-30 1.0.2
 -------------------
 * Minor release
