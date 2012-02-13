@@ -7,6 +7,7 @@ class MetaOptions(object):
         self.urlregex = ''
         self.parents = []
         self.models = []
+        self.model_fields = set()
 
         self.emitters_dict = dict()
         self.emitters_types = []

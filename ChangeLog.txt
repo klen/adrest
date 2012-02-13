@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-02-13 1.0.4
+-------------------
+* !!! No backward compatible (get_filter_options -> get_queryset)
+
 ## 2012-02-12 1.0.3
 -------------------
 * More information in mail about errors

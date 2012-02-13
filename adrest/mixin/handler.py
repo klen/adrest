@@ -24,6 +24,9 @@ class HandlerMeta(type):
         if cls.model:
             assert issubclass(cls.model, Model), "'model' attribute must be subclass of Model "
             cls.meta.name = cls.model._meta.module_name
+            cls.meta.model_fields = set(f.name for f in cls.model._meta.fields)
+            if cls.queryset is None:
+                cls.queryset = cls.model.objects.all()
 
         # Create form if not exist
         if cls.model and not cls.form:
@@ -51,19 +54,17 @@ class HandlerMixin(object):
                 'PUT': 'put', 'DELETE': 'delete', 'OPTIONS': 'options' }
 
     def __init__(self, *args, **kwargs):
-        " Copy self queryset for disable cache "
-        self.queryset = self.queryset.all() if not self.queryset is None else (
-            self.model.objects.all() if self.model else None
-        )
         super(HandlerMixin, self).__init__(*args, **kwargs)
+        # Copy self queryset for prevent query caching
+        if not self.queryset is None:
+            self.queryset = self.queryset.all()
 
     def get(self, request, instance=None, **kwargs):
         assert self.model, "This auto method required in model."
         if instance:
             return instance
 
-        filter_options = self.get_filter_options(request, **kwargs)
-        return self.paginate(request, self.queryset.filter(**filter_options))
+        return self.paginate(request, self.get_queryset(request, **kwargs))
 
     def post(self, request, **kwargs):
         form = self.form(data=request.data, **kwargs)
@@ -95,25 +96,29 @@ class HandlerMixin(object):
     def options(request, **kwargs):
         return 'OK'
 
-    def get_filter_options(self, request, **kwargs):
-        model_fields = set(f.name for f in self.model._meta.fields)
+    def get_queryset(self, request, **kwargs):
 
-        # Make filters from URL variables or params
-        filter_options = dict((k, v) for k, v in kwargs.items() if k in model_fields)
+        if self.queryset is None:
+            return None
+
+        # Make filters from URL variables or resources
+        filters = dict((k, v) for k, v in kwargs.iteritems() if k in self.meta.model_fields)
 
         # Make filters from GET variables
         for field in request.GET.iterkeys():
-            if not field in model_fields or filter_options.has_key(field):
+            if not field in self.meta.model_fields or filters.has_key(field):
                 continue
             converter = self.model._meta.get_field(field).to_python
-            filter_options[field] = map(converter, request.GET.getlist(field))
+            filters[field] = map(converter, request.GET.getlist(field))
 
-        return dict(
+        filters = dict(
             (k, v) if not isinstance(v, (list, tuple))
             else ("%s__in" % k, v) if len(v) > 1
             else (k, v[0])
-            for k, v in filter_options.iteritems()
+            for k, v in filters.iteritems()
         )
+
+        return self.queryset.filter(**filters)
 
     def paginate(self, request, qs):
         """ Paginate queryset.
