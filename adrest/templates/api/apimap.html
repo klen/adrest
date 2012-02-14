@@ -19,6 +19,7 @@
                 text-decoration: none;
                 border-bottom: 1px dotted;
                 font-size: 1.2em;
+                cursor: pointer;
             }
             .uri { margin-bottom: 1em; font-weight: bold; }
             .uri_methods {
@@ -36,7 +37,7 @@
 
             {% for uri, info in content.1 %}
             <div class="uri">
-                <a href="#" class="toggle"> {% if info.fields or info.resource %}+{% else %}-{% endif %} {{ uri }}</a>
+                <span class="toggle"> {% if info.fields or info.resource %}+{% else %}-{% endif %} {{ uri }}</span>
                 <span class="uri_methods"> {% for m in info.methods %}{{ m }}&nbsp;{% endfor %}</span>
                 <span class="uri_auth">{% for a in info.auth %} {{ a }} {% endfor %}</span>
 
