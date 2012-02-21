@@ -96,13 +96,13 @@ class HandlerMixin(object):
     def options(request, **kwargs):
         return 'OK'
 
-    def get_queryset(self, request, **kwargs):
+    def get_queryset(self, request, **resources):
 
         if self.queryset is None:
             return None
 
         # Make filters from URL variables or resources
-        filters = dict((k, v) for k, v in kwargs.iteritems() if k in self.meta.model_fields)
+        filters = dict((k, v) for k, v in resources.iteritems() if k in self.meta.model_fields)
 
         # Make filters from GET variables
         for field in request.GET.iterkeys():

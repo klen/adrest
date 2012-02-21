@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+## 2012-02-17 1.0.5
+-------------------
+* More accurate html (@hogart)
+* Append ADREST temlatetags (adrest_include)
+
 ## 2012-02-13 1.0.4
 -------------------
 * !!! No backward compatible (get_filter_options -> get_queryset)

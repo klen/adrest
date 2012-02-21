@@ -5,7 +5,7 @@ BUILDDIR=_build
 
 
 clean:
-	sudo rm -rf build dist $(MODULE).egg-info/ docs/_build
+	sudo rm -rf build dist docs/_build
 	find . -name "*.pyc" -delete
 	find . -name "*.orig" -delete
 

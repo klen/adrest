@@ -3,6 +3,8 @@ from time import mktime
 
 from django.template import RequestContext, loader
 from django.http import HttpResponse
+from django.db.models.base import ModelBase, Model
+from os import path as op
 
 from .paginator import Paginator
 from .serializer import json_dumps, xml_dumps
@@ -15,6 +17,7 @@ class BaseEmitter(object):
 
     def __init__(self, resource):
         self.resource = resource
+        self.ext = str(self.media_type).split('/')[-1]
 
     def emit(self, content, request=None):
         if not isinstance(content, HttpResponse):
@@ -40,31 +43,37 @@ class TemplateEmitter(BaseEmitter):
         if isinstance(content, HttpResponse):
             return content
 
-        template = loader.get_template(self.get_template(content))
-        return template.render(RequestContext(request, dict(
+        template_name = self.resource.template or self.get_template_path(content)
+        template = loader.get_template(template_name)
+        content = template.render(RequestContext(request, dict(
                 content = content,
                 emitter = self,
                 resource = self.resource,
             )))
 
-    def get_template_dir(self):
-        path = 'api/%s/' % (getattr(self.resource, 'version', ''))
-        model = getattr(self.resource, 'model', None)
-        if model:
-            path += model._meta.app_label + '/'
-        return path
+        return content
 
-    def get_template(self, content=None):
-        if self.resource.template:
-            return self.resource.template
+    def get_template_path(self, content=None):
 
         if isinstance(content, Paginator):
-            template_name = 'api/paginator'
-        else:
-            template_name = self.get_template_dir() + self.resource.meta.name
+            return 'api/paginator.%s' % self.ext
 
-        template_name += '.%s' % self.media_type.split('/')[-1]
-        return template_name
+        app = ''
+        name = self.resource.meta.name
+
+        if not content:
+            content = self.resource.model
+
+        if isinstance(content, (Model, ModelBase)):
+            app = content._meta.app_label
+            name = content._meta.module_name
+
+        return op.join(
+            'api',
+            self.resource.version,
+            app,
+            "%s.%s" % (name, self.ext)
+        )
 
 
 class JSONTemplateEmitter(TemplateEmitter):
