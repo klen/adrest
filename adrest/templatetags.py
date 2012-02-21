@@ -5,6 +5,8 @@ from copy import copy
 
 register = Library()
 
+# Fix django templatetags module loader
+__path__ = ""
 
 class AdrestInclusionNode(Node):
 

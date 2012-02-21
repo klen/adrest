@@ -1,7 +1,7 @@
 CHANGES
 =======
 
-## 2012-02-17 1.0.5
+## 2012-02-17 1.0.6
 -------------------
 * More accurate html (@hogart)
 * Append ADREST temlatetags (adrest_include)
