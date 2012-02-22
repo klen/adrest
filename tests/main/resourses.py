@@ -40,7 +40,7 @@ class SomeOtherResource(ResourceView):
 class CustomResource(ResourceView):
     model = 'main.book'
     queryset = Book.objects.all()
-    template = 'api/custom.xml'
+    template = 'main/custom.xml'
 
     def get(self, request, **kwargs):
         return list(self.queryset)

@@ -68,8 +68,9 @@ class TemplateEmitter(BaseEmitter):
             app = content._meta.app_label
             name = content._meta.module_name
 
+        basedir = self.resource.api.prefix if getattr(self.resource, 'api', None) else 'api'
         return op.join(
-            'api',
+            basedir,
             self.resource.version,
             app,
             "%s.%s" % (name, self.ext)
