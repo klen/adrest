@@ -1,5 +1,6 @@
-from api import api
-from simple.api import API
+from simple.api import API as simple
+
+from .api import API as main
 
 
-urlpatterns = api.urls + API.urls
+urlpatterns = main.urls + simple.urls

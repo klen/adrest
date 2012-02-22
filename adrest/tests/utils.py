@@ -22,7 +22,7 @@ class AdrestTestCase(TestCase):
 
         kwargs = dict((k, getattr(v, "pk", v)) for k, v in kwargs.iteritems())
         name_ver = '' if not str(self.api) else '%s-' % str(self.api)
-        return reverse('api-%s%s' % (name_ver, urlname), kwargs=kwargs)
+        return reverse('%s-%s%s' % (self.api.prefix, name_ver, urlname), kwargs=kwargs)
 
     def get_resource(self, resource, method='get', data=None, key=None, headers=None, **kwargs):
         uri = self.reverse(resource, **kwargs)

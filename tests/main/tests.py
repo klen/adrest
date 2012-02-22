@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.test import TestCase, Client, RequestFactory
 from django.views.generic import View
 
-from .api import api
+from .api import API as api
 from .models import Author, Book, Article
 from .resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
 from adrest.mixin.emitter import EmitterMixin
@@ -93,7 +93,7 @@ class ApiTest(TestCase):
         self.assertEqual(str(api), "1.0.0")
         self.assertTrue(api.urls)
         urlpattern = api.urls[1]
-        self.assertEqual(urlpattern.name, "api-%s-%s" % (str(api), AuthorResource.meta.name ))
+        self.assertEqual(urlpattern.name, "main-%s-%s" % (str(api), AuthorResource.meta.name ))
 
 
 class AdrestTest(AdrestTestCase):
@@ -241,7 +241,7 @@ class AdrestMapTest(TestCase):
         self.client = Client()
 
     def test_methods(self):
-        uri = reverse("api-%s-apimap" % str(api))
+        uri = reverse("main-%s-apimap" % str(api))
         response = self.client.get(uri)
         self.assertContains(response, 'MAP')
         self.assertContains(response, 'nickname')

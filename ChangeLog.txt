@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-02-22 1.0.7
+-------------------
+* Add 'api_prefix' option to API
+
 ## 2012-02-17 1.0.6
 -------------------
 * More accurate html (@hogart)

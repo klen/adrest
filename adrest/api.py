@@ -14,9 +14,10 @@ class Api(object):
         Especially useful for navigation, HATEOAS and for providing multiple
         versions of your API.
     """
-    def __init__(self, version=None, show_map=True, **params):
+    def __init__(self, version=None, api_map=True, api_prefix='api', **params):
         self.version = version
-        self.show_map = show_map
+        self.show_map = api_map
+        self.prefix = api_prefix
         self.params = params
         self._map = dict()
 
@@ -60,7 +61,7 @@ class Api(object):
         if self.show_map:
             patterns.append(
                 # self top level map
-                url(r"^%s$" % url_vprefix, ApiMapResource.as_view(api=self), name="api-%s%s" % (name_vprefix, ApiMapResource.meta.urlname)),
+                url(r"^%s$" % url_vprefix, ApiMapResource.as_view(api=self), name="%s-%s%s" % (self.prefix, name_vprefix, ApiMapResource.meta.urlname)),
             )
 
         for urlname in sorted(self._map.keys()):
@@ -69,7 +70,7 @@ class Api(object):
 
             patterns.append(url('^%s%s' % (url_vprefix, urlregex),
                         resource.as_view(api=self),
-                        name='api-%s%s' % (name_vprefix, urlname)))
+                        name='%s-%s%s' % (self.prefix, name_vprefix, urlname)))
 
         return patterns
 

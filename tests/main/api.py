@@ -8,11 +8,10 @@ class CustomUserAuth(UserAuthenticator):
     username_fieldname = 'nickname'
 
 
-api = Api(version=(1, 0, 0), emitters=(XMLTemplateEmitter, JSONEmitter))
+API = Api(version=(1, 0, 0), emitters=(XMLTemplateEmitter, JSONEmitter), api_prefix='main')
 
-api.register(AuthorResource, authenticators=(AnonimousAuthenticator, CustomUserAuth))
-api.register(BookPrefixResource)
-api.register(ArticleResource, authenticators=AccessKeyAuthenticator)
-api.register(CustomResource)
-api.register(SomeOtherResource, urlname='test', urlregex='test/mem/$')
-
+API.register(AuthorResource, authenticators=(AnonimousAuthenticator, CustomUserAuth))
+API.register(BookPrefixResource)
+API.register(ArticleResource, authenticators=AccessKeyAuthenticator)
+API.register(CustomResource)
+API.register(SomeOtherResource, urlname='test', urlregex='test/mem/$')
