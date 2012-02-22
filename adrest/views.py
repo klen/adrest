@@ -63,10 +63,10 @@ class ResourceMetaClass(handler.HandlerMeta, throttle.ThrottleMeta, emitter.Emit
 
         methods = as_tuple(methods)
 
-        if settings.ALLOW_OPTIONS:
+        if not 'OPTIONS' in methods and settings.ALLOW_OPTIONS:
             methods += 'OPTIONS',
 
-        if 'GET' in methods:
+        if not 'HEAD' in methods and 'GET' in methods:
             methods += 'HEAD',
 
         return methods

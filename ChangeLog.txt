@@ -1,8 +1,8 @@
 CHANGES
 =======
 
-## 2012-02-22 1.0.10
--------------------
+## 2012-02-22 1.0.11
+--------------------
 * Add 'api_prefix' option to API
 * Fix templates
 * Append http HEAD method support by default

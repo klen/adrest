@@ -38,6 +38,9 @@ class MetaTest(TestCase):
 
     def test_meta(self):
         self.assertTrue(AuthorResource.meta)
+        self.assertEqual(AuthorResource.allowed_methods, (
+            'GET', 'POST', 'OPTIONS', 'HEAD'
+        ))
         self.assertEqual(AuthorResource.meta.name, 'author')
         self.assertEqual(AuthorResource.meta.url_name, 'author')
         self.assertEqual(AuthorResource.meta.url_regex, '^owner/$')
