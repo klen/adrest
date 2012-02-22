@@ -89,8 +89,6 @@ class ApiTest(TestCase):
         self.assertTrue(api.version)
         self.assertEqual(str(api), "1.0.0")
         self.assertTrue(api.urls)
-        urlpattern = api.urls[1]
-        self.assertEqual(urlpattern.name, "main-%s-%s" % (str(api), AuthorResource.meta.name ))
 
 
 class AdrestTest(AdrestTestCase):

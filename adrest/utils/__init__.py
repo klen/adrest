@@ -16,7 +16,7 @@ class MetaOptions(object):
         self.default_parser = None
 
     def __str__(self):
-        return "%(url_name)s(%(name)s) - %(url_regex)s %(parents)s %(models)s" % self.__dict__
+        return "%(url_name)s(%(name)s) - %(url_regex)s %(parents)s" % self.__dict__
 
     __repr__ = __str__
 

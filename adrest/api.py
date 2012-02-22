@@ -23,7 +23,7 @@ class Api(object):
         self.resources = dict()
 
         if api_map:
-            self.resources[MapResource.url_name] = MapResource
+            self.resources[MapResource.meta.url_name] = MapResource
 
         try:
             self.str_version = '.'.join(map(str, version or list()))

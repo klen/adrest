@@ -231,13 +231,13 @@ class ResourceView(handler.HandlerMixin,
             and Book with pk=2 has ForeignKey field linked to Author object with pk=1.
         """
 
-        resource = resources.get(cls.meta.name)
-        if cls.allow_public_access or not cls.parent or not resource:
+        if cls.allow_public_access or not cls.parent:
             return True
 
         cls.parent.check_owners(**resources)
 
-        if cls.model and cls.parent.model:
+        resource = resources.get(cls.meta.name)
+        if cls.model and cls.parent.model and resource:
             parent_resource = resources.get(cls.parent.meta.name)
             parent_resource_id = getattr(resource, "%s_id" % cls.parent.meta.name, None)
             try:
