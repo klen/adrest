@@ -10,8 +10,9 @@ class CustomUserAuth(UserAuthenticator):
 
 API = Api(version=(1, 0, 0), emitters=(XMLTemplateEmitter, JSONEmitter), api_prefix='main')
 
-API.register(AuthorResource, authenticators=(AnonimousAuthenticator, CustomUserAuth))
+API.register(AuthorResource,
+        authenticators=(CustomUserAuth, AnonimousAuthenticator))
 API.register(BookPrefixResource)
 API.register(ArticleResource, authenticators=AccessKeyAuthenticator)
 API.register(CustomResource)
-API.register(SomeOtherResource, urlname='test', urlregex='test/mem/$')
+API.register(SomeOtherResource, url_name='test', url_regex='test/mem/$')

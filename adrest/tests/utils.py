@@ -13,16 +13,15 @@ class AdrestTestCase(TestCase):
 
     def reverse(self, resource, **kwargs):
         if isinstance(resource, basestring):
-            urlname = resource
-            assert self.api._map.get(urlname), "Invalid resource name: %s" % urlname
-            _, resource = self.api._map.get(urlname)
+            url_name = resource
+            assert self.api.resources.get(url_name), "Invalid resource name: %s" % url_name
 
         else:
-            urlname = resource.meta.urlname
+            url_name = resource.meta.url_name
 
         kwargs = dict((k, getattr(v, "pk", v)) for k, v in kwargs.iteritems())
         name_ver = '' if not str(self.api) else '%s-' % str(self.api)
-        return reverse('%s-%s%s' % (self.api.prefix, name_ver, urlname), kwargs=kwargs)
+        return reverse('%s-%s%s' % (self.api.prefix, name_ver, url_name), kwargs=kwargs)
 
     def get_resource(self, resource, method='get', data=None, key=None, headers=None, **kwargs):
         uri = self.reverse(resource, **kwargs)

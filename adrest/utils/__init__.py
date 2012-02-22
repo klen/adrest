@@ -3,10 +3,9 @@ class MetaOptions(object):
 
     def __init__(self):
         self.name = ''
-        self.urlname = ''
-        self.urlregex = ''
+        self.url_name = ''
+        self.url_regex = ''
         self.parents = []
-        self.models = []
         self.model_fields = set()
 
         self.emitters_dict = dict()
@@ -17,6 +16,36 @@ class MetaOptions(object):
         self.default_parser = None
 
     def __str__(self):
-        return "%(urlname)s(%(name)s) - %(urlregex)s %(parents)s %(models)s" % self.__dict__
+        return "%(url_name)s(%(name)s) - %(url_regex)s %(parents)s %(models)s" % self.__dict__
 
     __repr__ = __str__
+
+
+def gen_url_name(resource):
+    if resource.parent:
+        yield resource.parent.meta.url_name
+
+    if resource.prefix:
+        yield resource.prefix
+
+    for p in resource.url_params:
+        yield p
+
+    yield resource.meta.name
+
+
+def gen_url_regex(resource):
+    for r in resource.meta.parents:
+        if r.url_regex:
+            yield r.url_regex.rstrip('/$').lstrip('^')
+        else:
+            yield '%(name)s/(?P<%(name)s>[^/]+)' % dict(
+                    name = r.meta.name)
+
+    for p in resource.url_params:
+        yield '%(name)s/(?P<%(name)s>[^/]+)' % dict(name = p)
+
+    if resource.prefix:
+        yield resource.prefix
+
+    yield '%(name)s/(?:(?P<%(name)s>[^/]+)/)?' % dict(name = resource.meta.name)

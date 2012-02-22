@@ -9,7 +9,7 @@ from django.test import TestCase, Client, RequestFactory
 from django.views.generic import View
 
 from .api import API as api
-from .models import Author, Book, Article
+from .models import Author, Book
 from .resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
 from adrest.mixin.emitter import EmitterMixin
 from adrest.models import Access
@@ -39,10 +39,9 @@ class MetaTest(TestCase):
     def test_meta(self):
         self.assertTrue(AuthorResource.meta)
         self.assertEqual(AuthorResource.meta.name, 'author')
-        self.assertEqual(AuthorResource.meta.urlname, 'author')
-        self.assertEqual(AuthorResource.meta.urlregex, 'author/(?:(?P<author>[^/]+)/)?$')
+        self.assertEqual(AuthorResource.meta.url_name, 'author')
+        self.assertEqual(AuthorResource.meta.url_regex, '^owner/$')
         self.assertEqual(AuthorResource.meta.parents, [])
-        self.assertEqual(AuthorResource.meta.models, [Author])
         self.assertEqual(AuthorResource.meta.emitters_dict, {
             emitter.JSONEmitter.media_type: emitter.JSONEmitter,
         })
@@ -62,28 +61,23 @@ class MetaTest(TestCase):
         self.assertEqual(BookPrefixResource.meta.parents, [AuthorResource])
         self.assertEqual(ArticleResource.meta.parents, [AuthorResource, BookPrefixResource])
 
-    def test_meta_models(self):
-        self.assertEqual(AuthorResource.meta.models, [Author])
-        self.assertEqual(BookPrefixResource.meta.models, [Author, Book])
-        self.assertEqual(ArticleResource.meta.models, [Author, Book, Article])
-
     def test_meta_name(self):
         self.assertEqual(AuthorResource.meta.name, 'author')
         self.assertEqual(BookPrefixResource.meta.name, 'book')
         self.assertEqual(SomeOtherResource.meta.name, 'someother')
 
-    def test_meta_urlname(self):
-        self.assertEqual(AuthorResource.meta.urlname, 'author')
-        self.assertEqual(BookResource.meta.urlname, 'author-book')
-        self.assertEqual(BookPrefixResource.meta.urlname, 'author-test-book')
-        self.assertEqual(ArticleResource.meta.urlname, 'author-test-book-article')
-        self.assertEqual(SomeOtherResource.meta.urlname, 'author-device-someother')
+    def test_meta_url_name(self):
+        self.assertEqual(AuthorResource.meta.url_name, 'author')
+        self.assertEqual(BookResource.meta.url_name, 'author-book')
+        self.assertEqual(BookPrefixResource.meta.url_name, 'author-test-book')
+        self.assertEqual(ArticleResource.meta.url_name, 'author-test-book-article')
+        self.assertEqual(SomeOtherResource.meta.url_name, 'author-device-someother')
 
-    def test_meta_urlregex(self):
-        self.assertEqual(AuthorResource.meta.urlregex, 'author/(?:(?P<author>[^/]+)/)?$')
-        self.assertEqual(BookPrefixResource.meta.urlregex, 'author/(?P<author>[^/]+)/test/book/(?:(?P<book>[^/]+)/)?$')
-        self.assertEqual(ArticleResource.meta.urlregex, 'author/(?P<author>[^/]+)/book/(?P<book>[^/]+)/article/(?:(?P<article>[^/]+)/)?$')
-        self.assertEqual(SomeOtherResource.meta.urlregex, 'author/(?P<author>[^/]+)/device/(?P<device>[^/]+)/someother/(?:(?P<someother>[^/]+)/)?$')
+    def test_meta_url_regex(self):
+        self.assertEqual(AuthorResource.meta.url_regex, '^owner/$')
+        self.assertEqual(BookPrefixResource.meta.url_regex, 'owner/test/book/(?:(?P<book>[^/]+)/)?')
+        self.assertEqual(ArticleResource.meta.url_regex, 'owner/book/(?P<book>[^/]+)/article/(?:(?P<article>[^/]+)/)?')
+        self.assertEqual(SomeOtherResource.meta.url_regex, 'owner/device/(?P<device>[^/]+)/someother/(?:(?P<someother>[^/]+)/)?')
 
 
 class ApiTest(TestCase):
@@ -108,32 +102,41 @@ class AdrestTest(AdrestTestCase):
 
     def test_methods(self):
         uri = self.reverse('author')
-        self.assertEqual(uri, '/1.0.0/author/')
+        self.assertEqual(uri, '/1.0.0/owner')
         response = self.client.get(uri)
         self.assertContains(response, 'true')
 
         response = self.client.put(uri)
         self.assertContains(response, 'false', status_code=405)
 
+        response = self.client.head(uri)
+        self.assertEqual(response.status_code, 200)
+
     def test_owner(self):
-        response = self.get_resource('author-test-book-article', author=self.author.pk, book=self.book.pk)
+        response = self.get_resource('author-test-book-article', book=self.book.pk, data=dict(
+            author = self.author.pk
+        ))
         self.assertContains(response, 'false', status_code=401)
 
         response = self.get_resource('author-test-book-article', key = self.author.user.accesskey_set.get(),
-                author=self.author.pk, book=self.book.pk)
+                book=self.book.pk, data=dict(
+                    author = self.author.pk
+                ))
         self.assertContains(response, 'true')
 
     def test_log(self):
-        uri = self.reverse('author-test-book-article', author=self.author.pk, book=self.book.pk)
+        uri = self.reverse('author-test-book-article', book=self.book.pk)
         self.client.get(uri)
         access = Access.objects.get()
         self.assertEqual(access.uri, uri)
         self.assertEqual(access.version, str(api))
 
     def test_options(self):
-        uri = self.reverse('author-test-book-article', author=self.author.pk, book=self.book.pk)
         self.assertTrue('OPTIONS' in ArticleResource.allowed_methods)
-        response = self.client.options(uri)
+        uri = self.reverse('author-test-book-article', book=self.book.pk)
+        response = self.client.options(uri, data=dict(
+            author = self.author.pk,
+        ))
         self.assertContains(response, 'OK')
 
 
@@ -158,31 +161,49 @@ class ResourceTest(AdrestTestCase):
         self.assertContains(response, 'new author')
 
     def test_book(self):
-        response = self.get_resource('author-test-book', author=self.author)
+        uri = self.reverse('author-test-book')
+        self.assertEqual(uri, "/1.0.0/owner/test/book/")
+
+        response = self.get_resource('author-test-book', data=dict(
+            author = self.author.pk
+        ))
         self.assertContains(response, 'count="%s"' % Book.objects.filter(author=self.author).count())
         self.assertContains(response, '<name>%s</name>' % self.author.name)
 
-        response = self.post_resource('author-test-book', author = self.author, data=dict(title = "new book", status=2))
+        response = self.post_resource('author-test-book', data=dict(
+            title = "new book",
+            status=2,
+            author = self.author.pk))
         self.assertContains(response, '<price>0</price>')
 
-        response = self.put_resource('author-test-book', author = self.author, book = 1, data=dict(price = 100))
+        uri = self.reverse('author-test-book', book=1)
+        uri = "%s?author=%s" % (uri, self.author.pk)
+        response = self.client.put(uri, data=dict(
+            price = 100
+        ))
         self.assertContains(response, '<price>100</price>')
 
-        response = self.delete_resource('author-test-book', author=self.author, book=1)
+        response = self.client.delete(uri)
         self.assertContains(response, 'Book has been deleted.')
 
     def test_filter(self):
-        uri = self.reverse('author-test-book', author=self.author)
-        response = self.client.get(uri, data=dict(title="book2"))
+        uri = self.reverse('author-test-book')
+        response = self.client.get(uri, data=dict(
+            author = self.author.pk,
+            title="book2"))
         self.assertContains(response, 'count="1"')
 
-        response = self.client.get(uri, data=dict(status=[1, 2, 3]))
+        response = self.client.get(uri, data=dict(
+            author = self.author.pk,
+            status=[1, 2, 3]))
         self.assertContains(response, 'count="%s"' % Book.objects.all().count())
 
-        response = self.client.get(uri, data=dict(status=[1, 3]))
+        response = self.client.get(uri, data=dict(
+            author = self.author.pk,
+            status=[1, 3]))
         self.assertNotContains(response, '<status>2</status>')
 
-        response = self.client.get(uri + "?title=book2&title=book3")
+        response = self.client.get(uri + "?title=book2&title=book3&author=%s" % self.author.pk)
         self.assertContains(response, 'count="2"')
 
     def test_custom(self):
@@ -193,17 +214,17 @@ class ResourceTest(AdrestTestCase):
         response = self.client.get(uri)
         self.assertContains(response, 'count="%s"' % Book.objects.all().count())
 
-        response = self.delete_resource('author-test-book-article', key = self.author.user.accesskey_set.get(),
-                author=self.author.pk, book=book.pk)
+        uri = self.reverse('author-test-book-article', book=book.pk) + "?author=" + str(self.author.pk)
+        response = self.client.delete(uri,
+                HTTP_AUTHORIZATION=self.author.user.accesskey_set.get().key)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[-1].subject, '[Django] ADREST API Error (500): /1.0.0/author/5/book/%s/article/' % Book.objects.all().count())
+        self.assertEqual(mail.outbox[-1].subject, '[Django] ADREST API Error (500): /1.0.0/owner/book/%s/article/' % Book.objects.all().count())
 
         self.assertContains(response, 'Some error', status_code=500)
 
-        response = self.put_resource('author-test-book-article', key = self.author.user.accesskey_set.get(),
-                author=self.author.pk, book=book.pk)
+        response = self.client.put(uri, HTTP_AUTHORIZATION=self.author.user.accesskey_set.get().key)
         self.assertEqual(len(mail.outbox), 2)
-        self.assertEqual(mail.outbox[-1].subject, '[Django] ADREST API Error (400): /1.0.0/author/5/book/%s/article/' % Book.objects.all().count())
+        self.assertEqual(mail.outbox[-1].subject, '[Django] ADREST API Error (400): /1.0.0/owner/book/%s/article/' % Book.objects.all().count())
         self.assertContains(response, 'Assertion error', status_code=400)
 
     def test_some_other(self):
@@ -219,19 +240,19 @@ class ResourceTest(AdrestTestCase):
         """
         link_re = re.compile(r'<(?P<link>[^>]+)>\; rel=\"(?P<rel>[^\"]+)\"')
 
-        response = self.get_resource('author-test-book', author=self.author)
+        response = self.get_resource('author-test-book',
+                data=dict(author = self.author.pk))
         self.assertTrue(response.has_header("Link"))
-        self.assertEquals(response["Link"], '<%s?page=2>; rel="next"' % self.reverse('author-test-book',
-                                                                                     author=self.author))
+        self.assertEquals(response["Link"], '<%s?page=2&author=5>; rel="next"' % self.reverse('author-test-book'))
         # Get objects by links on Link header
         response = self.client.get(link_re.findall(response['Link'])[0][0])
 
         links = link_re.findall(response['Link'])
 
-        self.assertEquals(links[0][0], '%s?page=3' % self.reverse('author-test-book', author=self.author))
+        self.assertEquals(links[0][0], '%s?page=3&author=5' % self.reverse('author-test-book'))
         self.assertEquals(links[0][1], 'next')
 
-        self.assertEquals(links[1][0], '%s?' % self.reverse('author-test-book', author=self.author))
+        self.assertEquals(links[1][0], '%s?author=5' % self.reverse('author-test-book'))
         self.assertEquals(links[1][1], 'previous')
 
 
@@ -241,7 +262,8 @@ class AdrestMapTest(TestCase):
         self.client = Client()
 
     def test_methods(self):
-        uri = reverse("main-%s-apimap" % str(api))
+        uri = reverse("main-%s-map" % str(api))
+        self.assertEqual(uri, "/%s/map" % api)
         response = self.client.get(uri)
         self.assertContains(response, 'MAP')
         self.assertContains(response, 'nickname')

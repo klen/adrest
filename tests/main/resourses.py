@@ -5,6 +5,7 @@ from adrest.views import ResourceView
 class AuthorResource(ResourceView):
     allowed_methods = 'GET', 'POST'
     model = 'main.author'
+    url_regex = '^owner/$'
 
 
 class BookResource(ResourceView):
@@ -31,7 +32,7 @@ class ArticleResource(ResourceView):
 
 class SomeOtherResource(ResourceView):
     parent = AuthorResource
-    uri_params = 'device',
+    url_params = 'device',
 
     def get(self, request, **kwargs):
         return True

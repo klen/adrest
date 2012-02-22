@@ -51,7 +51,8 @@ class HandlerMixin(object):
     form_fields = None
     form_exclude = None
     callmap = { 'GET': 'get', 'POST': 'post',
-                'PUT': 'put', 'DELETE': 'delete', 'OPTIONS': 'options' }
+                'PUT': 'put', 'DELETE': 'delete',
+                'OPTIONS': 'options', 'HEAD': 'head' }
 
     def __init__(self, *args, **kwargs):
         super(HandlerMixin, self).__init__(*args, **kwargs)
@@ -59,34 +60,41 @@ class HandlerMixin(object):
         if not self.queryset is None:
             self.queryset = self.queryset.all()
 
-    def get(self, request, instance=None, **kwargs):
+    @staticmethod
+    def head(*args, **kwargs):
+        return HttpResponse()
+
+    def get(self, request, **resources):
         assert self.model, "This auto method required in model."
+        instance = resources.get(self.meta.name)
         if instance:
             return instance
 
-        return self.paginate(request, self.get_queryset(request, **kwargs))
+        return self.paginate(request, self.get_queryset(request, **resources))
 
-    def post(self, request, **kwargs):
-        form = self.form(data=request.data, **kwargs)
+    def post(self, request, **resources):
+        form = self.form(data=request.data, **resources)
         if form.is_valid():
             return form.save()
         raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, instance=None, **kwargs):
+    def put(self, request, **resources):
+        instance = resources.get(self.meta.name)
         if not instance:
             raise HttpError("Bad request", status=status.HTTP_404_NOT_FOUND)
 
-        form = self.form(data=request.data, instance=instance, **kwargs)
+        form = self.form(data=request.data, instance=instance, **resources)
         if form.is_valid():
             return form.save()
 
         raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, instance=None, **kwargs):
+    def delete(self, request, **resources):
+        instance = resources.get(self.meta.name)
         if not instance:
             raise HttpError("Bad request", status=status.HTTP_400_BAD_REQUEST)
 
-        for name, owner in kwargs.items():
+        for name, owner in resources.items():
             if hasattr(instance, '%s_id' % name):
                 assert owner.pk == getattr(instance, '%s_id' % name)
         instance.delete()

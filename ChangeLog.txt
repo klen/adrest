@@ -1,10 +1,14 @@
 CHANGES
 =======
 
-## 2012-02-22 1.0.9
+## 2012-02-22 1.0.10
 -------------------
 * Add 'api_prefix' option to API
 * Fix templates
+* Append http HEAD method support by default
+* New resource method: as_url
+* Resources now parse from URL and GET
+* get_resources_from_uri -> get_resources
 
 ## 2012-02-17 1.0.6
 -------------------

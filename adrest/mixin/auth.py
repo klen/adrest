@@ -46,10 +46,9 @@ class AuthMixin(object):
     def check_rights(self, resources, request=None):
         " Check rights of client for queried resources "
 
-        if self.auth:
-            mresources = filter(None, (resources.get(m._meta.module_name) for m in self.meta.models))
-            try:
-                assert self.auth.test_rights(mresources, request=request)
-            except AssertionError:
-                raise HttpError("Access forbidden.", status=status.HTTP_403_FORBIDDEN)
-        return True
+        if not self.auth:
+            return True
+        try:
+            assert self.auth.test_rights(resources, request=request)
+        except AssertionError:
+            raise HttpError("Access forbidden.", status=status.HTTP_403_FORBIDDEN)
