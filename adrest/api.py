@@ -1,6 +1,7 @@
 import logging
 
-from django.conf.urls.defaults import url
+from django.conf.urls.defaults import url, patterns
+
 from adrest.views import ApiMapResource, ResourceView
 
 
@@ -51,7 +52,7 @@ class Api(object):
             ``Resources`` beneath it.
         """
 
-        patterns = []
+        urls = []
         url_vprefix = name_vprefix = ''
 
         if self.str_version:
@@ -59,7 +60,7 @@ class Api(object):
             name_vprefix = '%s-' % self.str_version
 
         if self.show_map:
-            patterns.append(
+            urls.append(
                 # self top level map
                 url(r"^%s$" % url_vprefix, ApiMapResource.as_view(api=self), name="%s-%s%s" % (self.prefix, name_vprefix, ApiMapResource.meta.urlname)),
             )
@@ -68,11 +69,11 @@ class Api(object):
 
             urlregex, resource = self._map[urlname]
 
-            patterns.append(url('^%s%s' % (url_vprefix, urlregex),
+            urls.append(url('^%s%s' % (url_vprefix, urlregex),
                         resource.as_view(api=self),
                         name='%s-%s%s' % (self.prefix, name_vprefix, urlname)))
 
-        return patterns
+        return patterns(self.prefix, *urls)
 
     def __str__(self):
         return self.str_version
