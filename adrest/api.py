@@ -40,6 +40,7 @@ class Api(object):
         params = dict(self.params, **params)
         if params:
             params['name'] = ''.join(bit for bit in resource.__name__.split('Resource') if bit).lower()
+            params['__module__'] = '%s.%s' % (self.prefix, self.str_version.replace('.', '_'))
             resource = type('%s%s' % (resource.__name__, len(self.resources)), (resource,), params)
 
         if self.resources.get(resource.meta.url_name):

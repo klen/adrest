@@ -134,7 +134,7 @@ class ResourceView(handler.HandlerMixin,
             self.throttle_check()
 
             # Get required resources
-            resources = self.get_resources(request, **resources)
+            resources = self.get_resources(request, resource=self, **resources)
 
             # Check owners
             self.check_owners(**resources)
@@ -198,12 +198,12 @@ class ResourceView(handler.HandlerMixin,
             raise HttpError('Method \'%s\' not allowed on this resource.' % method, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @classmethod
-    def get_resources(cls, request, **resources):
+    def get_resources(cls, request, resource=None, **resources):
         " Parse resource objects from URL and GET. "
 
         # Get from parent
         if cls.parent:
-            resources = cls.parent.get_resources(request, **resources)
+            resources = cls.parent.get_resources(request, resource=resource, **resources)
 
         pk = resources.get(cls.meta.name) or request.GET.get(cls.meta.name)
         if not cls.model or not pk:
