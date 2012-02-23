@@ -1,7 +1,7 @@
 CHANGES
 =======
 
-## 2012-02-23 1.0.14
+## 2012-02-23 1.0.15
 --------------------
 * Add 'api_prefix' option to API
 * Fix templates
