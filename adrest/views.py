@@ -272,6 +272,7 @@ class ResourceView(handler.HandlerMixin,
         name_prefix = name_prefix and "%s-" % name_prefix
 
         url_regex = '^%s%s$' % (url_prefix, cls.meta.url_regex.lstrip('^').rstrip('/$'))
+        url_regex = url_regex.replace('//', '/')
         url_name = '%s%s' % (name_prefix, cls.meta.url_name)
 
         return url(url_regex, cls.as_view(api=api), name = url_name)
