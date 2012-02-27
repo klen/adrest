@@ -95,6 +95,11 @@ class ApiTest(AdrestTestCase):
     def test_urls(self):
         uri = self.reverse('test')
         self.assertEqual(uri, '/1.0.0/test/mem')
+        response = self.client.get('/1.0.0/test/mem')
+        self.assertContains(response, 'true')
+
+        response = self.client.get('/1.0.0/test/mem/')
+        self.assertContains(response, 'true')
 
 
 class AdrestTest(AdrestTestCase):
