@@ -43,7 +43,7 @@ META_DATA = dict(
     packages=find_packages(),
     package_data = { '': PACKAGE_DATA, },
 
-    install_requires = ('mimeparse',),
+    install_requires = ('mimeparse', 'Django>=1.3.0'),
     test_suite = '__main__.run_tests'
 )
 

@@ -1,7 +1,7 @@
 CHANGES
 =======
 
-## 2012-02-27 1.0.17
+## 2012-02-27 1.0.18
 --------------------
 * More information in adrest signals.
 * Fix API urls
