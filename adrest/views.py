@@ -183,7 +183,7 @@ class ResourceView(handler.HandlerMixin,
         errors_mail(response, request)
 
         # Send finished signal
-        api_request_finished.send(self, request=request, response=response)
+        api_request_finished.send(self, request=request, response=response, **resources)
 
         return response
 

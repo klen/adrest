@@ -83,12 +83,18 @@ class MetaTest(TestCase):
         self.assertEqual(SomeOtherResource.meta.url_regex, 'owner/device/(?P<device>[^/]+)/someother/(?:(?P<someother>[^/]+)/)?')
 
 
-class ApiTest(TestCase):
+class ApiTest(AdrestTestCase):
+
+    api = api
 
     def test_api(self):
         self.assertTrue(api.version)
         self.assertEqual(str(api), "1.0.0")
         self.assertTrue(api.urls)
+
+    def test_urls(self):
+        uri = self.reverse('test')
+        self.assertEqual(uri, '/1.0.0/test/mem')
 
 
 class AdrestTest(AdrestTestCase):

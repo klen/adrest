@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-02-27 1.0.16
+--------------------
+* More information in adrest signals.
+
 ## 2012-02-23 1.0.15
 --------------------
 * Add 'api_prefix' option to API

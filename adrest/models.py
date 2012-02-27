@@ -41,18 +41,20 @@ if settings.ACCESS_LOG:
         date_hierarchy = 'created_at'
     admin.site.register(Access, AccessAdmin)
 
-    def save_log(sender, response=None, request=None, **kwargs):
+    def save_log(sender, response=None, request=None, **resources):
 
-        if not sender.log:
+        resource = sender
+
+        if not resource.log:
             return
 
         Access.objects.create(
             uri = request.path_info,
             method = request.method,
-            version = str(sender.api),
+            version = str(resource.api),
             status_code = response.status_code,
             request = '%s\n\n%s' % (str(request.META), str(getattr(request, 'data', ''))),
-            identifier = sender.identifier or '',
+            identifier = resource.identifier or '',
             response = response.content.decode('utf-8')[:5000],
         )
 

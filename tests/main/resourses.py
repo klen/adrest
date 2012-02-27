@@ -30,6 +30,14 @@ class ArticleResource(ResourceView):
         raise Exception("Some error")
 
 
+class OtherResource(ResourceView):
+    parent = BookResource
+    url_prefix = 'other'
+
+    def get(self, request, **kwargs):
+        return True
+
+
 class SomeOtherResource(ResourceView):
     parent = AuthorResource
     url_params = 'device',
