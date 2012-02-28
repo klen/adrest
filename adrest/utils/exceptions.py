@@ -1,14 +1,14 @@
-from . import status as http_status
+from .status import HTTP_400_BAD_REQUEST
 
 
 class HttpError(Exception):
-    """ Represent Http Error.
-    """
-    def __init__(self, message, status=http_status.HTTP_400_BAD_REQUEST):
-        self.message, self.status = message, status
-        super(HttpError, self).__init__(message)
+    " Represent HTTP Error. "
+
+    def __init__(self, content, status=HTTP_400_BAD_REQUEST, emitter=None):
+        self.content, self.status, self.emitter = content, status, emitter
+        super(HttpError, self).__init__(content)
 
     def __str__(self):
-        return self.message
+        return self.content
 
     __repr__ = __str__

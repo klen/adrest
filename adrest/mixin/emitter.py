@@ -1,8 +1,10 @@
 import mimeparse
+from django.http import HttpResponse
 
 from adrest.utils import MetaOptions
 from adrest.utils.emitter import JSONEmitter, BaseEmitter
 from adrest.utils.tools import as_tuple
+from adrest.utils.paginator import Paginator
 
 
 class EmitterMeta(type):
@@ -32,9 +34,22 @@ class EmitterMixin(object):
 
         # Get emitter for request
         emitter = emitter or self._determine_emitter(request)
+        emitter = emitter(self, request=request, response=content)
 
         # Serialize the response content
-        return emitter(self).emit(content, request=request)
+        response = emitter.emit()
+        assert isinstance(response, HttpResponse), "Emitter must return HttpResponse"
+
+        # Append pagination headers
+        if isinstance(content, Paginator):
+            linked_resources = []
+            if content.next:
+                linked_resources.append('<%s>; rel="next"' % content.next)
+            if content.previous:
+                linked_resources.append('<%s>; rel="previous"' % content.previous)
+            response["Link"] = ", ".join(linked_resources)
+
+        return response
 
     def _determine_emitter(self, request):
         " Return must fine emitter for request "

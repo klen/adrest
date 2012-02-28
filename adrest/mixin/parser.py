@@ -26,16 +26,18 @@ class ParserMixin(object):
 
     def parse(self, request):
         " Parse request content "
+        if request.method in ('POST', 'PUT'):
+            content_type = self.determine_content(request)
+            if content_type:
+                split = content_type.split(';', 1)
+                if len(split) > 1:
+                    content_type = split[0]
+                content_type = content_type.strip()
 
-        content_type = self.determine_content(request)
-        if content_type:
-            split = content_type.split(';', 1)
-            if len(split) > 1:
-                content_type = split[0]
-            content_type = content_type.strip()
-
-        parser = self.meta.parsers_dict.get(content_type, self.meta.default_parser)
-        return parser(self).parse(request)
+            parser = self.meta.parsers_dict.get(content_type, self.meta.default_parser)
+            data = parser(self).parse(request)
+            return dict() if isinstance(data, basestring) else data
+        return dict()
 
     @staticmethod
     def determine_content(request):

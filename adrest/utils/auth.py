@@ -32,7 +32,8 @@ class AnonimousAuthenticator(BaseAuthenticator):
     " Always return true "
     __metaclass__ = type('MetaAnonimous', (type,), dict(__str__ = lambda m: "Anonymous access"))
 
-    def get_identifier(self, request=None):
+    @staticmethod
+    def get_identifier(request):
         return request.META.get('REMOTE_ADDR', 'anonymous')
 
 

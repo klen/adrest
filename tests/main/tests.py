@@ -124,19 +124,17 @@ class AdrestTest(AdrestTestCase):
         response = self.client.head(uri)
         self.assertEqual(response.status_code, 200)
 
-    def test_owner(self):
+    def test_owners_checking(self):
         response = self.get_resource('author-test-book-article', book=self.book.pk, data=dict(
             author = self.author.pk
         ))
         self.assertContains(response, 'false', status_code=401)
 
         response = self.get_resource('author-test-book-article', key = self.author.user.accesskey_set.get(),
-                book=self.book.pk, data=dict(
-                    author = self.author.pk
-                ))
+                book=self.book.pk, data=dict(author = self.author.pk))
         self.assertContains(response, 'true')
 
-    def test_log(self):
+    def test_access_logging(self):
         uri = self.reverse('author-test-book-article', book=self.book.pk)
         self.client.get(uri)
         access = Access.objects.get()
@@ -146,10 +144,8 @@ class AdrestTest(AdrestTestCase):
     def test_options(self):
         self.assertTrue('OPTIONS' in ArticleResource.allowed_methods)
         uri = self.reverse('author-test-book-article', book=self.book.pk)
-        response = self.client.options(uri, data=dict(
-            author = self.author.pk,
-        ))
-        self.assertContains(response, 'OK')
+        response = self.client.options(uri, data=dict(author = self.author.pk))
+        self.assertContains(response, 'Options OK')
 
 
 class ResourceTest(AdrestTestCase):
@@ -229,15 +225,17 @@ class ResourceTest(AdrestTestCase):
         uri = self.reverse('author-test-book-article', book=book.pk) + "?author=" + str(self.author.pk)
         response = self.client.delete(uri,
                 HTTP_AUTHORIZATION=self.author.user.accesskey_set.get().key)
+        self.assertContains(response, 'Some error', status_code=500)
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[-1].subject, '[Django] ADREST API Error (500): /1.0.0/owner/book/%s/article/' % Book.objects.all().count())
 
-        self.assertContains(response, 'Some error', status_code=500)
-
         response = self.client.put(uri, HTTP_AUTHORIZATION=self.author.user.accesskey_set.get().key)
+        self.assertContains(response, 'Assertion error', status_code=400)
         self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(mail.outbox[-1].subject, '[Django] ADREST API Error (400): /1.0.0/owner/book/%s/article/' % Book.objects.all().count())
-        self.assertContains(response, 'Assertion error', status_code=400)
+
+        response = self.post_resource('book')
+        self.assertContains(response, '{"error": true}', status_code=400)
 
     def test_some_other(self):
         response = self.get_resource('test')

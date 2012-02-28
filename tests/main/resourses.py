@@ -1,4 +1,6 @@
 from .models import Book
+from adrest.utils.emitter import JSONEmitter
+from adrest.utils.exceptions import HttpError
 from adrest.views import ResourceView
 
 
@@ -47,9 +49,13 @@ class SomeOtherResource(ResourceView):
 
 
 class CustomResource(ResourceView):
+    allowed_methods = 'GET', 'POST'
     model = 'main.book'
     queryset = Book.objects.all()
     template = 'main/custom.xml'
 
     def get(self, request, **kwargs):
         return list(self.queryset)
+
+    def post(self, request, **resources):
+        raise HttpError(dict(error=True), status=400, emitter=JSONEmitter)

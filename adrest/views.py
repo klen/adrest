@@ -11,10 +11,10 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
-from .utils import status, MetaOptions, gen_url_name, gen_url_regex
+from .utils import status, MetaOptions
 from .utils.exceptions import HttpError
-from .utils.paginator import Paginator
-from .utils.tools import as_tuple
+from .utils.tools import as_tuple, gen_url_name, gen_url_regex
+from .utils.response import SerializedHttpResponse
 from adrest import settings
 from adrest.mixin import auth, emitter, handler, parser, throttle
 from adrest.signals import api_request_started, api_request_finished
@@ -128,11 +128,7 @@ class ResourceView(handler.HandlerMixin,
             self.check_method_allowed(method)
 
             # Authentificate
-            # We do not restrict access for OPTIONS request.
-            if method == 'OPTIONS' and settings.ALLOW_OPTIONS:
-                self.identifier = 'anonymous'
-            else:
-                self.identifier = self.authenticate(request)
+            self.identifier = self.authenticate(request)
 
             # Throttle check
             self.throttle_check()
@@ -147,43 +143,31 @@ class ResourceView(handler.HandlerMixin,
             self.check_rights(resources, request=request)
 
             # Parse content
-            if method in ('POST', 'PUT'):
-                request.data = self.parse(request)
-                if isinstance(request.data, basestring):
-                    request.data = dict()
+            request.data = self.parse(request)
 
             # Get the appropriate create/read/update/delete function
-            func = getattr(self, self.callmap.get(method, None))
+            view = getattr(self, self.callmap.get(method, None))
 
             # Get function data
-            content = func(request, **resources)
+            response = view(request, **resources)
 
             # Serialize response
-            response = self.emit(content, request=request)
-            try:
-                response["Allow"] = ', '.join(self.allowed_methods),
-                response["Vary"] = 'Authenticate, Accept'
+            response = self.emit(response, request=request)
+            response["Allow"] = ', '.join(self.allowed_methods),
+            response["Vary"] = 'Authenticate, Accept'
 
-                # Add pagination headers
-                # http://www.w3.org/Protocols/9707-link-header.html
-                if isinstance(content, Paginator):
-                    linked_resources = []
-                    if content.next:
-                        linked_resources.append('<%s>; rel="next"' % content.next)
-                    if content.previous:
-                        linked_resources.append('<%s>; rel="previous"' % content.previous)
-                    response["Link"] = ", ".join(linked_resources)
+        except HttpError, e:
+            response = SerializedHttpResponse(e.content, status=e.status)
+            response = self.emit(response, request=request, emitter=e.emitter)
 
-            except TypeError:
-                raise ValueError("Emitter must return HttpResponse")
-
-        except (HttpError, AssertionError, ValidationError), e:
-            response = HttpResponse(unicode(e), status=getattr(e, 'status', status.HTTP_400_BAD_REQUEST))
+        except (AssertionError, ValidationError), e:
+            response = SerializedHttpResponse(unicode(e), status=status.HTTP_400_BAD_REQUEST)
             response = self.emit(response, request=request)
 
         except Exception, e:
             response = self.handle_exception(e, request=request)
 
+        # Send errors on mail
         errors_mail(response, request)
 
         # Send finished signal
@@ -199,10 +183,12 @@ class ResourceView(handler.HandlerMixin,
         """ Ensure the request HTTP method is permitted for this resource, raising a ResourceException if it is not.
         """
         if not method in cls.callmap.keys():
-            raise HttpError('Unknown or unsupported method \'%s\'' % method, status=status.HTTP_501_NOT_IMPLEMENTED)
+            raise HttpError('Unknown or unsupported method \'%s\'' % method,
+                    status=status.HTTP_501_NOT_IMPLEMENTED)
 
         if not method in cls.allowed_methods:
-            raise HttpError('Method \'%s\' not allowed on this resource.' % method, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            raise HttpError('Method \'%s\' not allowed on this resource.' % method,
+                    status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @classmethod
     def get_resources(cls, request, resource=None, **resources):
@@ -220,10 +206,12 @@ class ResourceView(handler.HandlerMixin,
             resources[cls.meta.name] = cls.model.objects.get(pk = pk)
 
         except (ObjectDoesNotExist, ValueError):
-            raise HttpError("Resource not found.", status=status.HTTP_404_NOT_FOUND)
+            raise HttpError("Resource not found.",
+                    status=status.HTTP_404_NOT_FOUND)
 
         except MultipleObjectsReturned:
-            raise HttpError("Resources conflict.", status=status.HTTP_409_CONFLICT)
+            raise HttpError("Resources conflict.",
+                    status=status.HTTP_409_CONFLICT)
 
         return resources
 
@@ -251,20 +239,19 @@ class ResourceView(handler.HandlerMixin,
                 assert parent_resource and parent_resource.pk == parent_resource_id
             except AssertionError:
                 # 403 Error if there is error in parent-children relationship
-                raise HttpError("Access forbidden.", status=status.HTTP_403_FORBIDDEN)
+                raise HttpError("Access forbidden.",
+                        status=status.HTTP_403_FORBIDDEN)
 
         return True
 
     @staticmethod
-    def handle_exception(e, request=None, exc_info=None):
+    def handle_exception(e, request=None):
         """ Handle code exception.
         """
         if settings.DEBUG:
             raise
 
-        logger.warning('ADREST API Error: %s' % request.path,
-            exc_info=exc_info
-        )
+        logger.exception('\nADREST API Error: %s' % request.path)
 
         return HttpResponse(str(e), status=500)
 

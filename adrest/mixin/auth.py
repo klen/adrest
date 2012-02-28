@@ -1,4 +1,5 @@
 from adrest.utils import status
+from adrest import settings
 from adrest.utils.auth import AnonimousAuthenticator, BaseAuthenticator
 from adrest.utils.exceptions import HttpError
 from adrest.utils.tools import as_tuple
@@ -32,6 +33,9 @@ class AuthMixin(object):
         """ Attempt to authenticate the request, returning an authentication context or None.
             An authentication context may be any object, although in many cases it will simply be a :class:`User` instance.
         """
+        if request.method == 'OPTIONS' and settings.ALLOW_OPTIONS:
+            return AnonimousAuthenticator.get_identifier(request)
+
         for authenticator in self.authenticators:
             auth = authenticator(self)
             result = auth.authenticate(request)

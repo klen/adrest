@@ -102,7 +102,7 @@ class HandlerMixin(object):
 
     @staticmethod
     def options(request, **kwargs):
-        return 'OK'
+        return HttpResponse("Options OK")
 
     def get_queryset(self, request, **resources):
 

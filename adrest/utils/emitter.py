@@ -1,62 +1,99 @@
 from datetime import datetime
+from os import path as op
 from time import mktime
 
-from django.template import RequestContext, loader
-from django.http import HttpResponse
 from django.db.models.base import ModelBase, Model
-from os import path as op
+from django.http import HttpResponse
+from django.template import RequestContext, loader
 
 from .paginator import Paginator
 from .serializer import json_dumps, xml_dumps
 from adrest.utils.status import HTTP_200_OK
+from adrest.utils.response import SerializedHttpResponse
+
+
+class EmitterMeta(type):
+    " Preload format attribute. "
+    def __new__(mcs, name, bases, params):
+        cls = super(EmitterMeta, mcs).__new__(mcs, name, bases, params)
+        if not cls.format and cls.media_type:
+            cls.format = str(cls.media_type).split('/')[-1]
+        return cls
 
 
 class BaseEmitter(object):
+    """ All emitters must extend this class, set the media_type attribute, and
+        override the serialize() function.
+    """
+    __metaclass__ = EmitterMeta
 
     media_type = None
+    format = None
 
-    def __init__(self, resource):
+    def __init__(self, resource, request=None, response=None):
         self.resource = resource
-        self.ext = str(self.media_type).split('/')[-1]
+        self.request = request
+        self.response = response
+        if not isinstance(response, HttpResponse):
+            self.response = SerializedHttpResponse(response, mimetype=self.media_type, status=HTTP_200_OK)
 
-    def emit(self, content, request=None):
-        if not isinstance(content, HttpResponse):
-            return HttpResponse(self.serialize(content, request=request),
-                    mimetype=self.media_type,
-                    status=HTTP_200_OK)
+    def emit(self):
+        if not isinstance(self.response, SerializedHttpResponse):
+            return self.response
 
-        response = content
-        response.content = self.serialize(content, request=request)
-        return response
+        self.response.content = self.serialize(self.response.response)
+        return self.response
 
     @staticmethod
-    def serialize(content, request=None):
+    def serialize(content):
+        " Get content and return string. "
         return content
+
+
+class TextEmitter(BaseEmitter):
+    media_type = 'text/plain'
+
+    @staticmethod
+    def serialize(content):
+        " Get content and return string. "
+        return unicode(content)
+
+
+class JSONEmitter(BaseEmitter):
+    media_type = 'application/json'
+
+    @staticmethod
+    def serialize(content):
+        return json_dumps(content)
+
+
+class XMLEmitter(BaseEmitter):
+
+    media_type = 'application/xml'
+
+    @staticmethod
+    def serialize(content):
+        return xml_dumps(content)
 
 
 class TemplateEmitter(BaseEmitter):
-    """ All emitters must extend this class, set the media_type attribute, and
-        override the emit() function.
-    """
-    def serialize(self, content, request=None):
+    " Serialize by django templates. "
 
-        if isinstance(content, HttpResponse):
-            return content
-
+    def serialize(self, content):
         template_name = self.resource.template or self.get_template_path(content)
         template = loader.get_template(template_name)
-        content = template.render(RequestContext(request, dict(
+        return template.render(RequestContext(self.request, dict(
                 content = content,
                 emitter = self,
-                resource = self.resource,
-            )))
-
-        return content
+                resource = self.resource)))
 
     def get_template_path(self, content=None):
 
+        if self.response.status_code != HTTP_200_OK:
+            return op.join('api', 'error.%s' % self.format)
+
         if isinstance(content, Paginator):
-            return 'api/paginator.%s' % self.ext
+            return op.join('api', 'paginator.%s' % self.format)
 
         app = ''
         name = self.resource.meta.name
@@ -73,52 +110,30 @@ class TemplateEmitter(BaseEmitter):
             basedir,
             self.resource.version,
             app,
-            "%s.%s" % (name, self.ext)
+            "%s.%s" % (name, self.format)
         )
 
 
 class JSONTemplateEmitter(TemplateEmitter):
-    """ Emitter which serializes to JSON.
-    """
+    " Template emitter with JSON media type. "
     media_type = 'application/json'
 
 
 class HTMLTemplateEmitter(TemplateEmitter):
-    """ HTML content.
-    """
+    " Template emitter with HTML media type. "
     media_type = 'text/html'
 
 
 class XMLTemplateEmitter(TemplateEmitter):
-    """ Emitter which serializes to XML.
-    """
-    media_type = 'application/xml'
-    template = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>'
-
-    def serialize(self, content, request=None):
-        ts = int(mktime(datetime.now().timetuple()))
-        if isinstance(content, HttpResponse):
-            return self.template % (
-                'true' if content.status_code == HTTP_200_OK else 'false',
-                self.resource.version, ts, content.content)
-        else:
-            content = super(XMLTemplateEmitter, self).serialize(content, request=request)
-            return self.template % ('true', self.resource.version, ts, content)
-
-
-class JSONEmitter(BaseEmitter):
-
-    media_type = 'application/json'
-
-    @staticmethod
-    def serialize(content, **kwargs):
-        return json_dumps(content)
-
-
-class XMLEmitter(BaseEmitter):
+    " Template emitter with XML media type. "
 
     media_type = 'application/xml'
+    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>'
 
-    @staticmethod
-    def serialize(content, **kwargs):
-        return xml_dumps(content)
+    def serialize(self, content):
+        return self.xmldoc_tpl % (
+            'true' if self.response.status_code == HTTP_200_OK else 'false',
+            self.resource.version,
+            int(mktime(datetime.now().timetuple())),
+            super(XMLTemplateEmitter, self).serialize(content)
+        )
