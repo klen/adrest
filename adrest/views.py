@@ -112,8 +112,12 @@ class ResourceView(handler.HandlerMixin,
     @csrf_exempt
     def dispatch(self, request, **resources):
 
-        # Send started signal
-        api_request_started.send(self, request = request)
+        # Send ADREST started signal
+        api_request_started.send(self, request=request)
+
+        # Send current api started signal
+        if self.api:
+            self.api.request_started.send(self, request=request)
 
         # Current HTTP method
         method = request.method.upper()
@@ -184,6 +188,9 @@ class ResourceView(handler.HandlerMixin,
 
         # Send finished signal
         api_request_finished.send(self, request=request, response=response, **resources)
+
+        if self.api:
+            self.api.request_finished.send(self, request=request, response=response, **resources)
 
         return response
 

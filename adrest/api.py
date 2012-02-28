@@ -1,6 +1,7 @@
 import logging
 
 from django.conf.urls.defaults import patterns
+from django.dispatch import Signal
 
 from .map import MapResource
 from .views import ResourceView
@@ -21,6 +22,8 @@ class Api(object):
         self.prefix = api_prefix
         self.params = params
         self.resources = dict()
+        self.request_started = Signal()
+        self.request_finished = Signal()
 
         if api_map:
             self.resources[MapResource.meta.url_name] = MapResource

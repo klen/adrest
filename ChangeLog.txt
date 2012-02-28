@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-02-28 1.0.19
+--------------------
+* Add api owned signals
+
 ## 2012-02-27 1.0.18
 --------------------
 * More information in adrest signals.
