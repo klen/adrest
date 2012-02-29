@@ -80,7 +80,11 @@ class TemplateEmitter(BaseEmitter):
     " Serialize by django templates. "
 
     def serialize(self, content):
-        template_name = self.resource.template or self.get_template_path(content)
+        if self.response.status_code != HTTP_200_OK:
+            template_name = op.join('api', 'error.%s' % self.format)
+        else:
+            template_name = self.resource.template or self.get_template_path(content)
+
         template = loader.get_template(template_name)
         return template.render(RequestContext(self.request, dict(
                 content = content,
@@ -88,9 +92,6 @@ class TemplateEmitter(BaseEmitter):
                 resource = self.resource)))
 
     def get_template_path(self, content=None):
-
-        if self.response.status_code != HTTP_200_OK:
-            return op.join('api', 'error.%s' % self.format)
 
         if isinstance(content, Paginator):
             return op.join('api', 'paginator.%s' % self.format)
