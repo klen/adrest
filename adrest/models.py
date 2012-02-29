@@ -89,6 +89,7 @@ if 'django.contrib.auth' in django_settings.INSTALLED_APPS:
     class AccessKeyAdmin(admin.ModelAdmin):
         list_display = 'key', 'user', 'created'
         search_fields = 'key', 'user'
+        raw_id_fields = 'user',
     admin.site.register(AccessKey, AccessKeyAdmin)
 
     # Auto create key for created user

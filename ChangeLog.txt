@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-02-29 1.1.1
+-------------------
+* Fix accesskey admin
+
 ## 2012-02-28 1.1.0
 -------------------
 * Add not string content for HttpError
