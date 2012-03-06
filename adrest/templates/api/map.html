@@ -9,25 +9,22 @@
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
         <script>
             $(function(){
-                $('.toggle').click(function(e){
-                    $(this).parent().toggleClass('show');
+                $('.uri_link-active').click(function(e){
+                    $(this).parent().find('.uri_info').toggleClass('uri_info-show');
                 });
             });
         </script>
         <style>
-            .toggle {
-                text-decoration: none;
-                border-bottom: 1px dotted;
-                font-size: 1.2em;
-                cursor: pointer;
-            }
-            .uri { margin-bottom: 1em; font-weight: bold; }
-            .uri_methods {
-                margin-left: 1em; color: #999;
-            }
-            .info { display: none; font-weight: bold; margin-left: 1em; }
-            .show .info { display: block; }
-            .required { font-weight: bold; color: red; }
+            .uri { margin-bottom: 1em; font-weight: bold }
+            .uri_item { margin-left: .5em }
+            .uri_methods { color: #999 }
+            .uri_resource { color: #393 }
+            .uri_link { font-size: 1.2em; color: #339 }
+            .uri_link-active { border-bottom: 1px dashed; cursor: pointer; }
+            .uri_auth { margin: 0; }
+            .uri_info { display: none; font-weight: bold; margin-left: 1em; }
+            .uri_info-show { display: block; }
+            .uri_info_required { font-weight: bold; color: red; }
         </style>
     </head>
     <body>
@@ -37,27 +34,18 @@
 
             {% for uri, info in content.1 %}
             <div class="uri">
-                <span class="toggle"> {% if info.fields or info.resource %}+{% else %}-{% endif %} {{ uri }}</span>
-                <span class="uri_methods"> {% for m in info.methods %}{{ m }}&nbsp;{% endfor %}</span>
-                <span class="uri_auth">{% for a in info.auth %} {{ a }} {% endfor %}</span>
-
-                {% if info.fields or info.resource %}
-                    <div class="info">
-                        {% if info.resource %}Resource: {{ info.resource }}<br/> {% endif %}
-                        {% if info.fields %}
-                            Fields:
-                            <table>
-                                {% for f, v in info.fields %}
-                                    <tr>
-                                        <td {% if v.required %} class="required" {% endif %}>
-                                            {{ f }}
-                                        </td>
-                                        <td> {{ v.help }} </td>
-                                {% endfor %}
-                            </table>
-                        {% endif %}
-                    </div>
-                {% endif %}
+                {% if info.fields %}<span class="uri_link uri_link-active">+ {{ uri }}</span>{% else %}<span class="uri_link">{{ uri }}</span>{% endif %}
+                
+                {% if info.resource %}<span class="uri_item uri_resource">[{{ info.resource }}]</span>{% endif %}
+                <span class="uri_item uri_methods"> {% for m in info.methods %}{{ m }}&nbsp;{% endfor %}</span>
+                <p class="uri_auth">{% for a in info.auth %} {{ a }} {% endfor %}</p>
+                {% if info.fields %}<table class="uri_info info">
+                    {% for f, v in info.fields %}
+                        <tr>
+                            <td {% if v.required %} class="uri_info_required" {% endif %}> {{ f }} </td>
+                            <td> {{ v.help }} </td>
+                    {% endfor %}
+                </table>{% endif %}
             </div>
             {% endfor %}
         </div>
