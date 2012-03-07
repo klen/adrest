@@ -74,7 +74,7 @@ class BasicAuthenticator(_UserAuthenticator):
         return False
 
 
-class UserAuthenticator(BaseAuthenticator):
+class UserAuthenticator(_UserAuthenticator):
     " Authorization by login and password "
 
     username_fieldname = 'username'
