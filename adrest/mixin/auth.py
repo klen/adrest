@@ -49,5 +49,10 @@ class AuthMixin(object):
 
     def check_rights(self, resources, request=None):
         " Check rights of client for queried resources "
-        if not self.auth.test_rights(resources, request=request):
-            raise HttpError("Access forbidden.", status=status.HTTP_403_FORBIDDEN)
+        if not self.auth:
+            return True
+
+        try:
+            assert self.auth.test_rights(resources, request=request)
+        except AssertionError, e:
+            raise HttpError("Access forbidden. %s" % str(e), status=status.HTTP_403_FORBIDDEN)
