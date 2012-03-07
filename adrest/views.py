@@ -97,7 +97,7 @@ class ResourceView(handler.HandlerMixin,
     # Link to parent resource
     parent = None
 
-    # URL name and regex prefix
+    # Custom prefix for url name and regex
     prefix = ''
 
     # Some custom URI params here
@@ -128,7 +128,7 @@ class ResourceView(handler.HandlerMixin,
             self.check_method_allowed(method)
 
             # Authentificate
-            self.identifier = self.authenticate(request)
+            self.authenticate(request)
 
             # Throttle check
             self.throttle_check()

@@ -45,6 +45,6 @@ class MapResource(ResourceView):
             for a in resource.authenticators:
                 info['fields'] += a.get_fields()
 
-            info['auth'] = set(map(str, resource.authenticators))
+            info['auth'] = set(a.__doc__ or 'Custom' for a in resource.authenticators)
             key = resource.meta.url_regex.replace("(?P", "").replace("[^/]+)", "").replace("?:", "").replace("$", "")
             yield key, info

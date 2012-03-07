@@ -54,7 +54,7 @@ if settings.ACCESS_LOG:
             version = str(resource.api),
             status_code = response.status_code,
             request = '%s\n\n%s' % (str(request.META), str(getattr(request, 'data', ''))),
-            identifier = resource.identifier or '',
+            identifier = resource.identifier or request.META.get('REMOTE_ADDR', 'anonymous'),
             response = response.content.decode('utf-8')[:5000],
         )
 

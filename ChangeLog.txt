@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-03-07 1.1.4
+-------------------
+* Authenticators refactoring
+
 ## 2012-03-06 1.1.3
 -------------------
 * More usefull api map

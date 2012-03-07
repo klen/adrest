@@ -33,26 +33,21 @@ class AuthMixin(object):
         """ Attempt to authenticate the request, returning an authentication context or None.
             An authentication context may be any object, although in many cases it will simply be a :class:`User` instance.
         """
+        authenticators = self.authenticators
+
         if request.method == 'OPTIONS' and settings.ALLOW_OPTIONS:
-            return AnonimousAuthenticator.get_identifier(request)
+            authenticators = AnonimousAuthenticator,
 
-        for authenticator in self.authenticators:
-            auth = authenticator(self)
-            result = auth.authenticate(request)
-            if result:
-                self.auth = auth
-                return result
-        else:
-            raise HttpError("Authorization required.", status=status.HTTP_401_UNAUTHORIZED)
+        for authenticator in authenticators:
+            self.auth = authenticator(self)
+            self.identifier = self.auth.authenticate(request)
+            if self.identifier:
+                return self.identifier
 
-        return True
+        self.auth, self.identifier = None, ''
+        raise HttpError("Authorization required.", status=status.HTTP_401_UNAUTHORIZED)
 
     def check_rights(self, resources, request=None):
         " Check rights of client for queried resources "
-
-        if not self.auth:
-            return True
-        try:
-            assert self.auth.test_rights(resources, request=request)
-        except AssertionError:
+        if not self.auth.test_rights(resources, request=request):
             raise HttpError("Access forbidden.", status=status.HTTP_403_FORBIDDEN)
