@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-03-19 1.1.7
+-------------------
+* Allows fields query (field__startswith) in GET filters
+
 ## 2012-03-07 1.1.6
 -------------------
 * Authenticators refactoring

@@ -1,4 +1,7 @@
 from django.db.models import get_model, Model
+from logging import getLogger
+from django.db.models.sql.constants import LOOKUP_SEP
+from django.core.exceptions import FieldError
 from django.http import HttpResponse
 
 from adrest.forms import PartitialForm
@@ -6,6 +9,9 @@ from adrest.settings import LIMIT_PER_PAGE
 from adrest.utils import status, MetaOptions
 from adrest.utils.exceptions import HttpError
 from adrest.utils.paginator import Paginator
+
+
+logger = getLogger('django.request')
 
 
 class HandlerMeta(type):
@@ -112,21 +118,30 @@ class HandlerMixin(object):
         # Make filters from URL variables or resources
         filters = dict((k, v) for k, v in resources.iteritems() if k in self.meta.model_fields)
 
+        qs = self.queryset.filter(**filters)
+
         # Make filters from GET variables
         for field in request.GET.iterkeys():
-            if not field in self.meta.model_fields or filters.has_key(field):
+            tokens = field.split(LOOKUP_SEP)
+            field_name = tokens[0]
+
+            if not field_name in self.meta.model_fields or filters.has_key(field_name):
                 continue
-            converter = self.model._meta.get_field(field).to_python
-            filters[field] = map(converter, request.GET.getlist(field))
 
-        filters = dict(
-            (k, v) if not isinstance(v, (list, tuple))
-            else ("%s__in" % k, v) if len(v) > 1
-            else (k, v[0])
-            for k, v in filters.iteritems()
-        )
+            converter = self.model._meta.get_field(field).to_python if len(tokens) == 1 else lambda v: v
+            value = map(converter, request.GET.getlist(field))
 
-        return self.queryset.filter(**filters)
+            if len(value) > 1:
+                tokens.append('in')
+            else:
+                value = value.pop()
+
+            try:
+                qs = qs.filter(**{LOOKUP_SEP.join(tokens): value})
+            except FieldError, e:
+                logger.warning(e)
+
+        return qs
 
     def paginate(self, request, qs):
         """ Paginate queryset.

@@ -178,6 +178,12 @@ class ResourceTest(AdrestTestCase):
         self.assertContains(response, 'count="%s"' % Book.objects.filter(author=self.author).count())
         self.assertContains(response, '<name>%s</name>' % self.author.name)
 
+        response = self.get_resource('author-test-book', data=dict(
+            title__startswith = "book1",
+            title__megadeath = 12,
+        ))
+        self.assertContains(response, 'count="%s"' % Book.objects.filter(title__startswith='book1').count())
+
         response = self.post_resource('author-test-book', data=dict(
             title = "new book",
             status=2,
