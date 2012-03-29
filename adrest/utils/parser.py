@@ -39,12 +39,4 @@ class FormParser(BaseParser):
 
     @staticmethod
     def parse(request):
-        source = dict(request.REQUEST.iteritems())
-        # Fix Django dont parse PUT request from form-data
-        if request.method == "PUT":
-            request.method = "POST"
-            del request._files
-            request._load_post_and_files()
-            request.method = "PUT"
-            source.update(dict(request.POST.iteritems()))
-        return source
+        return dict(request.POST.iteritems())

@@ -13,7 +13,7 @@ from django.views.generic import View
 
 from .utils import status, MetaOptions
 from .utils.exceptions import HttpError
-from .utils.tools import as_tuple, gen_url_name, gen_url_regex
+from .utils.tools import as_tuple, gen_url_name, gen_url_regex, fix_request
 from .utils.response import SerializedHttpResponse
 from adrest import settings
 from adrest.mixin import auth, emitter, handler, parser, throttle
@@ -111,6 +111,9 @@ class ResourceView(handler.HandlerMixin,
 
     @csrf_exempt
     def dispatch(self, request, **resources):
+
+        # Fix PUT and PATH methods in Django request
+        request = fix_request(request)
 
         # Send ADREST started signal
         api_request_started.send(self, request=request)

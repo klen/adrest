@@ -40,3 +40,22 @@ def gen_url_regex(resource):
         yield resource.prefix
 
     yield '%(name)s/(?:(?P<%(name)s>[^/]+)/)?' % dict(name = resource.meta.name)
+
+
+def fix_request(request):
+    methods = "PUT", "PATH"
+
+    if request.method in methods:
+
+        if hasattr(request, '_post'):
+            del(request._post)
+            del(request._files)
+
+        if hasattr(request, '_request'):
+            del(request._request)
+
+        request.method, method = "POST", request.method
+        setattr(request, method, request.POST)
+        request.method = method
+
+    return request

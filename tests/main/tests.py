@@ -193,9 +193,9 @@ class ResourceTest(AdrestTestCase):
         uri = self.reverse('author-test-book', book=1)
         uri = "%s?author=%s" % (uri, self.author.pk)
         response = self.client.put(uri, data=dict(
-            price = 100
+            price = 199
         ))
-        self.assertContains(response, '<price>100</price>')
+        self.assertContains(response, '<price>199</price>')
 
         response = self.client.delete(uri)
         self.assertContains(response, 'Book has been deleted.')

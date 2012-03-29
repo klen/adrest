@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-03-29 1.1.8
+-------------------
+* Fix PUT and PATH requests
+
 ## 2012-03-19 1.1.7
 -------------------
 * Allows fields query (field__startswith) in GET filters
