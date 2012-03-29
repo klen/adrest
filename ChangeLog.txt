@@ -1,8 +1,8 @@
 CHANGES
 =======
 
-## 2012-03-29 1.1.9
--------------------
+## 2012-03-29 1.1.10
+--------------------
 * Add ADREST_ACCESSKEY option
 * Fix PUT and PATH requests
 

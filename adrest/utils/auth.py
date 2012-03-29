@@ -3,6 +3,8 @@ import base64
 from django.contrib.auth import authenticate
 from django.middleware.csrf import CsrfViewMiddleware
 
+from adrest import models
+
 
 class BaseAuthenticator(object):
     " Abstract base authenticator "
@@ -97,27 +99,19 @@ class UserAuthenticator(_UserAuthenticator):
         return [(cls.username_fieldname, dict(required=True)), (cls.password_fieldname, dict(required=True))]
 
 
-try:
-    from adrest.models import AccessKey
+class AccessKeyAuthenticator(_UserAuthenticator):
+    " Authorization by API key "
 
+    def authenticate(self, request=None):
+        """ Authenticate user using AccessKey from HTTP Header or GET params.
+        """
+        try:
+            access_key = request.META.get('HTTP_AUTHORIZATION') or request.REQUEST['key']
+            api_key = models.AccessKey.objects.get(key=access_key)
+            self.user = request.user = api_key.user
+            return self.get_identifier(request)
 
-    class AccessKeyAuthenticator(_UserAuthenticator):
-        " Authorization by API key "
-
-        def authenticate(self, request=None):
-            """ Authenticate user using AccessKey from HTTP Header or GET params.
-            """
-            try:
-                access_key = request.META.get('HTTP_AUTHORIZATION') or request.REQUEST['key']
-                api_key = AccessKey.objects.get(key=access_key)
-                self.user = request.user = api_key.user
-                return self.get_identifier(request)
-
-            except(KeyError, AccessKey.DoesNotExist):
-                return False
-
+        except(KeyError, models.AccessKey.DoesNotExist):
             return False
 
-
-except ImportError:
-    assert True
+        return False
