@@ -8,6 +8,7 @@ from adrest.utils.tools import as_tuple
 ACCESS_LOG = getattr(settings, 'ADREST_ACCESS_LOG', False)
 
 # Auto create adrest access-key for created user
+ACCESSKEY = getattr(settings, 'ADREST_ACCESSKEY', 'django.contrib.auth' in settings.INSTALLED_APPS)
 AUTO_CREATE_ACCESSKEY = getattr(settings, 'ADREST_AUTO_CREATE_ACCESSKEY', False)
 
 # Max resources per page in list views

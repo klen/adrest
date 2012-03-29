@@ -99,7 +99,6 @@ class UserAuthenticator(_UserAuthenticator):
 
 try:
     from adrest.models import AccessKey
-    from django.core.exceptions import ObjectDoesNotExist
 
 
     class AccessKeyAuthenticator(_UserAuthenticator):
@@ -114,7 +113,7 @@ try:
                 self.user = request.user = api_key.user
                 return self.get_identifier(request)
 
-            except(KeyError, ObjectDoesNotExist):
+            except(KeyError, AccessKey.DoesNotExist):
                 return False
 
             return False

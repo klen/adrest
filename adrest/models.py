@@ -1,4 +1,3 @@
-from django.conf import settings as django_settings
 from django.contrib import admin
 from django.db import models
 
@@ -63,7 +62,7 @@ if settings.ACCESS_LOG:
 
 # Access keys
 # -----------
-if 'django.contrib.auth' in django_settings.INSTALLED_APPS:
+if settings.ACCESSKEY:
 
     import uuid
     from django.contrib.auth.models import User
