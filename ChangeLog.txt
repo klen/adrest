@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-04-01 1.1.11
+--------------------
+* Do not change data in request from forms
+
 ## 2012-03-29 1.1.10
 --------------------
 * Add ADREST_ACCESSKEY option
