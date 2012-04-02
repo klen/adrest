@@ -1,3 +1,4 @@
+from copy import deepcopy
 from django.db.models import get_model, Model
 from logging import getLogger
 from django.db.models.sql.constants import LOOKUP_SEP
@@ -79,7 +80,7 @@ class HandlerMixin(object):
         return self.paginate(request, self.get_queryset(request, **resources))
 
     def post(self, request, **resources):
-        form = self.form(data=request.data, **resources)
+        form = self.form(data=deepcopy(request.data), **resources)
         if form.is_valid():
             return form.save()
         raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
@@ -89,7 +90,7 @@ class HandlerMixin(object):
         if not instance:
             raise HttpError("Bad request", status=status.HTTP_404_NOT_FOUND)
 
-        form = self.form(data=request.data, instance=instance, **resources)
+        form = self.form(data=deepcopy(request.data), instance=instance, **resources)
         if form.is_valid():
             return form.save()
 
