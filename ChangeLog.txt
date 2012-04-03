@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-04-03 1.1.12
+--------------------
+* Minor fix of allow header
+
 ## 2012-04-01 1.1.11
 --------------------
 * Do not change data in request from forms

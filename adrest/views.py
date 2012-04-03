@@ -156,7 +156,7 @@ class ResourceView(handler.HandlerMixin,
 
             # Serialize response
             response = self.emit(response, request=request)
-            response["Allow"] = ', '.join(self.allowed_methods),
+            response["Allow"] = ', '.join(self.allowed_methods)
             response["Vary"] = 'Authenticate, Accept'
 
         except HttpError, e:
