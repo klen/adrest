@@ -28,6 +28,7 @@ if settings.ACCESS_LOG:
         identifier = models.CharField(max_length=255)
 
         class Meta():
+            ordering = ["-created_at"]
             verbose_name_plural = "Access"
 
         def __unicode__(self):
@@ -76,6 +77,7 @@ if settings.ACCESSKEY:
         created = models.DateTimeField(auto_now_add=True)
 
         class Meta():
+            ordering = ["-created"]
             unique_together = 'user', 'key'
 
         def __unicode__(self):
