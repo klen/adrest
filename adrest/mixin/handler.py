@@ -106,7 +106,7 @@ class HandlerMixin(object):
             if hasattr(instance, '%s_id' % name):
                 assert owner.pk == getattr(instance, '%s_id' % name)
         instance.delete()
-        return HttpResponse("%s has been deleted." % self.meta.name.capitalize())
+        return HttpResponse("")
 
     @staticmethod
     def options(request, **kwargs):
