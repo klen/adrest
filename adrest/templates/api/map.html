@@ -43,7 +43,7 @@
                     {% for f, v in info.fields %}
                         <tr>
                             <td {% if v.required %} class="uri_info_required" {% endif %}> {{ f }} </td>
-                            <td> {{ v.help }} </td>
+                            <td> {{ v.label }}. {{ v.help }} </td>
                     {% endfor %}
                 </table>{% endif %}
             </div>
