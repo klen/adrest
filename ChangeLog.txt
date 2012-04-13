@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-04-09 1.1.16
+--------------------
+* Add field label to map.
+
 ## 2012-04-09 1.1.15
 --------------------
 * Delete returned empty response.

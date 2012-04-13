@@ -36,7 +36,7 @@ class MapResource(ResourceView):
                 info['fields'] += [
                     (name, dict(
                         required = f.required and f.initial is None,
-                        help = smart_unicode(f.help_text + ''))
+                        help = smart_unicode(f.label + '. ' + f.help_text + ''))
                     )
                     for name, f in resource.form.base_fields.iteritems()
                     if not (isinstance(f, ModelChoiceField) and f.choices.queryset.model in models)
