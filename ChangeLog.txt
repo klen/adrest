@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-04-26 1.1.18
+--------------------
+* Not resource checking on options request (ALLOW_OPTIONS)
+
 ## 2012-04-09 1.1.17
 --------------------
 * Add field label to map.

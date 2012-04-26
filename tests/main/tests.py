@@ -147,6 +147,11 @@ class AdrestTest(AdrestTestCase):
         response = self.client.options(uri, data=dict(author = self.author.pk))
         self.assertContains(response, 'Options OK')
 
+        user = User.objects.create(username='test2')
+        author = Author.objects.create(name='Tester', user=user)
+        response = self.client.options(uri, data=dict(author = author.pk))
+        self.assertContains(response, 'Options OK')
+
 
 class ResourceTest(AdrestTestCase):
 

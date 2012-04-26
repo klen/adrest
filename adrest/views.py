@@ -136,17 +136,19 @@ class ResourceView(handler.HandlerMixin,
             # Throttle check
             self.throttle_check()
 
-            # Get required resources
-            resources = self.get_resources(request, resource=self, **resources)
+            if request.method != 'OPTIONS' or not settings.ALLOW_OPTIONS:
 
-            # Check owners
-            self.check_owners(**resources)
+                # Get required resources
+                resources = self.get_resources(request, resource=self, **resources)
 
-            # Check rights for resources with this method
-            self.check_rights(resources, request=request)
+                # Check owners
+                self.check_owners(**resources)
 
-            # Parse content
-            request.data = self.parse(request)
+                # Check rights for resources with this method
+                self.check_rights(resources, request=request)
+
+                # Parse content
+                request.data = self.parse(request)
 
             # Get the appropriate create/read/update/delete function
             view = getattr(self, self.callmap.get(method, None))
