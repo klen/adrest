@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-04-28 1.1.20
+--------------------
+* Fix accesskey admin
+
 ## 2012-04-26 1.1.19
 --------------------
 * Not resource checking on options request (ALLOW_OPTIONS)
