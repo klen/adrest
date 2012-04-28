@@ -4,3 +4,4 @@ dist
 .ropeproject
 *.pyc
 *.egg-info
+.vimrc
