@@ -89,7 +89,7 @@ if settings.ACCESSKEY:
 
     class AccessKeyAdmin(admin.ModelAdmin):
         list_display = 'key', 'user', 'created'
-        search_fields = 'key', 'user'
+        search_fields = '=key', '=user'
         raw_id_fields = 'user',
     admin.site.register(AccessKey, AccessKeyAdmin)
 
