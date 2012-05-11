@@ -45,7 +45,7 @@ class SomeOtherResource(ResourceView):
     url_params = 'device',
 
     def get(self, request, **kwargs):
-        return True
+        return self.paginate(request, [1, 2, 3])
 
 
 class CustomResource(ResourceView):

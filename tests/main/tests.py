@@ -250,7 +250,8 @@ class ResourceTest(AdrestTestCase):
 
     def test_some_other(self):
         response = self.get_resource('test')
-        self.assertContains(response, '<someother>True</someother>')
+        self.assertContains(response, 'count="3"')
+        self.assertContains(response, '<someother>1</someother>')
         self.assertContains(response, '<method>GET</method>')
 
 

@@ -203,7 +203,7 @@ class ResourceView(handler.HandlerMixin,
         if cls.parent:
             resources = cls.parent.get_resources(request, resource=resource, **resources)
 
-        pk = resources.get(cls.meta.name) or request.GET.get(cls.meta.name)
+        pk = resources.get(cls.meta.name) or request.REQUEST.get(cls.meta.name)
         if not cls.model or not pk:
             return resources
 
