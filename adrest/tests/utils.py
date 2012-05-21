@@ -2,6 +2,7 @@ from django.core.urlresolvers import reverse
 from django.db.models import Model
 from django.test import TestCase, Client
 from django.utils.functional import curry
+from django.utils import simplejson
 
 
 class AdrestTestCase(TestCase):
@@ -29,8 +30,12 @@ class AdrestTestCase(TestCase):
         if isinstance(key, Model):
             key = key.key
         headers = dict() if headers is None else headers
-        headers['HTTP_AUTHORIZATION'] = key
+        headers['HTTP_AUTHORIZATION'] = key or headers.get('HTTP_AUTHORIZATION')
         return method(uri, data=data or dict(), **headers)
+
+    def rpc(self, data, **kwargs):
+        data = dict(payload=simplejson.dumps(data))
+        return self.get_resource('rpc', data=data, **kwargs)
 
     put_resource = curry(get_resource, method='put')
     post_resource = curry(get_resource, method='post')

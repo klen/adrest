@@ -1,9 +1,9 @@
 import logging
-
 from django.conf.urls.defaults import patterns
 from django.dispatch import Signal
 
 from .map import MapResource
+from .rpc import RPCResource
 from .views import ResourceView
 
 
@@ -17,7 +17,7 @@ class Api(object):
         Especially useful for navigation, HATEOAS and for providing multiple
         versions of your API.
     """
-    def __init__(self, version=None, api_map=True, api_prefix='api', **params):
+    def __init__(self, version=None, api_map=True, api_prefix='api', api_rpc=False, **params):
         self.version = version
         self.prefix = api_prefix
         self.params = params
@@ -27,6 +27,9 @@ class Api(object):
 
         if api_map:
             self.resources[MapResource.meta.url_name] = MapResource
+
+        if api_rpc:
+            self.resources[RPCResource.meta.url_name] = RPCResource
 
         try:
             self.str_version = '.'.join(map(str, version or list()))

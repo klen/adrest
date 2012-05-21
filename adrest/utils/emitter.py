@@ -70,10 +70,15 @@ class JSONEmitter(BaseEmitter):
 class XMLEmitter(BaseEmitter):
 
     media_type = 'application/xml'
+    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>'
 
-    @staticmethod
-    def serialize(content):
-        return xml_dumps(content)
+    def serialize(self, content):
+        return self.xmldoc_tpl % (
+            'true' if self.response.status_code == HTTP_200_OK else 'false',
+            self.resource.version,
+            int(mktime(datetime.now().timetuple())),
+            xml_dumps(content)
+        )
 
 
 class TemplateEmitter(BaseEmitter):
