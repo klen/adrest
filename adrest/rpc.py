@@ -1,9 +1,9 @@
-from adrest.utils.exceptions import HttpError
-from adrest.utils.status import HTTP_402_PAYMENT_REQUIRED
-from django.utils import simplejson
 from django.http import QueryDict
+from django.utils import simplejson
 
 from .views import ResourceView
+from adrest.utils.exceptions import HttpError
+from adrest.utils.status import HTTP_402_PAYMENT_REQUIRED
 
 
 class RPCResource(ResourceView):
@@ -29,6 +29,7 @@ class RPCResource(ResourceView):
             data = QueryDict('', mutable=True)
             data.update(payload.get('data', dict()))
             request.POST = request.PUT = request.GET = data
+            delattr(request, '_request')
 
         except AssertionError, e:
             raise HttpError('Invalid RPC Call. %s' % e, status=HTTP_402_PAYMENT_REQUIRED)
