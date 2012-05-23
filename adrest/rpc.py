@@ -28,6 +28,7 @@ class RPCResource(ResourceView):
 
             data = QueryDict('', mutable=True)
             data.update(payload.get('data', dict()))
+            data['callback'] = payload.get('callback', request.GET.get('callback', request.GET.get('jsonp', 'callback')))
             request.POST = request.PUT = request.GET = data
             delattr(request, '_request')
 

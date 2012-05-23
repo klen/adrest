@@ -102,3 +102,26 @@ class RPCTestCase(AdrestTestCase):
 
         child = Child.objects.get(name='child4')
         self.assertEqual(child.root, self.root1)
+
+    def test_rpc_jsonp(self):
+        response = self.rpc(dict(
+            method='test.get',
+        ), callback='test1234')
+        self.assertContains(response, 'test1234')
+
+        response = self.rpc(dict(
+            method='test.get',
+        ), callback='jsonp')
+        self.assertContains(response, 'jsonp')
+
+        response = self.rpc(dict(
+            method='test.get',
+            callback='parseJSON'
+        ))
+        self.assertContains(response, 'parseJSON')
+
+        response = self.rpc(dict(
+            method='test.get',
+            callback='parseJSON'
+        ), callback='Other')
+        self.assertContains(response, 'parseJSON')

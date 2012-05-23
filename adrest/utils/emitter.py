@@ -67,6 +67,14 @@ class JSONEmitter(BaseEmitter):
         return json_dumps(content)
 
 
+class JSONPEmitter(BaseEmitter):
+    media_type = 'text/javascript'
+
+    def serialize(self, content):
+        callback = self.request.GET.get('callback', 'callback')
+        return '%s(%s)' % (callback, json_dumps(content))
+
+
 class XMLEmitter(BaseEmitter):
 
     media_type = 'application/xml'
@@ -123,6 +131,16 @@ class TemplateEmitter(BaseEmitter):
 class JSONTemplateEmitter(TemplateEmitter):
     " Template emitter with JSON media type. "
     media_type = 'application/json'
+
+
+class JSONPTemplateEmitter(TemplateEmitter):
+    " Template emitter with javascript media type. "
+    media_type = 'text/javascript'
+
+    def serialize(self, content):
+        content = super(JSONPTemplateEmitter, self).serialize(content)
+        callback = self.request.GET.get('callback', 'callback')
+        return '%s(%s)' % (callback, content)
 
 
 class HTMLTemplateEmitter(TemplateEmitter):

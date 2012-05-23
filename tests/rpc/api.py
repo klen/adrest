@@ -1,7 +1,7 @@
 from adrest.api import Api
 from adrest.views import ResourceView
 from adrest.utils.auth import BaseAuthenticator
-from adrest.utils.emitter import XMLEmitter, JSONEmitter
+from adrest.utils.emitter import XMLEmitter, JSONEmitter, JSONPEmitter
 
 
 class TestAuth(BaseAuthenticator):
@@ -30,7 +30,7 @@ class ChildResource(ResourceView):
     model = 'rpc.child'
 
 
-API = Api(api_rpc=True, emitters=(JSONEmitter, XMLEmitter))
+API = Api(api_rpc=True, emitters=(JSONPEmitter, JSONEmitter, XMLEmitter))
 API.register(TestResource)
 API.register(RootResource, authenticators=TestAuth)
 API.register(ChildResource)

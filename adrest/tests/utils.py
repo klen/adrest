@@ -33,8 +33,8 @@ class AdrestTestCase(TestCase):
         headers['HTTP_AUTHORIZATION'] = key or headers.get('HTTP_AUTHORIZATION')
         return method(uri, data=data or dict(), **headers)
 
-    def rpc(self, data, **kwargs):
-        data = dict(payload=simplejson.dumps(data))
+    def rpc(self, data, callback=None, **kwargs):
+        data = dict(payload=simplejson.dumps(data), callback=callback)
         return self.get_resource('rpc', data=data, **kwargs)
 
     put_resource = curry(get_resource, method='put')
