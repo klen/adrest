@@ -14,6 +14,10 @@ class RPCResource(ResourceView):
     emitters = JSONEmitter, JSONPEmitter
     separator = '.'
 
+    def __init__(self, *args, **kwargs):
+        self.target_resource = None
+        super(RPCResource, self).__init__(*args, **kwargs)
+
     def get(self, request, **resources):
         try:
             payload = request.GET.get('payload')
@@ -37,12 +41,19 @@ class RPCResource(ResourceView):
             request.POST = request.PUT = request.GET = data
             delattr(request, '_request')
 
+            request.method = method.upper()
+
         except AssertionError, e:
             raise HttpError('Invalid RPC Call. %s' % e, status=HTTP_402_PAYMENT_REQUIRED)
 
         except (ValueError, KeyError, TypeError):
             raise HttpError('Invalid RPC Payload.', status=HTTP_402_PAYMENT_REQUIRED)
 
+        self.target_resource = resource
         resource = resource.as_view(api=self.api)
-        request.method = method.upper()
         return resource(request, **payload.get("params", dict()))
+
+    def get_name(self):
+        if self.target_resource:
+            return self.target_resource.meta.name
+        return self.meta.name

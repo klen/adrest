@@ -111,7 +111,7 @@ class TemplateEmitter(BaseEmitter):
             return op.join('api', 'paginator.%s' % self.format)
 
         app = ''
-        name = self.resource.meta.name
+        name = self.resource.get_name()
 
         if not content:
             content = self.resource.model

@@ -276,6 +276,9 @@ class ResourceView(handler.HandlerMixin,
 
         return url(url_regex, cls.as_view(api=api), name = url_name)
 
+    def get_name(self):
+        return self.meta.name
+
 
 def errors_mail(response, request):
 
