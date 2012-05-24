@@ -42,6 +42,7 @@ class BaseEmitter(object):
             return self.response
 
         self.response.content = self.serialize(self.response.response)
+        self.response['Content-type'] = self.media_type
         return self.response
 
     @staticmethod

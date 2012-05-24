@@ -103,6 +103,7 @@ class RPCTestCase(AdrestTestCase):
         response = self.rpc(dict(
             method='test.get',
         ), callback='test1234', headers=dict(HTTP_ACCEPT='text/javascript'))
+        self.assertEqual(response.get('Content-type'), 'text/javascript')
         self.assertContains(response, 'test1234')
 
         response = self.rpc(dict(
