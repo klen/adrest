@@ -99,6 +99,16 @@ class RPCTestCase(AdrestTestCase):
         child = Child.objects.get(name='child4')
         self.assertEqual(child.root, self.root1)
 
+    def test_rpc_put(self):
+        response = self.rpc(dict(
+            method='root-child.put',
+            params=dict(root=self.root1.pk, child=self.root1.child_set.all()[0].pk),
+            data=dict(name='New name')
+        ))
+        self.assertContains(response, 'New name')
+        child = self.root1.child_set.all()[0]
+        self.assertEqual(child.name, 'New name')
+
     def test_rpc_jsonp(self):
         response = self.rpc(dict(
             method='test.get',
