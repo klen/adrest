@@ -31,6 +31,9 @@ class RPCResource(ResourceView):
             data.update(payload.get('data', dict()))
             data['callback'] = payload.get('callback') or request.GET.get('callback') or request.GET.get('jsonp') or 'callback'
 
+            for h, v in payload.get('headers', dict()).iteritems():
+                request.META["HTTP_%s" % h.upper().replace('-', '_')] = v
+
             request.POST = request.PUT = request.GET = data
             delattr(request, '_request')
 

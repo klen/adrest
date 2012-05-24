@@ -33,11 +33,17 @@ class AdrestTestCase(TestCase):
         headers['HTTP_AUTHORIZATION'] = key or headers.get('HTTP_AUTHORIZATION')
         return method(uri, data=data or dict(), **headers)
 
-    def rpc(self, data, callback=None, **kwargs):
+    def rpc(self, data, callback=None, headers=None, key=None, **kwargs):
         data = dict(payload=simplejson.dumps(data))
         if callback:
             data['callback'] = callback
-        return self.get_resource('rpc', data=data, **kwargs)
+
+        # JSONP not support headers
+        if headers and headers.get('HTTP_ACCEPT') == 'text/javascript':
+            headers = dict(HTTP_ACCEPT='text/javascript')
+            key = None
+
+        return self.get_resource('rpc', data=data, headers=headers, key=key, **kwargs)
 
     put_resource = curry(get_resource, method='put')
     post_resource = curry(get_resource, method='post')

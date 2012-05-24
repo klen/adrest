@@ -53,7 +53,8 @@ class RPCTestCase(AdrestTestCase):
 
         response = self.rpc(dict(
             method='root.get',
-        ), key=111)
+            headers=dict(Authorization=111)
+        ))
         self.assertContains(response, 'test_root')
 
         response = self.rpc(dict(
