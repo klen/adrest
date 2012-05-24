@@ -19,6 +19,7 @@
             .uri_item { margin-left: .5em }
             .uri_methods { color: #999 }
             .uri_resource { color: #393 }
+            .uri_name { color: #933 }
             .uri_link { font-size: 1.2em; color: #339 }
             .uri_link-active { border-bottom: 1px dashed; cursor: pointer; }
             .uri_auth { margin: 0; }
@@ -36,6 +37,7 @@
             <div class="uri">
                 {% if info.fields %}<span class="uri_link uri_link-active">+ {{ uri }}</span>{% else %}<span class="uri_link">{{ uri }}</span>{% endif %}
                 
+                <span class="uri_item uri_name">[{{ info.name }}]</span>
                 {% if info.resource %}<span class="uri_item uri_resource">[{{ info.resource }}]</span>{% endif %}
                 <span class="uri_item uri_methods"> {% for m in info.methods %}{{ m }}&nbsp;{% endfor %}</span>
                 <p class="uri_auth">{% for a in info.auth %} {{ a }} {% endfor %}</p>

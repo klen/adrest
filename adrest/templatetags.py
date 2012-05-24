@@ -33,3 +33,9 @@ def adrest_include(parser, token):
     bits = token.split_contents()[1:]
     return AdrestInclusionNode(*bits)
 adrest_include = register.tag(adrest_include)
+
+
+# def adrest_jsonify(content, **kwargs):
+    # from adrest.utils.serializer import json_dumps
+    # json_dumps(content)
+# adrest_jsonify = register.simple_tag(adrest_jsonify)

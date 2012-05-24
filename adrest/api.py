@@ -37,7 +37,7 @@ class Api(object):
             self.str_version = str(version)
 
     def register(self, resource, **params):
-        " Register resource subclass with API. "
+        " Registers resource subclass for the API. "
 
         # Must be instance of ResourceView
         assert issubclass(resource, ResourceView), "%s not subclass of ResourceView" % resource
@@ -59,7 +59,6 @@ class Api(object):
         """ Provides URLconf details for the ``Api`` and all registered
             ``Resources`` beneath it.
         """
-
         urls = []
 
         for url_name in sorted(self.resources.keys()):
@@ -67,10 +66,7 @@ class Api(object):
             resource = self.resources[url_name]
             urls.append(resource.as_url(
                 api = self,
-                name_prefix = '-'.join((
-                            self.prefix,
-                            self.str_version,
-                        )).strip('-'),
+                name_prefix = '-'.join((self.prefix, self.str_version)).strip('-'),
                 url_prefix = self.str_version
             ))
 

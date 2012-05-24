@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-05-24 1.2.3
+-------------------
+* API-map has been updated.
+
 ## 2012-05-23 1.2.2
 -------------------
 * Add JSONP emitters, add jsonp support to rpc
