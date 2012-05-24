@@ -137,7 +137,7 @@ class JSONTemplateEmitter(TemplateEmitter):
 class JSONPTemplateEmitter(TemplateEmitter):
     " Template emitter with javascript media type. "
     media_type = 'text/javascript'
-    format = 'js'
+    format = 'json'
 
     def serialize(self, content):
         content = super(JSONPTemplateEmitter, self).serialize(content)
