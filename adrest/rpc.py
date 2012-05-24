@@ -12,8 +12,7 @@ class RPCResource(ResourceView):
 
     url_regex = r'^rpc$'
     emitters = JSONEmitter, JSONPEmitter
-
-    SEPARATOR = '.'
+    separator = '.'
 
     def get(self, request, **resources):
         try:
@@ -22,15 +21,16 @@ class RPCResource(ResourceView):
             assert payload, "Payload not found."
 
             method = payload['method']
-            assert method and self.SEPARATOR in method, "Wrong method name: %s." % method
+            assert method and self.separator in method, "Wrong method name: %s." % method
 
-            resource, method = method.split(self.SEPARATOR, 1)
+            resource, method = method.split(self.separator, 1)
             resource = self.api.resources.get(resource)
             assert resource and hasattr(resource, method), "Wrong resource: %s.%s" % (resource, method)
 
             data = QueryDict('', mutable=True)
             data.update(payload.get('data', dict()))
-            data['callback'] = payload.get('callback', request.GET.get('callback', request.GET.get('jsonp', 'callback')))
+            data['callback'] = payload.get('callback') or request.GET.get('callback') or request.GET.get('jsonp') or 'callback'
+
             request.POST = request.PUT = request.GET = data
             delattr(request, '_request')
 
@@ -43,6 +43,3 @@ class RPCResource(ResourceView):
         resource = resource.as_view(api=self.api)
         request.method = method.upper()
         return resource(request, **payload.get("params", dict()))
-
-    def emit(self, response, **kwargs):
-        return response

@@ -34,7 +34,9 @@ class AdrestTestCase(TestCase):
         return method(uri, data=data or dict(), **headers)
 
     def rpc(self, data, callback=None, **kwargs):
-        data = dict(payload=simplejson.dumps(data), callback=callback)
+        data = dict(payload=simplejson.dumps(data))
+        if callback:
+            data['callback'] = callback
         return self.get_resource('rpc', data=data, **kwargs)
 
     put_resource = curry(get_resource, method='put')

@@ -71,11 +71,6 @@ class RPCTestCase(AdrestTestCase):
         ))
         self.assertContains(response, '"count": 5')
 
-        response = self.rpc(dict(
-            method='root.get',
-        ), headers=dict(HTTP_AUTHORIZATION=111, HTTP_ACCEPT='application/xml'))
-        self.assertContains(response, '<count>2</count>')
-
     def test_rpc_post(self):
         response = self.rpc(dict(
             method='root.post',
@@ -106,22 +101,22 @@ class RPCTestCase(AdrestTestCase):
     def test_rpc_jsonp(self):
         response = self.rpc(dict(
             method='test.get',
-        ), callback='test1234')
+        ), callback='test1234', headers=dict(HTTP_ACCEPT='text/javascript'))
         self.assertContains(response, 'test1234')
 
         response = self.rpc(dict(
             method='test.get',
-        ), callback='jsonp')
+        ), callback='jsonp', headers=dict(HTTP_ACCEPT='text/javascript'))
         self.assertContains(response, 'jsonp')
 
         response = self.rpc(dict(
             method='test.get',
             callback='parseJSON'
-        ))
+        ), headers=dict(HTTP_ACCEPT='text/javascript'))
         self.assertContains(response, 'parseJSON')
 
         response = self.rpc(dict(
             method='test.get',
             callback='parseJSON'
-        ), callback='Other')
+        ), callback='Other', headers=dict(HTTP_ACCEPT='text/javascript'))
         self.assertContains(response, 'parseJSON')
