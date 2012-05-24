@@ -1,11 +1,12 @@
 CHANGES
 =======
 
-## 2012-05-24 1.2.7
+## 2012-05-24 1.2.8
 -------------------
 * API-map has been updated.
 * Fixed RPC headers.
 * Added JavaScript templates.
+* Added `adrest_jsonify` tag.
 
 ## 2012-05-23 1.2.2
 -------------------

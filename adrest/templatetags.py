@@ -35,7 +35,7 @@ def adrest_include(parser, token):
 adrest_include = register.tag(adrest_include)
 
 
-# def adrest_jsonify(content, **kwargs):
-    # from adrest.utils.serializer import json_dumps
-    # json_dumps(content)
-# adrest_jsonify = register.simple_tag(adrest_jsonify)
+def adrest_jsonify(content, **kwargs):
+    from adrest.utils.serializer import json_dumps
+    return json_dumps(content)
+adrest_jsonify = register.simple_tag(adrest_jsonify)
