@@ -1,10 +1,11 @@
 CHANGES
 =======
 
-## 2012-05-24 1.2.5
+## 2012-05-24 1.2.6
 -------------------
 * API-map has been updated.
 * Fixed RPC headers.
+* Added JavaScript templates.
 
 ## 2012-05-23 1.2.2
 -------------------
