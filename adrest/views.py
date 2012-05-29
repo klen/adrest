@@ -208,7 +208,7 @@ class ResourceView(handler.HandlerMixin,
             return resources
 
         try:
-            resources[cls.meta.name] = cls.model.objects.get(pk = pk)
+            resources[cls.meta.name] = cls.queryset.get(pk=pk)
 
         except (ObjectDoesNotExist, ValueError):
             raise HttpError("Resource not found.",
@@ -274,7 +274,7 @@ class ResourceView(handler.HandlerMixin,
         url_regex = url_regex.replace('//', '/')
         url_name = '%s%s' % (name_prefix, cls.meta.url_name)
 
-        return url(url_regex, cls.as_view(api=api), name = url_name)
+        return url(url_regex, cls.as_view(api=api), name=url_name)
 
     def get_name(self):
         return self.meta.name

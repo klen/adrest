@@ -101,9 +101,9 @@ class TemplateEmitter(BaseEmitter):
 
         template = loader.get_template(template_name)
         return template.render(RequestContext(self.request, dict(
-                content = content,
-                emitter = self,
-                resource = self.resource)))
+                content=content,
+                emitter=self,
+                resource=self.resource)))
 
     def get_template_path(self, content=None):
 

@@ -47,5 +47,5 @@ class CacheThrottle(BaseThrottle):
         if count >= self.throttle_at and expiration > now:
             return expiration - now
 
-        cache.set(key, (count+1, expiration), (expiration - now))
+        cache.set(key, (count + 1, expiration), (expiration - now))
         return 0

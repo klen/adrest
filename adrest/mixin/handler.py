@@ -58,9 +58,9 @@ class HandlerMixin(object):
     form = None
     form_fields = None
     form_exclude = None
-    callmap = { 'GET': 'get', 'POST': 'post',
-                'PUT': 'put', 'DELETE': 'delete',
-                'OPTIONS': 'options', 'HEAD': 'head' }
+    callmap = {'GET': 'get', 'POST': 'post',
+               'PUT': 'put', 'DELETE': 'delete',
+               'OPTIONS': 'options', 'HEAD': 'head'}
 
     def __init__(self, *args, **kwargs):
         super(HandlerMixin, self).__init__(*args, **kwargs)
@@ -127,7 +127,7 @@ class HandlerMixin(object):
             tokens = field.split(LOOKUP_SEP)
             field_name = tokens[0]
 
-            if not field_name in self.meta.model_fields or filters.has_key(field_name):
+            if not field_name in self.meta.model_fields or field_name in filters:
                 continue
 
             converter = self.model._meta.get_field(field).to_python if len(tokens) == 1 else lambda v: v

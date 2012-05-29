@@ -49,13 +49,13 @@ if settings.ACCESS_LOG:
             return
 
         Access.objects.create(
-            uri = request.path_info,
-            method = request.method,
-            version = str(resource.api),
-            status_code = response.status_code,
-            request = '%s\n\n%s' % (str(request.META), str(getattr(request, 'data', ''))),
-            identifier = resource.identifier or request.META.get('REMOTE_ADDR', 'anonymous'),
-            response = response.content.decode('utf-8')[:5000],
+            uri=request.path_info,
+            method=request.method,
+            version=str(resource.api),
+            status_code=response.status_code,
+            request='%s\n\n%s' % (str(request.META), str(getattr(request, 'data', ''))),
+            identifier=resource.identifier or request.META.get('REMOTE_ADDR', 'anonymous'),
+            response=response.content.decode('utf-8')[:5000],
         )
 
     api_request_finished.connect(save_log)
@@ -68,11 +68,10 @@ if settings.ACCESSKEY:
     import uuid
     from django.contrib.auth.models import User
 
-
     class AccessKey(models.Model):
         """ API key.
         """
-        key =  models.CharField(max_length=40, blank=True)
+        key = models.CharField(max_length=40, blank=True)
         user = models.ForeignKey(User)
         created = models.DateTimeField(auto_now_add=True)
 

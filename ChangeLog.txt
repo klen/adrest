@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-05-29 1.3.0
+-------------------
+* Fixed parsing of resources
+
 ## 2012-05-24 1.2.11
 --------------------
 * API-map has been updated.

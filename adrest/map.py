@@ -23,9 +23,9 @@ class MapResource(ResourceView):
         for url_name in sorted(self.api.resources.iterkeys()):
             resource = self.api.resources[url_name]
             info = dict(
-                name = url_name,
-                methods = resource.allowed_methods,
-                fields = []
+                name=url_name,
+                methods=resource.allowed_methods,
+                fields=[]
             )
             if resource.model:
                 info['resource'] = resource.model.__name__
@@ -35,9 +35,9 @@ class MapResource(ResourceView):
             if resource.form and ('POST' in resource.allowed_methods or 'PUT' in resource.allowed_methods):
                 info['fields'] += [
                     (name, dict(
-                        required = f.required and f.initial is None,
-                        label = f.label,
-                        help = smart_unicode(f.help_text + ''))
+                        required=f.required and f.initial is None,
+                        label=f.label,
+                        help=smart_unicode(f.help_text + ''))
                     )
                     for name, f in resource.form.base_fields.iteritems()
                     if not (isinstance(f, ModelChoiceField) and f.choices.queryset.model in models)

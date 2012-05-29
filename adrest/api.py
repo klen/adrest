@@ -65,9 +65,9 @@ class Api(object):
 
             resource = self.resources[url_name]
             urls.append(resource.as_url(
-                api = self,
-                name_prefix = '-'.join((self.prefix, self.str_version)).strip('-'),
-                url_prefix = self.str_version
+                api=self,
+                name_prefix='-'.join((self.prefix, self.str_version)).strip('-'),
+                url_prefix=self.str_version
             ))
 
         return patterns(self.prefix, *urls)

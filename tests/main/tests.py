@@ -24,6 +24,7 @@ class MixinTest(TestCase):
 
     def test_emitter(self):
         request = self.rf.get("/")
+
         class Test(View, EmitterMixin):
             def get(self, request):
                 content = self.emit('test')
@@ -126,12 +127,12 @@ class AdrestTest(AdrestTestCase):
 
     def test_owners_checking(self):
         response = self.get_resource('author-test-book-article', book=self.book.pk, data=dict(
-            author = self.author.pk
+            author=self.author.pk
         ))
         self.assertContains(response, 'false', status_code=401)
 
-        response = self.get_resource('author-test-book-article', key = self.author.user.accesskey_set.get(),
-                book=self.book.pk, data=dict(author = self.author.pk))
+        response = self.get_resource('author-test-book-article', key=self.author.user.accesskey_set.get(),
+                book=self.book.pk, data=dict(author=self.author.pk))
         self.assertContains(response, 'true')
 
     def test_access_logging(self):
@@ -144,12 +145,12 @@ class AdrestTest(AdrestTestCase):
     def test_options(self):
         self.assertTrue('OPTIONS' in ArticleResource.allowed_methods)
         uri = self.reverse('author-test-book-article', book=self.book.pk)
-        response = self.client.options(uri, data=dict(author = self.author.pk))
+        response = self.client.options(uri, data=dict(author=self.author.pk))
         self.assertContains(response, 'Options OK')
 
         user = User.objects.create(username='test2')
         author = Author.objects.create(name='Tester', user=user)
-        response = self.client.options(uri, data=dict(author = author.pk))
+        response = self.client.options(uri, data=dict(author=author.pk))
         self.assertContains(response, 'Options OK')
 
 
@@ -160,17 +161,17 @@ class ResourceTest(AdrestTestCase):
     def setUp(self):
         super(ResourceTest, self).setUp()
         for i in range(5):
-            user = User.objects.create(username='test%s' % i )
+            user = User.objects.create(username='test%s' % i)
             self.author = Author.objects.create(name='author%s' % i, user=user)
 
         for i in range(148):
-            Book.objects.create(author=self.author, title="book%s" % i, status = random.choice((1, 2, 3)))
+            Book.objects.create(author=self.author, title="book%s" % i, status=random.choice((1, 2, 3)))
 
     def test_author(self):
         response = self.get_resource('author')
         self.assertContains(response, 'count="5"')
 
-        response = self.post_resource('author', data=dict(name = "new author", user=User.objects.create(username="new user").pk))
+        response = self.post_resource('author', data=dict(name="new author", user=User.objects.create(username="new user").pk))
         self.assertContains(response, 'new author')
 
     def test_book(self):
@@ -178,27 +179,27 @@ class ResourceTest(AdrestTestCase):
         self.assertEqual(uri, "/1.0.0/owner/test/book/")
 
         response = self.get_resource('author-test-book', data=dict(
-            author = self.author.pk
+            author=self.author.pk
         ))
         self.assertContains(response, 'count="%s"' % Book.objects.filter(author=self.author).count())
         self.assertContains(response, '<name>%s</name>' % self.author.name)
 
         response = self.get_resource('author-test-book', data=dict(
-            title__startswith = "book1",
-            title__megadeath = 12,
+            title__startswith="book1",
+            title__megadeath=12,
         ))
         self.assertContains(response, 'count="%s"' % Book.objects.filter(title__startswith='book1').count())
 
         response = self.post_resource('author-test-book', data=dict(
-            title = "new book",
+            title="new book",
             status=2,
-            author = self.author.pk))
+            author=self.author.pk))
         self.assertContains(response, '<price>0</price>')
 
         uri = self.reverse('author-test-book', book=1)
         uri = "%s?author=%s" % (uri, self.author.pk)
         response = self.client.put(uri, data=dict(
-            price = 199
+            price=199
         ))
         self.assertContains(response, '<price>199</price>')
 
@@ -208,17 +209,17 @@ class ResourceTest(AdrestTestCase):
     def test_filter(self):
         uri = self.reverse('author-test-book')
         response = self.client.get(uri, data=dict(
-            author = self.author.pk,
+            author=self.author.pk,
             title="book2"))
         self.assertContains(response, 'count="1"')
 
         response = self.client.get(uri, data=dict(
-            author = self.author.pk,
+            author=self.author.pk,
             status=[1, 2, 3]))
         self.assertContains(response, 'count="%s"' % Book.objects.all().count())
 
         response = self.client.get(uri, data=dict(
-            author = self.author.pk,
+            author=self.author.pk,
             status=[1, 3]))
         self.assertNotContains(response, '<status>2</status>')
 
@@ -254,7 +255,6 @@ class ResourceTest(AdrestTestCase):
         self.assertContains(response, '<someother>1</someother>')
         self.assertContains(response, '<method>GET</method>')
 
-
     def test_books(self):
         """Test response Link header
 
@@ -263,7 +263,7 @@ class ResourceTest(AdrestTestCase):
         link_re = re.compile(r'<(?P<link>[^>]+)>\; rel=\"(?P<rel>[^\"]+)\"')
 
         response = self.get_resource('author-test-book',
-                data=dict(author = self.author.pk))
+                data=dict(author=self.author.pk))
         self.assertTrue(response.has_header("Link"))
         self.assertEquals(response["Link"], '<%s?page=2&author=5>; rel="next"' % self.reverse('author-test-book'))
         # Get objects by links on Link header

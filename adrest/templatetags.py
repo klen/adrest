@@ -7,6 +7,7 @@ register = Library()
 # Fix django templatetags module loader
 __path__ = ""
 
+
 class AdrestInclusionNode(Node):
 
     def __init__(self, name, *args):
