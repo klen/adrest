@@ -5,7 +5,7 @@ from adrest.views import ResourceView
 
 
 class AuthorResource(ResourceView):
-    allowed_methods = 'GET', 'POST'
+    allowed_methods = 'GET', 'POST', 'PATCH'
     model = 'main.author'
     url_regex = '^owner/$'
 
@@ -59,3 +59,8 @@ class CustomResource(ResourceView):
 
     def post(self, request, **resources):
         raise HttpError(dict(error=True), status=400, emitter=JSONEmitter)
+
+
+class DummyResource(ResourceView):
+    def get(self, request, **resources):
+        return True

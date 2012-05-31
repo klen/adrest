@@ -43,7 +43,7 @@ def gen_url_regex(resource):
 
 
 def fix_request(request):
-    methods = "PUT", "PATH"
+    methods = "PUT", "PATCH"
 
     if request.method in methods and not getattr(request, request.method, None):
 

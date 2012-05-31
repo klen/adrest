@@ -40,7 +40,7 @@ class MetaTest(TestCase):
     def test_meta(self):
         self.assertTrue(AuthorResource.meta)
         self.assertEqual(AuthorResource.allowed_methods, (
-            'GET', 'POST', 'OPTIONS', 'HEAD'
+            'GET', 'POST', 'PATCH', 'OPTIONS', 'HEAD'
         ))
         self.assertEqual(AuthorResource.meta.name, 'author')
         self.assertEqual(AuthorResource.meta.url_name, 'author')
@@ -113,6 +113,10 @@ class AdrestTest(AdrestTestCase):
         self.book = Book.objects.create(author=self.author, title='test', status=1)
         super(AdrestTest, self).setUp()
 
+    def test_urls(self):
+        uri = reverse('dummy')
+        self.assertEqual(uri, '/dummy/')
+
     def test_methods(self):
         uri = self.reverse('author')
         self.assertEqual(uri, '/1.0.0/owner')
@@ -166,6 +170,10 @@ class ResourceTest(AdrestTestCase):
 
         for i in range(148):
             Book.objects.create(author=self.author, title="book%s" % i, status=random.choice((1, 2, 3)))
+
+    def test_patch(self):
+        response = self.patch_resource('author')
+        self.assertContains(response, 'true')
 
     def test_author(self):
         response = self.get_resource('author')
