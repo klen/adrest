@@ -1,4 +1,5 @@
 <book>
+    <id>{{ content.pk }}</id>
     <title>{{ content.title }}</title>
     <price>{{ content.price }}</price>
     <status>{{ content.status }}</status>
