@@ -8,7 +8,8 @@ from django.http import HttpResponse
 
 from adrest.forms import PartitialForm
 from adrest.settings import LIMIT_PER_PAGE
-from adrest.utils import status, MetaOptions
+from adrest.utils import status, MetaOptions, UpdatedList
+from adrest.utils.tools import as_tuple
 from adrest.utils.exceptions import HttpError
 from adrest.utils.paginator import Paginator
 
@@ -60,7 +61,8 @@ class HandlerMixin(object):
     form_exclude = None
     callmap = {'GET': 'get', 'POST': 'post',
                'PUT': 'put', 'DELETE': 'delete',
-               'OPTIONS': 'options', 'HEAD': 'head'}
+               'PATCH': 'patch', 'OPTIONS': 'options',
+               'HEAD': 'head'}
 
     def __init__(self, *args, **kwargs):
         super(HandlerMixin, self).__init__(*args, **kwargs)
@@ -87,26 +89,31 @@ class HandlerMixin(object):
         raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, **resources):
-        instance = resources.get(self.meta.name)
-        if not instance:
+        content = resources.get(self.meta.name)
+        if not content:
             raise HttpError("Bad request", status=status.HTTP_404_NOT_FOUND)
 
-        form = self.form(data=deepcopy(request.data), instance=instance, **resources)
-        if form.is_valid():
-            return form.save()
+        updated = UpdatedList()
+        for o in as_tuple(content):
+            form = self.form(data=deepcopy(request.data), instance=o, **resources)
+            if not form.is_valid():
+                raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
+            updated.append(form.save())
 
-        raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
+        return updated if isinstance(content, list) else updated[-1]
 
     def delete(self, request, **resources):
-        instance = resources.get(self.meta.name)
-        if not instance:
-            raise HttpError("Bad request", status=status.HTTP_400_BAD_REQUEST)
+        content = resources.get(self.meta.name)
+        if not content:
+            raise HttpError("Bad request", status=status.HTTP_404_NOT_FOUND)
 
-        for name, owner in resources.items():
-            if hasattr(instance, '%s_id' % name):
-                assert owner.pk == getattr(instance, '%s_id' % name)
-        instance.delete()
+        for o in as_tuple(content):
+            o.delete()
+
         return HttpResponse("")
+
+    def patch(self, request, **resources):
+        pass
 
     @staticmethod
     def options(request, **kwargs):

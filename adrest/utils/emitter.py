@@ -8,6 +8,7 @@ from django.template import RequestContext, loader
 
 from .paginator import Paginator
 from .serializer import json_dumps, xml_dumps
+from adrest.utils import UpdatedList
 from adrest.utils.status import HTTP_200_OK
 from adrest.utils.response import SerializedHttpResponse
 
@@ -109,6 +110,9 @@ class TemplateEmitter(BaseEmitter):
 
         if isinstance(content, Paginator):
             return op.join('api', 'paginator.%s' % self.format)
+
+        if isinstance(content, UpdatedList):
+            return op.join('api', 'updated.%s' % self.format)
 
         app = ''
         name = self.resource.get_name()

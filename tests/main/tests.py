@@ -10,7 +10,7 @@ from django.views.generic import View
 
 from .api import API as api
 from .models import Author, Book
-from .resourses import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
+from .resources import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
 from adrest.mixin.emitter import EmitterMixin
 from adrest.models import Access
 from adrest.tests.utils import AdrestTestCase
@@ -181,6 +181,25 @@ class ResourceTest(AdrestTestCase):
 
         response = self.post_resource('author', data=dict(name="new author", user=User.objects.create(username="new user").pk))
         self.assertContains(response, 'new author')
+
+    def test_collection_put_delete(self):
+        status1 = Book.objects.filter(status=1)
+        response = self.put_resource('author-test-book', data=dict(
+            status=3,
+            author=self.author.pk,
+            book=[b.pk for b in status1]
+        ))
+        self.assertContains(response, '<status>3</status>')
+        self.assertNotContains(response, '<status>1</status>')
+        self.assertFalse(Book.objects.filter(status=1).count())
+
+        status2 = Book.objects.filter(status=2)
+        response = self.delete_resource('author-test-book', data=dict(
+            author=self.author.pk,
+            book=[b.pk for b in status2]
+        ))
+        self.assertContains(response, '')
+        self.assertFalse(Book.objects.filter(status=2).count())
 
     def test_book(self):
         uri = self.reverse('author-test-book')

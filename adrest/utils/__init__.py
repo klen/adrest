@@ -19,3 +19,10 @@ class MetaOptions(object):
         return "%(url_name)s(%(name)s) - %(url_regex)s %(parents)s" % self.__dict__
 
     __repr__ = __str__
+
+
+class UpdatedList(list):
+
+    @property
+    def len(self):
+        return len(self)

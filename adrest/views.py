@@ -199,18 +199,24 @@ class ResourceView(handler.HandlerMixin,
     def get_resources(cls, request, resource=None, **resources):
         " Parse resource objects from URL and GET. "
 
-        # Get from parent
         if cls.parent:
             resources = cls.parent.get_resources(request, resource=resource, **resources)
 
-        pk = resources.get(cls.meta.name) or request.REQUEST.get(cls.meta.name)
-        if not cls.model or not pk:
+        pks = resources.get(cls.meta.name) or request.REQUEST.getlist(cls.meta.name)
+        if not cls.model or not pks:
             return resources
 
-        try:
-            resources[cls.meta.name] = cls.queryset.get(pk=pk)
+        pks = as_tuple(pks)
 
-        except (ObjectDoesNotExist, ValueError):
+        try:
+            if len(pks) == 1:
+                resources[cls.meta.name] = cls.queryset.get(pk=pks[0])
+
+            else:
+                assert cls.queryset.filter(pk__in=pks).count()
+                resources[cls.meta.name] = list(cls.queryset.filter(pk__in=pks))
+
+        except (ObjectDoesNotExist, ValueError, AssertionError):
             raise HttpError("Resource not found.",
                     status=status.HTTP_404_NOT_FOUND)
 
@@ -236,16 +242,14 @@ class ResourceView(handler.HandlerMixin,
 
         cls.parent.check_owners(**resources)
 
-        resource = resources.get(cls.meta.name)
-        if cls.model and cls.parent.model and resource:
-            parent_resource = resources.get(cls.parent.meta.name)
-            parent_resource_id = getattr(resource, "%s_id" % cls.parent.meta.name, None)
+        objects = as_tuple(resources.get(cls.meta.name))
+        if cls.model and cls.parent.model and objects:
             try:
-                assert parent_resource and parent_resource.pk == parent_resource_id
+                pr = resources.get(cls.parent.meta.name)
+                assert pr and all(pr.pk == getattr(o, "%s_id" % cls.parent.meta.name, None) for o in objects)
             except AssertionError:
                 # 403 Error if there is error in parent-children relationship
-                raise HttpError("Access forbidden.",
-                        status=status.HTTP_403_FORBIDDEN)
+                raise HttpError("Access forbidden.", status=status.HTTP_403_FORBIDDEN)
 
         return True
 
