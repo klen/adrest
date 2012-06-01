@@ -18,7 +18,6 @@ if not django_settings.configured:
 
 
 def run_tests(*test_args):
-    # Import django tests runner
     from django.test.simple import DjangoTestSuiteRunner
     if not test_args:
         test_args = ['main', 'simple', 'rpc']
