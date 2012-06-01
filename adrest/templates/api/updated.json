@@ -1,0 +1,3 @@
+[
+    {% for o in content %}{% adrest_include o %}{% if not forloop.last %}, {% endif %}{% endfor %}
+]
