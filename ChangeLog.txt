@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-06-07 1.4.1
+-------------------
+* Fixed RPC callbacks
+
 ## 2012-06-01 1.4.0
 -------------------
 * Upgraded PUT and DELETE methods.

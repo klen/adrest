@@ -110,7 +110,7 @@ class ResourceView(handler.HandlerMixin,
     allow_public_access = False
 
     @csrf_exempt
-    def dispatch(self, request, **resources):
+    def dispatch(self, request, __emit__=True, **resources):
 
         # Fix PUT and PATH methods in Django request
         request = fix_request(request)
@@ -157,17 +157,19 @@ class ResourceView(handler.HandlerMixin,
             response = view(request, **resources)
 
             # Serialize response
-            response = self.emit(response, request=request)
+            response = self.emit(response, request=request) if __emit__ else SerializedHttpResponse(response)
             response["Allow"] = ', '.join(self.allowed_methods)
             response["Vary"] = 'Authenticate, Accept'
 
         except HttpError, e:
             response = SerializedHttpResponse(e.content, status=e.status)
-            response = self.emit(response, request=request, emitter=e.emitter)
+            if __emit__:
+                response = self.emit(response, request=request, emitter=e.emitter)
 
         except (AssertionError, ValidationError), e:
             response = SerializedHttpResponse(unicode(e), status=status.HTTP_400_BAD_REQUEST)
-            response = self.emit(response, request=request)
+            if __emit__:
+                response = self.emit(response, request=request)
 
         except Exception, e:
             response = self.handle_exception(e, request=request)
@@ -178,8 +180,8 @@ class ResourceView(handler.HandlerMixin,
         # Send finished signal
         api_request_finished.send(self, request=request, response=response, **resources)
 
-        if self.api:
-            self.api.request_finished.send(self, request=request, response=response, **resources)
+        # Send finished signal in API context
+        self.api and self.api.request_finished.send(self, request=request, response=response, **resources)
 
         return response
 

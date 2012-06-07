@@ -16,6 +16,7 @@ class TestResource(ResourceView):
     model = 'rpc.test'
 
     def get(self, request, **resources):
+        assert not 'error' in request.GET, "Custom error"
         return True
 
 

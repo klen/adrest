@@ -14,7 +14,7 @@ class RPCTestCase(AdrestTestCase):
 
         self.root2 = Root.objects.create(name='test_root2')
         for i in xrange(10):
-            Child.objects.create(root=self.root2, name='test_child2', odd=i%2)
+            Child.objects.create(root=self.root2, name='test_child2', odd=i % 2)
 
     def test_base(self):
         uri = self.reverse('test')
@@ -132,3 +132,10 @@ class RPCTestCase(AdrestTestCase):
             callback='parseJSON'
         ), callback='Other', headers=dict(HTTP_ACCEPT='text/javascript'))
         self.assertContains(response, 'parseJSON')
+
+        response = self.rpc(dict(
+            method='test.get',
+            data=dict(error=True)
+        ), headers=dict(HTTP_ACCEPT='text/javascript'))
+        self.assertEqual(response.get('Content-type'), 'text/javascript')
+        self.assertContains(response, 'callback("Custom error")', status_code=400)

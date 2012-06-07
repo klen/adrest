@@ -51,7 +51,7 @@ class RPCResource(ResourceView):
 
         self.target_resource = resource
         resource = resource.as_view(api=self.api)
-        return resource(request, **payload.get("params", dict()))
+        return resource(request, __emit__=False, **payload.get("params", dict()))
 
     def get_name(self):
         if self.target_resource:
