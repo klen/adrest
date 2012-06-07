@@ -110,7 +110,7 @@ class ResourceView(handler.HandlerMixin,
     allow_public_access = False
 
     @csrf_exempt
-    def dispatch(self, request, __emit__=True, **resources):
+    def dispatch(self, request, _emit_=True, **resources):
 
         # Fix PUT and PATH methods in Django request
         request = fix_request(request)
@@ -157,18 +157,18 @@ class ResourceView(handler.HandlerMixin,
             response = view(request, **resources)
 
             # Serialize response
-            response = self.emit(response, request=request) if __emit__ else SerializedHttpResponse(response)
+            response = self.emit(response, request=request) if _emit_ else SerializedHttpResponse(response)
             response["Allow"] = ', '.join(self.allowed_methods)
             response["Vary"] = 'Authenticate, Accept'
 
         except HttpError, e:
             response = SerializedHttpResponse(e.content, status=e.status)
-            if __emit__:
+            if _emit_:
                 response = self.emit(response, request=request, emitter=e.emitter)
 
         except (AssertionError, ValidationError), e:
             response = SerializedHttpResponse(unicode(e), status=status.HTTP_400_BAD_REQUEST)
-            if __emit__:
+            if _emit_:
                 response = self.emit(response, request=request)
 
         except Exception, e:
