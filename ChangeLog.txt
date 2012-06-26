@@ -1,9 +1,13 @@
 CHANGES
 =======
 
+## 2012-06-26 1.4.4
+-------------------
+* Added manytomany field tests.
+
 ## 2012-06-07 1.4.3
 -------------------
-* Fixed RPC callbacks
+* Fixed RPC callbacks.
 
 ## 2012-06-01 1.4.0
 -------------------
