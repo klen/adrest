@@ -25,6 +25,7 @@ class Book(models.Model):
     author = models.ForeignKey(Author)
     price = models.PositiveIntegerField(default=0, blank=True)
     publisher = models.ForeignKey(Publisher, null=True, blank=True)
+    books = models.ManyToManyField('self', blank=True)
 
 
 class Article(models.Model):
