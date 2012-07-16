@@ -16,12 +16,12 @@ register: _register clean
 upload: _upload install _commit doc
 
 _upload:
-	python setup.py sdist upload
+	python setup.py sdist upload || echo 'Upload already'
 
 _commit:
 	git add .
 	git add . -u
-	git commit
+	git commit || echo 'No commits'
 	git push origin
 
 _register:
