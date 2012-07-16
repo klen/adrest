@@ -169,7 +169,7 @@ class ResourceTest(AdrestTestCase):
             self.author = Author.objects.create(name='author%s' % i, user=user)
 
         for i in range(148):
-            Book.objects.create(author=self.author, title="book%s" % i, status=random.choice((1, 2, 3)))
+            Book.objects.create(author=self.author, title="book%s" % i, status=random.choice((1, 2, 3)), price=432)
 
     def test_patch(self):
         response = self.patch_resource('author')
@@ -210,6 +210,7 @@ class ResourceTest(AdrestTestCase):
         ))
         self.assertContains(response, 'count="%s"' % Book.objects.filter(author=self.author).count())
         self.assertContains(response, '<name>%s</name>' % self.author.name)
+        self.assertContains(response, '<book_price>432</book_price>')
 
         response = self.get_resource('author-test-book', data=dict(
             title__startswith="book1",

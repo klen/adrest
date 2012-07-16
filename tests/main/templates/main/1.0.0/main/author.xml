@@ -1,3 +1,4 @@
 <author>
     <name>{{ content.name }}</name>
+    <book_price>{{ price|default_if_none:"0" }}</book_price>
 </author>

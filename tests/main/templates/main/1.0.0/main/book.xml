@@ -3,5 +3,5 @@
     <title>{{ content.title }}</title>
     <price>{{ content.price }}</price>
     <status>{{ content.status }}</status>
-    {% adrest_include content.author %}
+    {% adrest_include content.author price=content.price %}
 </book>

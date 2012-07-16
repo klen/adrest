@@ -32,7 +32,7 @@ if settings.ACCESS_LOG:
             verbose_name_plural = "Access"
 
         def __unicode__(self):
-            return "%s - %s" % (self.status_code, self.uri)
+            return "#%s %s:%s:%s" % (self.pk, self.method, self.status_code, self.uri)
 
     class AccessAdmin(admin.ModelAdmin):
         list_display = 'status_code', 'uri', 'method', 'identifier', 'created_at', 'version'
@@ -80,7 +80,7 @@ if settings.ACCESSKEY:
             unique_together = 'user', 'key'
 
         def __unicode__(self):
-            return u"%s for %s" % (self.key, self.user)
+            return u'#%s %s "%s"' % (self.pk, self.user, self.key)
 
         def save(self, **kwargs):
             self.key = self.key or str(uuid.uuid4()).replace('-', '')

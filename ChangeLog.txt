@@ -1,6 +1,10 @@
 CHANGES
 =======
 
+## 2012-07-16 1.6.0
+-------------------
+* Upgrade 'adrest_include'
+
 ## 2012-06-26 1.5.0
 -------------------
 * Added manytomany field tests.
