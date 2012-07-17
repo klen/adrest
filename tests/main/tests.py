@@ -136,7 +136,7 @@ class AdrestTest(AdrestTestCase):
         self.assertContains(response, 'false', status_code=401)
 
         response = self.get_resource('author-test-book-article', key=self.author.user.accesskey_set.get(),
-                book=self.book.pk, data=dict(author=self.author.pk))
+                                     book=self.book.pk, data=dict(author=self.author.pk))
         self.assertContains(response, 'true')
 
     def test_access_logging(self):
@@ -264,7 +264,7 @@ class ResourceTest(AdrestTestCase):
 
         uri = self.reverse('author-test-book-article', book=book.pk) + "?author=" + str(self.author.pk)
         response = self.client.delete(uri,
-                HTTP_AUTHORIZATION=self.author.user.accesskey_set.get().key)
+                                      HTTP_AUTHORIZATION=self.author.user.accesskey_set.get().key)
         self.assertContains(response, 'Some error', status_code=500)
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[-1].subject, '[Django] ADREST API Error (500): /1.0.0/owner/book/%s/article/' % Book.objects.all().count())
@@ -291,7 +291,7 @@ class ResourceTest(AdrestTestCase):
         link_re = re.compile(r'<(?P<link>[^>]+)>\; rel=\"(?P<rel>[^\"]+)\"')
 
         response = self.get_resource('author-test-book',
-                data=dict(author=self.author.pk))
+                                     data=dict(author=self.author.pk))
         self.assertTrue(response.has_header("Link"))
         self.assertEquals(response["Link"], '<%s?page=2&author=5>; rel="next"' % self.reverse('author-test-book'))
         # Get objects by links on Link header
@@ -304,6 +304,21 @@ class ResourceTest(AdrestTestCase):
 
         self.assertEquals(links[1][0], '%s?author=5' % self.reverse('author-test-book'))
         self.assertEquals(links[1][1], 'previous')
+
+    def test_bson(self):
+        " Test BSON support. "
+
+        from bson import BSON
+
+        response = self.get_resource('bson')
+        test = BSON(response.content).decode()
+        self.assertEqual(test['counter'], 1)
+
+        bson = BSON.encode(dict(counter=4))
+        uri = self.reverse('bson')
+        response = self.client.post(uri, data=bson, content_type='application/bson')
+        test = BSON(response.content).decode()
+        self.assertEqual(test['counter'], 5)
 
 
 class AdrestMapTest(TestCase):
