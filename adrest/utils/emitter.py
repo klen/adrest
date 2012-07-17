@@ -102,9 +102,9 @@ class TemplateEmitter(BaseEmitter):
 
         template = loader.get_template(template_name)
         return template.render(RequestContext(self.request, dict(
-                content=content,
-                emitter=self,
-                resource=self.resource)))
+            content=content,
+            emitter=self,
+            resource=self.resource)))
 
     def get_template_path(self, content=None):
 
@@ -167,3 +167,17 @@ class XMLTemplateEmitter(TemplateEmitter):
             int(mktime(datetime.now().timetuple())),
             super(XMLTemplateEmitter, self).serialize(content)
         )
+
+
+try:
+    from bson import BSON
+
+    class BSONEmitter(BaseEmitter):
+        media_type = 'application/bson'
+
+        @staticmethod
+        def serialize(content):
+            return BSON.encode(content)
+
+except ImportError:
+    pass

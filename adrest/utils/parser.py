@@ -5,6 +5,7 @@ from .exceptions import HttpError
 
 
 class BaseParser(object):
+    " Base class for parsers. "
 
     media_type = None
 
@@ -16,7 +17,20 @@ class BaseParser(object):
         return request.raw_post_data
 
 
+class FormParser(BaseParser):
+    " Parse user data from form data. "
+
+    media_type = 'application/x-www-form-urlencoded'
+
+    @staticmethod
+    def parse(request):
+        return dict(request.POST.iteritems())
+
+
 class JSONParser(BaseParser):
+    """ Parse user data from JSON.
+        http://en.wikipedia.org/wiki/JSON
+    """
 
     media_type = 'application/json'
 
@@ -29,14 +43,27 @@ class JSONParser(BaseParser):
 
 
 class XMLParser(BaseParser):
+    " Parse user data from XML. "
 
     media_type = 'application/xml'
 
 
-class FormParser(BaseParser):
+try:
+    from bson import BSON
 
-    media_type = 'application/x-www-form-urlencoded'
+    class BSONParser(BaseParser):
+        """ Parse user data from bson.
+            http://en.wikipedia.org/wiki/BSON
+        """
 
-    @staticmethod
-    def parse(request):
-        return dict(request.POST.iteritems())
+        media_type = 'application/bson'
+
+        @staticmethod
+        def parse(request):
+            try:
+                return BSON(request.raw_post_data).decode()
+            except ValueError, e:
+                raise HttpError('BSON parse error - %s' % str(e), status=status.HTTP_400_BAD_REQUEST)
+
+except ImportError:
+    pass
