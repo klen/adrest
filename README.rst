@@ -9,8 +9,8 @@ Documentation in construction.
 Requirements
 =============
 
-- python >= 2.5
-- django >= 1.2
+- python >= 2.6
+- django >= 1.4.0
 
 Installation
 =============
