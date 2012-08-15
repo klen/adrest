@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(name)-12s %(level
 
 if not django_settings.configured:
     django_settings.configure(
-            **dict([(x, getattr(settings, x)) for x in dir(settings) if x.isupper()]))
+        **dict([(x, getattr(settings, x)) for x in dir(settings) if x.isupper()]))
 
 
 def run_tests(*test_args):
@@ -23,7 +23,8 @@ def run_tests(*test_args):
         test_args = ['main', 'simple', 'rpc']
     parent = dirname(abspath(__file__))
     sys.path.insert(0, parent)
-    tests_runner = DjangoTestSuiteRunner(verbosity=1, interactive=True, failfast=True)
+    tests_runner = DjangoTestSuiteRunner(
+        verbosity=1, interactive=True, failfast=True)
     failures = tests_runner.run_tests(test_args)
     sys.exit(failures)
 

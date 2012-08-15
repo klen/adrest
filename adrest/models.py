@@ -5,6 +5,17 @@ from adrest import settings
 from adrest.signals import api_request_finished
 
 
+# Preloads ADREST tags
+try:
+    from django.template.base import builtins
+    from .templatetags import register
+
+    builtins.append(register)
+
+except ImportError:
+    pass
+
+
 # Access log
 # -----------
 if settings.ACCESS_LOG:
