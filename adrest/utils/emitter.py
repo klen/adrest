@@ -8,6 +8,7 @@ from django.template import RequestContext, loader
 
 from .paginator import Paginator
 from .serializer import json_dumps, xml_dumps
+from adrest.utils import UpdatedList
 from adrest.utils.status import HTTP_200_OK
 from adrest.utils.response import SerializedHttpResponse
 
@@ -42,6 +43,7 @@ class BaseEmitter(object):
             return self.response
 
         self.response.content = self.serialize(self.response.response)
+        self.response['Content-type'] = self.media_type
         return self.response
 
     @staticmethod
@@ -67,13 +69,26 @@ class JSONEmitter(BaseEmitter):
         return json_dumps(content)
 
 
+class JSONPEmitter(BaseEmitter):
+    media_type = 'text/javascript'
+
+    def serialize(self, content):
+        callback = self.request.GET.get('callback', 'callback')
+        return '%s(%s)' % (callback, json_dumps(content))
+
+
 class XMLEmitter(BaseEmitter):
 
     media_type = 'application/xml'
+    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>'
 
-    @staticmethod
-    def serialize(content):
-        return xml_dumps(content)
+    def serialize(self, content):
+        return self.xmldoc_tpl % (
+            'true' if self.response.status_code == HTTP_200_OK else 'false',
+            self.resource.version,
+            int(mktime(datetime.now().timetuple())),
+            xml_dumps(content)
+        )
 
 
 class TemplateEmitter(BaseEmitter):
@@ -87,17 +102,20 @@ class TemplateEmitter(BaseEmitter):
 
         template = loader.get_template(template_name)
         return template.render(RequestContext(self.request, dict(
-                content = content,
-                emitter = self,
-                resource = self.resource)))
+            content=content,
+            emitter=self,
+            resource=self.resource)))
 
     def get_template_path(self, content=None):
 
         if isinstance(content, Paginator):
             return op.join('api', 'paginator.%s' % self.format)
 
+        if isinstance(content, UpdatedList):
+            return op.join('api', 'updated.%s' % self.format)
+
         app = ''
-        name = self.resource.meta.name
+        name = self.resource.get_name()
 
         if not content:
             content = self.resource.model
@@ -120,6 +138,17 @@ class JSONTemplateEmitter(TemplateEmitter):
     media_type = 'application/json'
 
 
+class JSONPTemplateEmitter(TemplateEmitter):
+    " Template emitter with javascript media type. "
+    media_type = 'text/javascript'
+    format = 'json'
+
+    def serialize(self, content):
+        content = super(JSONPTemplateEmitter, self).serialize(content)
+        callback = self.request.GET.get('callback', 'callback')
+        return '%s(%s)' % (callback, content)
+
+
 class HTMLTemplateEmitter(TemplateEmitter):
     " Template emitter with HTML media type. "
     media_type = 'text/html'
@@ -138,3 +167,17 @@ class XMLTemplateEmitter(TemplateEmitter):
             int(mktime(datetime.now().timetuple())),
             super(XMLTemplateEmitter, self).serialize(content)
         )
+
+
+try:
+    from bson import BSON
+
+    class BSONEmitter(BaseEmitter):
+        media_type = 'application/bson'
+
+        @staticmethod
+        def serialize(content):
+            return BSON.encode(content)
+
+except ImportError:
+    pass

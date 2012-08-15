@@ -16,19 +16,19 @@ register: _register clean
 upload: _upload install _commit doc
 
 _upload:
-	python setup.py sdist upload
+	python setup.py sdist upload || echo 'Upload already'
 
 _commit:
 	git add .
 	git add . -u
-	git commit
+	git commit || echo 'No commits'
 	git push origin
 
 _register:
 	python setup.py register
 
 remove:
-	sudo pip uninstall -y $(MODULE)
+	sudo pip uninstall -y $(MODULE) || echo "not installed"
 
 _install:
 	sudo pip install -U .

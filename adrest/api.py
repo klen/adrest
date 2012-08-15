@@ -1,9 +1,9 @@
 import logging
-
 from django.conf.urls.defaults import patterns
 from django.dispatch import Signal
 
 from .map import MapResource
+from .rpc import RPCResource
 from .views import ResourceView
 
 
@@ -17,7 +17,7 @@ class Api(object):
         Especially useful for navigation, HATEOAS and for providing multiple
         versions of your API.
     """
-    def __init__(self, version=None, api_map=True, api_prefix='api', **params):
+    def __init__(self, version=None, api_map=True, api_prefix='api', api_rpc=False, **params):
         self.version = version
         self.prefix = api_prefix
         self.params = params
@@ -28,13 +28,16 @@ class Api(object):
         if api_map:
             self.resources[MapResource.meta.url_name] = MapResource
 
+        if api_rpc:
+            self.resources[RPCResource.meta.url_name] = RPCResource
+
         try:
             self.str_version = '.'.join(map(str, version or list()))
         except TypeError:
             self.str_version = str(version)
 
     def register(self, resource, **params):
-        " Register resource subclass with API. "
+        " Registers resource subclass for the API. "
 
         # Must be instance of ResourceView
         assert issubclass(resource, ResourceView), "%s not subclass of ResourceView" % resource
@@ -56,19 +59,15 @@ class Api(object):
         """ Provides URLconf details for the ``Api`` and all registered
             ``Resources`` beneath it.
         """
-
         urls = []
 
         for url_name in sorted(self.resources.keys()):
 
             resource = self.resources[url_name]
             urls.append(resource.as_url(
-                api = self,
-                name_prefix = '-'.join((
-                            self.prefix,
-                            self.str_version,
-                        )).strip('-'),
-                url_prefix = self.str_version
+                api=self,
+                name_prefix='-'.join((self.prefix, self.str_version)).strip('-'),
+                url_prefix=self.str_version
             ))
 
         return patterns(self.prefix, *urls)

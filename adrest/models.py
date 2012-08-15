@@ -32,7 +32,7 @@ if settings.ACCESS_LOG:
             verbose_name_plural = "Access"
 
         def __unicode__(self):
-            return "%s - %s" % (self.status_code, self.uri)
+            return "#%s %s:%s:%s" % (self.pk, self.method, self.status_code, self.uri)
 
     class AccessAdmin(admin.ModelAdmin):
         list_display = 'status_code', 'uri', 'method', 'identifier', 'created_at', 'version'
@@ -49,13 +49,13 @@ if settings.ACCESS_LOG:
             return
 
         Access.objects.create(
-            uri = request.path_info,
-            method = request.method,
-            version = str(resource.api),
-            status_code = response.status_code,
-            request = '%s\n\n%s' % (str(request.META), str(getattr(request, 'data', ''))),
-            identifier = resource.identifier or request.META.get('REMOTE_ADDR', 'anonymous'),
-            response = response.content.decode('utf-8')[:5000],
+            uri=request.path_info,
+            method=request.method,
+            version=str(resource.api),
+            status_code=response.status_code,
+            request='%s\n\n%s' % (str(request.META), str(getattr(request, 'data', ''))),
+            identifier=resource.identifier or request.META.get('REMOTE_ADDR', 'anonymous'),
+            response=response.content.decode('utf-8')[:5000],
         )
 
     api_request_finished.connect(save_log)
@@ -68,11 +68,10 @@ if settings.ACCESSKEY:
     import uuid
     from django.contrib.auth.models import User
 
-
     class AccessKey(models.Model):
         """ API key.
         """
-        key =  models.CharField(max_length=40, blank=True)
+        key = models.CharField(max_length=40, blank=True)
         user = models.ForeignKey(User)
         created = models.DateTimeField(auto_now_add=True)
 
@@ -81,7 +80,7 @@ if settings.ACCESSKEY:
             unique_together = 'user', 'key'
 
         def __unicode__(self):
-            return u"%s for %s" % (self.key, self.user)
+            return u'#%s %s "%s"' % (self.pk, self.user, self.key)
 
         def save(self, **kwargs):
             self.key = self.key or str(uuid.uuid4()).replace('-', '')

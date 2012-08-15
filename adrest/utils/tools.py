@@ -31,21 +31,21 @@ def gen_url_regex(resource):
             yield r.url_regex.rstrip('/$').lstrip('^')
         else:
             yield '%(name)s/(?P<%(name)s>[^/]+)' % dict(
-                    name = r.meta.name)
+                    name=r.meta.name)
 
     for p in resource.url_params:
-        yield '%(name)s/(?P<%(name)s>[^/]+)' % dict(name = p)
+        yield '%(name)s/(?P<%(name)s>[^/]+)' % dict(name=p)
 
     if resource.prefix:
         yield resource.prefix
 
-    yield '%(name)s/(?:(?P<%(name)s>[^/]+)/)?' % dict(name = resource.meta.name)
+    yield '%(name)s/(?:(?P<%(name)s>[^/]+)/)?' % dict(name=resource.meta.name)
 
 
 def fix_request(request):
-    methods = "PUT", "PATH"
+    methods = "PUT", "PATCH"
 
-    if request.method in methods:
+    if request.method in methods and not getattr(request, request.method, None):
 
         if hasattr(request, '_post'):
             del(request._post)

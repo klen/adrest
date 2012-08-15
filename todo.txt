@@ -1,1 +1,2 @@
-Add custom serializer to JSONEmmiter
+Add serializers: bplist, yaml
+Add patch method

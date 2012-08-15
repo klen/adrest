@@ -1,0 +1,3 @@
+<updated count="{{ content.len }}">
+    {% for o in content %}{% adrest_include o %}{% endfor %}
+</updated>

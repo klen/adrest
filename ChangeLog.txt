@@ -1,6 +1,51 @@
 CHANGES
 =======
 
+## 2012-07-17 1.7.0
+-------------------
+* Added BSON support
+
+## 2012-07-16 1.6.0
+-------------------
+* Upgrade 'adrest_include'
+
+## 2012-06-26 1.5.0
+-------------------
+* Added manytomany field tests.
+
+## 2012-06-07 1.4.3
+-------------------
+* Fixed RPC callbacks.
+
+## 2012-06-01 1.4.0
+-------------------
+* Upgraded PUT and DELETE methods.
+* Support for many resources.
+
+## 2012-05-29 1.3.0
+-------------------
+* Fixed parsing of resources
+
+## 2012-05-24 1.2.11
+--------------------
+* API-map has been updated.
+* Fixed RPC headers.
+* Added JavaScript templates.
+* Added `adrest_jsonify` tag.
+
+## 2012-05-23 1.2.2
+-------------------
+* Add JSONP emitters, add jsonp support to rpc
+
+## 2012-05-22 1.2.1
+-------------------
+* Add simple JSON RPC
+
+## 2012-05-11 1.1.21
+--------------------
+* Parse resources from POST and PUT
+* Fix pagination
+
 ## 2012-04-28 1.1.20
 --------------------
 * Fix accesskey admin

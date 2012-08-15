@@ -6,8 +6,9 @@ from django.db import models
 
 class Author(models.Model):
     name = models.CharField(max_length=100,
-            help_text = u"Имя автора")
+            help_text=u"Имя автора")
     user = models.ForeignKey(User)
+    active = models.BooleanField(default=True)
 
 
 class Publisher(models.Model):
@@ -24,6 +25,7 @@ class Book(models.Model):
     author = models.ForeignKey(Author)
     price = models.PositiveIntegerField(default=0, blank=True)
     publisher = models.ForeignKey(Publisher, null=True, blank=True)
+    books = models.ManyToManyField('self', blank=True)
 
 
 class Article(models.Model):

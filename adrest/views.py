@@ -110,7 +110,7 @@ class ResourceView(handler.HandlerMixin,
     allow_public_access = False
 
     @csrf_exempt
-    def dispatch(self, request, **resources):
+    def dispatch(self, request, _emit_=True, **resources):
 
         # Fix PUT and PATH methods in Django request
         request = fix_request(request)
@@ -157,17 +157,19 @@ class ResourceView(handler.HandlerMixin,
             response = view(request, **resources)
 
             # Serialize response
-            response = self.emit(response, request=request)
+            response = self.emit(response, request=request) if _emit_ else SerializedHttpResponse(response)
             response["Allow"] = ', '.join(self.allowed_methods)
             response["Vary"] = 'Authenticate, Accept'
 
         except HttpError, e:
             response = SerializedHttpResponse(e.content, status=e.status)
-            response = self.emit(response, request=request, emitter=e.emitter)
+            if _emit_:
+                response = self.emit(response, request=request, emitter=e.emitter)
 
         except (AssertionError, ValidationError), e:
             response = SerializedHttpResponse(unicode(e), status=status.HTTP_400_BAD_REQUEST)
-            response = self.emit(response, request=request)
+            if _emit_:
+                response = self.emit(response, request=request)
 
         except Exception, e:
             response = self.handle_exception(e, request=request)
@@ -178,8 +180,8 @@ class ResourceView(handler.HandlerMixin,
         # Send finished signal
         api_request_finished.send(self, request=request, response=response, **resources)
 
-        if self.api:
-            self.api.request_finished.send(self, request=request, response=response, **resources)
+        # Send finished signal in API context
+        self.api and self.api.request_finished.send(self, request=request, response=response, **resources)
 
         return response
 
@@ -199,18 +201,24 @@ class ResourceView(handler.HandlerMixin,
     def get_resources(cls, request, resource=None, **resources):
         " Parse resource objects from URL and GET. "
 
-        # Get from parent
         if cls.parent:
             resources = cls.parent.get_resources(request, resource=resource, **resources)
 
-        pk = resources.get(cls.meta.name) or request.GET.get(cls.meta.name)
-        if not cls.model or not pk:
+        pks = resources.get(cls.meta.name) or request.REQUEST.getlist(cls.meta.name)
+        if not cls.model or not pks:
             return resources
 
-        try:
-            resources[cls.meta.name] = cls.model.objects.get(pk = pk)
+        pks = as_tuple(pks)
 
-        except (ObjectDoesNotExist, ValueError):
+        try:
+            if len(pks) == 1:
+                resources[cls.meta.name] = cls.queryset.get(pk=pks[0])
+
+            else:
+                assert cls.queryset.filter(pk__in=pks).count()
+                resources[cls.meta.name] = list(cls.queryset.filter(pk__in=pks))
+
+        except (ObjectDoesNotExist, ValueError, AssertionError):
             raise HttpError("Resource not found.",
                     status=status.HTTP_404_NOT_FOUND)
 
@@ -236,16 +244,14 @@ class ResourceView(handler.HandlerMixin,
 
         cls.parent.check_owners(**resources)
 
-        resource = resources.get(cls.meta.name)
-        if cls.model and cls.parent.model and resource:
-            parent_resource = resources.get(cls.parent.meta.name)
-            parent_resource_id = getattr(resource, "%s_id" % cls.parent.meta.name, None)
+        objects = as_tuple(resources.get(cls.meta.name))
+        if cls.model and cls.parent.model and objects:
             try:
-                assert parent_resource and parent_resource.pk == parent_resource_id
+                pr = resources.get(cls.parent.meta.name)
+                assert pr and all(pr.pk == getattr(o, "%s_id" % cls.parent.meta.name, None) for o in objects)
             except AssertionError:
                 # 403 Error if there is error in parent-children relationship
-                raise HttpError("Access forbidden.",
-                        status=status.HTTP_403_FORBIDDEN)
+                raise HttpError("Access forbidden.", status=status.HTTP_403_FORBIDDEN)
 
         return True
 
@@ -274,7 +280,10 @@ class ResourceView(handler.HandlerMixin,
         url_regex = url_regex.replace('//', '/')
         url_name = '%s%s' % (name_prefix, cls.meta.url_name)
 
-        return url(url_regex, cls.as_view(api=api), name = url_name)
+        return url(url_regex, cls.as_view(api=api), name=url_name)
+
+    def get_name(self):
+        return self.meta.name
 
 
 def errors_mail(response, request):

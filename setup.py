@@ -11,12 +11,12 @@ PACKAGE_DATA = []
 for folder in ['templates']:
     for root, dirs, files in os.walk(os.path.join(PROJECT, folder)):
         for filename in files:
-            PACKAGE_DATA.append("%s/%s" % ( root[len(PROJECT)+1:], filename ))
+            PACKAGE_DATA.append("%s/%s" % (root[len(PROJECT) + 1:], filename))
 
 
-def read( fname ):
+def read(fname):
     try:
-        return open( os.path.join( os.path.dirname( __file__ ), fname ) ).read()
+        return open(os.path.join(os.path.dirname(__file__), fname)).read()
     except IOError:
         return ''
 
@@ -32,8 +32,8 @@ META_DATA = dict(
     name=PROJECT,
     version=version,
     LICENSE=LICENSE,
-    description=read( 'DESCRIPTION' ),
-    long_description=read( 'README.rst' ),
+    description=read('DESCRIPTION'),
+    long_description=read('README.rst'),
     platforms=('Any'),
 
     author='Kirill Klenov',
@@ -41,12 +41,13 @@ META_DATA = dict(
     url=' http://github.com/klen/adrest',
 
     packages=find_packages(),
-    package_data = { '': PACKAGE_DATA, },
+    package_data = {'': PACKAGE_DATA},
 
     install_requires = ('mimeparse', 'Django>=1.3.0'),
-    test_suite = '__main__.run_tests'
+    test_suite = '__main__.run_tests',
+    tests_require = 'pymongo'
 )
 
 
 if __name__ == "__main__":
-    setup( **META_DATA )
+    setup(**META_DATA)

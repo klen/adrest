@@ -37,32 +37,35 @@ class JSONEncoder(DjangoJSONEncoder):
             return o.content
 
         if isinstance(o, Model):
-            self.serializer.start_object(o)
-            for field in o._meta.local_fields:
-                if field.serialize:
-                    if field.rel is None:
-                        self.serializer.handle_field(o, field)
-                    else:
-                        self.handle_fk_field(o, field)
-            for field in o._meta.many_to_many:
-                if field.serialize:
-                    self.serializer.handle_m2m_field(o, field)
-            return {
-                "model"  : smart_unicode(o._meta),
-                "pk"     : smart_unicode(o._get_pk_val(), strings_only=True),
-                "fields" : self.serializer._current
-            }
+            return self._dump_model(o)
 
         elif isinstance(o, Paginator):
             return dict(
-                count = o.count,
-                page = o.page.number,
-                next = o.next,
-                prev = o.previous,
-                resources = o.resources,
+                count=o.count,
+                page=o.page.number,
+                next=o.next,
+                prev=o.previous,
+                resources=o.resources,
             )
 
         return super(JSONEncoder, self).default(o)
+
+    def _dump_model(self, o):
+        self.serializer.start_object(o)
+        for field in o._meta.local_fields:
+            if field.serialize:
+                if field.rel is None:
+                    self.serializer.handle_field(o, field)
+                else:
+                    self.handle_fk_field(o, field)
+        for field in o._meta.many_to_many:
+            if field.serialize:
+                self.serializer.handle_m2m_field(o, field)
+        return {
+            "model": smart_unicode(o._meta),
+            "pk": smart_unicode(o._get_pk_val(), strings_only=True),
+            "fields": self.serializer._current
+        }
 
 
 json_dumps = curry(dumps, cls=JSONEncoder)
@@ -72,6 +75,7 @@ def xml_dumps(o):
     simple = loads(json_dumps(o))
     return ''.join(_xml_dump(simple))
 
+
 def _xml_dump(o):
     tag = it = None
 
@@ -79,7 +83,7 @@ def _xml_dump(o):
         tag = 'items'
         it = iter(o)
 
-    elif isinstance(o, dict) and o.has_key('model'):
+    elif isinstance(o, dict) and 'model' in o:
         tag = o.get('model').split('.')[1]
         it = o.iteritems()
 

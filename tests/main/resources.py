@@ -5,7 +5,7 @@ from adrest.views import ResourceView
 
 
 class AuthorResource(ResourceView):
-    allowed_methods = 'GET', 'POST'
+    allowed_methods = 'GET', 'POST', 'PATCH'
     model = 'main.author'
     url_regex = '^owner/$'
 
@@ -45,7 +45,7 @@ class SomeOtherResource(ResourceView):
     url_params = 'device',
 
     def get(self, request, **kwargs):
-        return True
+        return self.paginate(request, [1, 2, 3])
 
 
 class CustomResource(ResourceView):
@@ -59,3 +59,22 @@ class CustomResource(ResourceView):
 
     def post(self, request, **resources):
         raise HttpError(dict(error=True), status=400, emitter=JSONEmitter)
+
+
+class DummyResource(ResourceView):
+    def get(self, request, **resources):
+        return True
+
+
+class BSONResource(ResourceView):
+
+    allowed_methods = 'GET', 'POST'
+
+    COUNTER = 1
+
+    def get(self, request, **resources):
+        return dict(counter=self.COUNTER)
+
+    def post(self, request, **resources):
+        self.COUNTER += request.data.get('counter', 0)
+        return dict(counter=self.COUNTER)
