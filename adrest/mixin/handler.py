@@ -125,16 +125,32 @@ class HandlerMixin(object):
             return None
 
         # Make filters from URL variables or resources
-        filters = dict((k, v) for k, v in resources.iteritems() if k in self.meta.model_fields)
+        default_filters = self.get_default_filters(**resources)
 
-        qs = self.queryset.filter(**filters)
+        qs = self.queryset.filter(**default_filters)
+
+        for filter_key, filter_value in self.get_filters(request, **resources):
+            try:
+                qs = qs.filter(**{filter_key: filter_value})
+            except FieldError, e:
+                logger.warning(e)
+        return qs
+
+    def get_default_filters(self, **resources):
+        # Make filters from URL variables or resources
+        return dict((k, v) for k, v in resources.iteritems() if k in self.meta.model_fields)
+
+    def get_filters(self, request, **resources):
+
+        default_filters = self.get_default_filters(**resources)
+        filters = []
 
         # Make filters from GET variables
         for field in request.GET.iterkeys():
             tokens = field.split(LOOKUP_SEP)
             field_name = tokens[0]
 
-            if not field_name in self.meta.model_fields or field_name in filters:
+            if not field_name in self.meta.model_fields or field_name in default_filters:
                 continue
 
             converter = self.model._meta.get_field(field).to_python if len(tokens) == 1 else lambda v: v
@@ -144,13 +160,9 @@ class HandlerMixin(object):
                 tokens.append('in')
             else:
                 value = value.pop()
+            filters.append((LOOKUP_SEP.join(tokens), value))
 
-            try:
-                qs = qs.filter(**{LOOKUP_SEP.join(tokens): value})
-            except FieldError, e:
-                logger.warning(e)
-
-        return qs
+        return filters
 
     def paginate(self, request, qs):
         """ Paginate queryset.
