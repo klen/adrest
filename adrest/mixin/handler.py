@@ -1,4 +1,3 @@
-from copy import deepcopy
 from logging import getLogger
 
 from django.core.exceptions import FieldError
@@ -18,6 +17,7 @@ logger = getLogger('django.request')
 
 
 class HandlerMeta(type):
+
     def __new__(mcs, name, bases, params):
 
         params['meta'] = params.get('meta', MetaOptions())
@@ -30,6 +30,7 @@ class HandlerMeta(type):
                                       " app_label.model_name")
             cls.model = get_model(*cls.model.split("."))
 
+        # Check meta.name and queryset
         if cls.model:
             assert issubclass(cls.model, Model), "'model' attribute must be subclass of Model "
             cls.meta.name = cls.model._meta.module_name
@@ -65,64 +66,82 @@ class HandlerMixin(object):
                'HEAD': 'head'}
 
     def __init__(self, *args, **kwargs):
+        " Copy self queryset for prevent query caching. "
+
         super(HandlerMixin, self).__init__(*args, **kwargs)
-        # Copy self queryset for prevent query caching
+
         if not self.queryset is None:
             self.queryset = self.queryset.all()
 
     @staticmethod
     def head(*args, **kwargs):
+        " Default HEAD method. "
+
         return HttpResponse()
 
     def get(self, request, **resources):
-        assert self.model, "This auto method required in model."
+        " Default GET method. Return instanse (collection) by model. "
+
         instance = resources.get(self.meta.name)
-        if instance:
+        if not instance is None:
             return instance
 
-        return self.paginate(request, self.get_queryset(request, **resources))
+        return self.paginate(request, self.get_collection(request, **resources))
 
     def post(self, request, **resources):
-        form = self.form(data=deepcopy(request.data), **resources)
+        " Default POST method. Uses self form. "
+
+        form = self.form(request.data, **resources)
         if form.is_valid():
             return form.save()
+
         raise HttpError(
             form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, **resources):
-        content = resources.get(self.meta.name)
-        if not content:
-            raise HttpError("Bad request", status=status.HTTP_404_NOT_FOUND)
+        " Default PUT method. Uses self form. Allow bulk update. "
+
+        resource = resources.get(self.meta.name)
+        if not resource:
+            raise HttpError("Resource not found.", status=status.HTTP_404_NOT_FOUND)
 
         updated = UpdatedList()
-        for o in as_tuple(content):
+        for o in as_tuple(resource):
             form = self.form(
-                data=deepcopy(request.data), instance=o, **resources)
+                data=request.data, instance=o, **resources)
+
             if not form.is_valid():
                 raise HttpError(
                     form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
+
             updated.append(form.save())
 
-        return updated if isinstance(content, list) else updated[-1]
+        return updated if isinstance(resource, list) else updated[-1]
 
     def delete(self, request, **resources):
-        content = resources.get(self.meta.name)
-        if not content:
+        " Default DELETE method. Allow bulk delete. "
+
+        resource = resources.get(self.meta.name)
+        if not resource:
             raise HttpError("Bad request", status=status.HTTP_404_NOT_FOUND)
 
-        for o in as_tuple(content):
+        for o in as_tuple(resource):
             o.delete()
 
         return HttpResponse("")
 
     def patch(self, request, **resources):
+        " Default PATCH method. Do nothing. "
+
         pass
 
     @staticmethod
-    def options(request, **kwargs):
-        return HttpResponse("Options OK")
+    def options(request, **resources):
+        " Default OPTIONS method. Always response OK. "
 
-    def get_queryset(self, request, **resources):
+        return HttpResponse("OK")
+
+    def get_collection(self, request, **resources):
 
         if self.queryset is None:
             return None
@@ -157,9 +176,13 @@ class HandlerMixin(object):
 
         return qs
 
+    def get_default_filters(self, **resources):
+        pass
+
     def paginate(self, request, qs):
-        """ Paginate queryset.
-        """
+        " Paginate queryset. "
+
         return Paginator(request, qs, self.limit_per_page)
+
 
 # pymode:lint_ignore=E1102

@@ -211,12 +211,12 @@ class ResourceView(handler.HandlerMixin,
         " Parse resource objects from URL and GET. "
 
         if cls.parent:
-            resources = cls.parent.get_resources(
-                request, resource=resource, **resources)
+            resources = cls.parent.get_resources(request, resource=resource, **resources)
 
         pks = resources.get(
             cls.meta.name) or request.REQUEST.getlist(cls.meta.name)
-        if not cls.model or not pks:
+
+        if not pks or not cls.queryset:
             return resources
 
         pks = as_tuple(pks)
@@ -226,9 +226,7 @@ class ResourceView(handler.HandlerMixin,
                 resources[cls.meta.name] = cls.queryset.get(pk=pks[0])
 
             else:
-                assert cls.queryset.filter(pk__in=pks).count()
-                resources[cls.meta.name] = list(
-                    cls.queryset.filter(pk__in=pks))
+                resources[cls.meta.name] = cls.queryset.filter(pk__in=pks)
 
         except (ObjectDoesNotExist, ValueError, AssertionError):
             raise HttpError("Resource not found.",
@@ -256,12 +254,12 @@ class ResourceView(handler.HandlerMixin,
 
         cls.parent.check_owners(**resources)
 
-        objects = as_tuple(resources.get(cls.meta.name))
+        objects = resources.get(cls.meta.name)
         if cls.model and cls.parent.model and objects:
             try:
                 pr = resources.get(cls.parent.meta.name)
                 assert pr and all(pr.pk == getattr(
-                    o, "%s_id" % cls.parent.meta.name, None) for o in objects)
+                    o, "%s_id" % cls.parent.meta.name, None) for o in as_tuple(objects))
             except AssertionError:
                 # 403 Error if there is error in parent-children relationship
                 raise HttpError(

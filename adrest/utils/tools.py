@@ -7,6 +7,9 @@ def as_tuple(obj):
     if isinstance(obj, (tuple, set, list)):
         return tuple(obj)
 
+    if hasattr(obj, '__iter__'):
+        return obj
+
     return obj,
 
 
