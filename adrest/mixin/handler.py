@@ -142,22 +142,38 @@ class HandlerMixin(object):
         return HttpResponse("OK")
 
     def get_collection(self, request, **resources):
+        " Get filters and return filtered result. "
 
         if self.queryset is None:
             return None
 
         # Make filters from URL variables or resources
-        filters = dict((k, v) for k, v in resources.iteritems(
-        ) if k in self.meta.model_fields)
+        default_filters = self.get_default_filters(**resources)
+        filters = self.get_filters(request, **resources)
+        filters.update(default_filters)
 
-        qs = self.queryset.filter(**filters)
+        # Get collection by queryset
+        qs = self.queryset
+        for key, value in filters.items():
+            try:
+                qs = qs.filter(**{key: value})
+            except FieldError, e:
+                logger.warning(e)
 
-        # Make filters from GET variables
+        return qs
+
+    def get_default_filters(self, **resources):
+        return dict((k, v) for k, v in resources.items() if k in self.meta.model_fields)
+
+    def get_filters(self, request, **resources):
+        " Make filters from GET variables. "
+
+        filters = dict()
         for field in request.GET.iterkeys():
             tokens = field.split(LOOKUP_SEP)
             field_name = tokens[0]
 
-            if not field_name in self.meta.model_fields or field_name in filters:
+            if not field_name in self.meta.model_fields:
                 continue
 
             converter = self.model._meta.get_field(
@@ -169,15 +185,9 @@ class HandlerMixin(object):
             else:
                 value = value.pop()
 
-            try:
-                qs = qs.filter(**{LOOKUP_SEP.join(tokens): value})
-            except FieldError, e:
-                logger.warning(e)
+            filters[LOOKUP_SEP.join(tokens)] = value
 
-        return qs
-
-    def get_default_filters(self, **resources):
-        pass
+        return filters
 
     def paginate(self, request, qs):
         " Paginate queryset. "
