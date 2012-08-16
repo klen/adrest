@@ -6,12 +6,12 @@ from django.db.models import get_model, Model
 from django.db.models.sql.constants import LOOKUP_SEP
 from django.http import HttpResponse
 
-from adrest.forms import PartitialForm
-from adrest.settings import LIMIT_PER_PAGE
-from adrest.utils import status, MetaOptions, UpdatedList
-from adrest.utils.exceptions import HttpError
-from adrest.utils.paginator import Paginator
-from adrest.utils.tools import as_tuple
+from ..forms import PartitialForm
+from ..settings import LIMIT_PER_PAGE
+from ..utils import status, MetaOptions, UpdatedList
+from ..utils.exceptions import HttpError
+from ..utils.paginator import Paginator
+from ..utils.tools import as_tuple
 
 
 logger = getLogger('django.request')
@@ -26,8 +26,8 @@ class HandlerMeta(type):
         # Create model from string
         if isinstance(cls.model, basestring):
             assert '.' in cls.model, ("'model_class' must be either a model"
-                                    " or a model name in the format"
-                                    " app_label.model_name")
+                                      " or a model name in the format"
+                                      " app_label.model_name")
             cls.model = get_model(*cls.model.split("."))
 
         if cls.model:
@@ -86,7 +86,8 @@ class HandlerMixin(object):
         form = self.form(data=deepcopy(request.data), **resources)
         if form.is_valid():
             return form.save()
-        raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
+        raise HttpError(
+            form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, **resources):
         content = resources.get(self.meta.name)
@@ -95,9 +96,11 @@ class HandlerMixin(object):
 
         updated = UpdatedList()
         for o in as_tuple(content):
-            form = self.form(data=deepcopy(request.data), instance=o, **resources)
+            form = self.form(
+                data=deepcopy(request.data), instance=o, **resources)
             if not form.is_valid():
-                raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
+                raise HttpError(
+                    form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
             updated.append(form.save())
 
         return updated if isinstance(content, list) else updated[-1]
@@ -125,7 +128,8 @@ class HandlerMixin(object):
             return None
 
         # Make filters from URL variables or resources
-        filters = dict((k, v) for k, v in resources.iteritems() if k in self.meta.model_fields)
+        filters = dict((k, v) for k, v in resources.iteritems(
+        ) if k in self.meta.model_fields)
 
         qs = self.queryset.filter(**filters)
 
@@ -137,7 +141,8 @@ class HandlerMixin(object):
             if not field_name in self.meta.model_fields or field_name in filters:
                 continue
 
-            converter = self.model._meta.get_field(field).to_python if len(tokens) == 1 else lambda v: v
+            converter = self.model._meta.get_field(
+                field).to_python if len(tokens) == 1 else lambda v: v
             value = map(converter, request.GET.getlist(field))
 
             if len(value) > 1:
@@ -156,3 +161,5 @@ class HandlerMixin(object):
         """ Paginate queryset.
         """
         return Paginator(request, qs, self.limit_per_page)
+
+# pymode:lint_ignore=E1102

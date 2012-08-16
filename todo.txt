@@ -1,2 +1,0 @@
-Add serializers: bplist, yaml
-Add patch method

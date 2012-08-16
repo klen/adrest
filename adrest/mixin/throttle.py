@@ -1,6 +1,6 @@
-from adrest.utils import status
-from adrest.utils.exceptions import HttpError
-from adrest.utils.throttle import BaseThrottle
+from ..utils import status
+from ..utils.exceptions import HttpError
+from ..utils.throttle import BaseThrottle
 
 
 class ThrottleMeta(type):

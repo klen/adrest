@@ -9,6 +9,22 @@ Documentation in construction.
     :target: http://travis-ci.org/klen/adrest
     :alt: Build Status
 
+Examples: ::
+
+    from adrest.api import Api
+    from adrest.views import ResourceView
+
+    class BookResource(ResourceView):
+        allowed_methods = 'get', 'post'
+        model = 'books.book'
+
+    api = Api(version(1, 0, 0))
+    api.register(BookResource)
+
+    urlpatterns = api.urls
+
+    
+
 
 Requirements
 =============
@@ -16,12 +32,14 @@ Requirements
 - python >= 2.6
 - django >= 1.4.0
 
+
 Installation
 =============
 
 **Adrest** should be installed using pip: ::
 
     pip install adrest
+
 
 Setup
 =====

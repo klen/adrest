@@ -1,7 +1,7 @@
 from django.utils import simplejson as json
 
-from . import status
 from .exceptions import HttpError
+from .status import HTTP_400_BAD_REQUEST
 
 
 class BaseParser(object):
@@ -39,7 +39,7 @@ class JSONParser(BaseParser):
         try:
             return json.loads(request.raw_post_data)
         except ValueError, e:
-            raise HttpError('JSON parse error - %s' % str(e), status=status.HTTP_400_BAD_REQUEST)
+            raise HttpError('JSON parse error - %s' % str(e), status=HTTP_400_BAD_REQUEST)
 
 
 class XMLParser(BaseParser):
@@ -63,7 +63,7 @@ try:
             try:
                 return BSON(request.raw_post_data).decode()
             except ValueError, e:
-                raise HttpError('BSON parse error - %s' % str(e), status=status.HTTP_400_BAD_REQUEST)
+                raise HttpError('BSON parse error - %s' % str(e), status=HTTP_400_BAD_REQUEST)
 
 except ImportError:
     pass

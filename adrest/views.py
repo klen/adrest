@@ -11,19 +11,20 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
+from .mixin import auth, emitter, handler, parser, throttle
+from .settings import ALLOW_OPTIONS, DEBUG, MAIL_ERRORS
+from .signals import api_request_started, api_request_finished
 from .utils import status, MetaOptions
 from .utils.exceptions import HttpError
-from .utils.tools import as_tuple, gen_url_name, gen_url_regex, fix_request
 from .utils.response import SerializedHttpResponse
-from adrest import settings
-from adrest.mixin import auth, emitter, handler, parser, throttle
-from adrest.signals import api_request_started, api_request_finished
+from .utils.tools import as_tuple, gen_url_name, gen_url_regex, fix_request
 
 
 logger = getLogger('django.request')
 
 
-class ResourceMetaClass(handler.HandlerMeta, throttle.ThrottleMeta, emitter.EmitterMeta,
+class ResourceMetaClass(
+    handler.HandlerMeta, throttle.ThrottleMeta, emitter.EmitterMeta,
         parser.ParserMeta, auth.AuthMeta):
     """ MetaClass for ResourceView.
         Create meta options.
@@ -45,10 +46,12 @@ class ResourceMetaClass(handler.HandlerMeta, throttle.ThrottleMeta, emitter.Emit
             try:
                 cls.meta.parents += cls.parent.meta.parents + [cls.parent]
             except AttributeError:
-                raise TypeError("%s.parent must be instance of %s" % (name, "ResourceView"))
+                raise TypeError("%s.parent must be instance of %s" %
+                                (name, "ResourceView"))
 
         # Meta name (maybe precalculate in handler)
-        cls.meta.name = cls.meta.name or cls.name or ''.join(bit for bit in name.split('Resource') if bit).lower()
+        cls.meta.name = cls.meta.name or cls.name or ''.join(
+            bit for bit in name.split('Resource') if bit).lower()
 
         # Prepare urls
         cls.url_params = list(as_tuple(cls.url_params))
@@ -61,9 +64,9 @@ class ResourceMetaClass(handler.HandlerMeta, throttle.ThrottleMeta, emitter.Emit
     def prepare_methods(methods):
         " Prepare allowed methods. "
 
-        methods = as_tuple(methods)
+        methods = tuple([str(m).upper() for m in as_tuple(methods)])
 
-        if not 'OPTIONS' in methods and settings.ALLOW_OPTIONS:
+        if not 'OPTIONS' in methods and ALLOW_OPTIONS:
             methods += 'OPTIONS',
 
         if not 'HEAD' in methods and 'GET' in methods:
@@ -73,11 +76,11 @@ class ResourceMetaClass(handler.HandlerMeta, throttle.ThrottleMeta, emitter.Emit
 
 
 class ResourceView(handler.HandlerMixin,
-        throttle.ThrottleMixin,
-        emitter.EmitterMixin,
-        parser.ParserMixin,
-        auth.AuthMixin,
-        View):
+                   throttle.ThrottleMixin,
+                   emitter.EmitterMixin,
+                   parser.ParserMixin,
+                   auth.AuthMixin,
+                   View):
 
     # Create meta options
     __metaclass__ = ResourceMetaClass
@@ -136,10 +139,11 @@ class ResourceView(handler.HandlerMixin,
             # Throttle check
             self.throttle_check()
 
-            if request.method != 'OPTIONS' or not settings.ALLOW_OPTIONS:
+            if request.method != 'OPTIONS' or not ALLOW_OPTIONS:
 
                 # Get required resources
-                resources = self.get_resources(request, resource=self, **resources)
+                resources = self.get_resources(
+                    request, resource=self, **resources)
 
                 # Check owners
                 self.check_owners(**resources)
@@ -164,10 +168,12 @@ class ResourceView(handler.HandlerMixin,
         except HttpError, e:
             response = SerializedHttpResponse(e.content, status=e.status)
             if _emit_:
-                response = self.emit(response, request=request, emitter=e.emitter)
+                response = self.emit(
+                    response, request=request, emitter=e.emitter)
 
         except (AssertionError, ValidationError), e:
-            response = SerializedHttpResponse(unicode(e), status=status.HTTP_400_BAD_REQUEST)
+            response = SerializedHttpResponse(
+                unicode(e), status=status.HTTP_400_BAD_REQUEST)
             if _emit_:
                 response = self.emit(response, request=request)
 
@@ -178,10 +184,12 @@ class ResourceView(handler.HandlerMixin,
         errors_mail(response, request)
 
         # Send finished signal
-        api_request_finished.send(self, request=request, response=response, **resources)
+        api_request_finished.send(
+            self, request=request, response=response, **resources)
 
         # Send finished signal in API context
-        self.api and self.api.request_finished.send(self, request=request, response=response, **resources)
+        if self.api:
+            self.api.request_finished.send(self, request=request, response=response, **resources)
 
         return response
 
@@ -191,20 +199,23 @@ class ResourceView(handler.HandlerMixin,
         """
         if not method in cls.callmap.keys():
             raise HttpError('Unknown or unsupported method \'%s\'' % method,
-                    status=status.HTTP_501_NOT_IMPLEMENTED)
+                            status=status.HTTP_501_NOT_IMPLEMENTED)
 
         if not method in cls.allowed_methods:
-            raise HttpError('Method \'%s\' not allowed on this resource.' % method,
-                    status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            raise HttpError(
+                'Method \'%s\' not allowed on this resource.' % method,
+                status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @classmethod
     def get_resources(cls, request, resource=None, **resources):
         " Parse resource objects from URL and GET. "
 
         if cls.parent:
-            resources = cls.parent.get_resources(request, resource=resource, **resources)
+            resources = cls.parent.get_resources(
+                request, resource=resource, **resources)
 
-        pks = resources.get(cls.meta.name) or request.REQUEST.getlist(cls.meta.name)
+        pks = resources.get(
+            cls.meta.name) or request.REQUEST.getlist(cls.meta.name)
         if not cls.model or not pks:
             return resources
 
@@ -216,15 +227,16 @@ class ResourceView(handler.HandlerMixin,
 
             else:
                 assert cls.queryset.filter(pk__in=pks).count()
-                resources[cls.meta.name] = list(cls.queryset.filter(pk__in=pks))
+                resources[cls.meta.name] = list(
+                    cls.queryset.filter(pk__in=pks))
 
         except (ObjectDoesNotExist, ValueError, AssertionError):
             raise HttpError("Resource not found.",
-                    status=status.HTTP_404_NOT_FOUND)
+                            status=status.HTTP_404_NOT_FOUND)
 
         except MultipleObjectsReturned:
             raise HttpError("Resources conflict.",
-                    status=status.HTTP_409_CONFLICT)
+                            status=status.HTTP_409_CONFLICT)
 
         return resources
 
@@ -248,10 +260,12 @@ class ResourceView(handler.HandlerMixin,
         if cls.model and cls.parent.model and objects:
             try:
                 pr = resources.get(cls.parent.meta.name)
-                assert pr and all(pr.pk == getattr(o, "%s_id" % cls.parent.meta.name, None) for o in objects)
+                assert pr and all(pr.pk == getattr(
+                    o, "%s_id" % cls.parent.meta.name, None) for o in objects)
             except AssertionError:
                 # 403 Error if there is error in parent-children relationship
-                raise HttpError("Access forbidden.", status=status.HTTP_403_FORBIDDEN)
+                raise HttpError(
+                    "Access forbidden.", status=status.HTTP_403_FORBIDDEN)
 
         return True
 
@@ -259,7 +273,7 @@ class ResourceView(handler.HandlerMixin,
     def handle_exception(e, request=None):
         """ Handle code exception.
         """
-        if settings.DEBUG:
+        if DEBUG:
             raise
 
         logger.exception('\nADREST API Error: %s' % request.path)
@@ -276,7 +290,8 @@ class ResourceView(handler.HandlerMixin,
         url_prefix = url_prefix and "%s/" % url_prefix
         name_prefix = name_prefix and "%s-" % name_prefix
 
-        url_regex = '^%s%s/?$' % (url_prefix, cls.meta.url_regex.lstrip('^').rstrip('/$'))
+        url_regex = '^%s%s/?$' % (
+            url_prefix, cls.meta.url_regex.lstrip('^').rstrip('/$'))
         url_regex = url_regex.replace('//', '/')
         url_name = '%s%s' % (name_prefix, cls.meta.url_name)
 
@@ -288,10 +303,11 @@ class ResourceView(handler.HandlerMixin,
 
 def errors_mail(response, request):
 
-    if not response.status_code in settings.MAIL_ERRORS:
+    if not response.status_code in MAIL_ERRORS:
         return False
 
-    subject = 'ADREST API Error (%s): %s' % (response.status_code, request.path)
+    subject = 'ADREST API Error (%s): %s' % (
+        response.status_code, request.path)
     stack_trace = '\n'.join(traceback.format_exception(*sys.exc_info()))
     message = """
 Stacktrace:
@@ -308,3 +324,5 @@ Request information:
 
 """ % (stack_trace, repr(getattr(request, 'data', None)), repr(request))
     return mail_admins(subject, message, fail_silently=True)
+
+# pymode:lint_ignore=E1120
