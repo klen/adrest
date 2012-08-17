@@ -10,7 +10,6 @@ branches:
         - develop
 
 install:
-    - pip install -IM pyflakes
-    - pip install -IM pep8
+    - pip install -IM pylama
 
 script: make test

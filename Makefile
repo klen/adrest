@@ -23,8 +23,7 @@ test: audit
 
 .PHONY: audit
 audit:
-	pep8 $(MODULE) --ignore=E501
-	pyflakes $(MODULE)
+	pylama $(MODULE) -i E501
 
 .PHONY: doc
 doc:
