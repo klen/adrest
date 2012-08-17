@@ -21,11 +21,11 @@ class AdrestClient(Client):
         parsed = urlparse(path)
         r = {
             'CONTENT_LENGTH': len(patch_data),
-            'CONTENT_TYPE':   content_type,
-            'PATH_INFO':      self._get_path(parsed),
-            'QUERY_STRING':   parsed[4],
+            'CONTENT_TYPE': content_type,
+            'PATH_INFO': self._get_path(parsed),
+            'QUERY_STRING': parsed[4],
             'REQUEST_METHOD': 'PATCH',
-            'wsgi.input':     FakePayload(patch_data),
+            'wsgi.input': FakePayload(patch_data),
         }
         r.update(extra)
         response = self.request(**r)

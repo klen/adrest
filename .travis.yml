@@ -9,4 +9,8 @@ branches:
         - master
         - develop
 
+install:
+    - pip install -IM pyflakes
+    - pip install -IM pep8
+
 script: make test
