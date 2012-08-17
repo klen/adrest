@@ -13,9 +13,10 @@ MULTIPART_CONTENT = 'multipart/form-data; boundary=BoUnDaRyStRiNg'
 
 class AdrestClient(Client):
 
-    def patch(self, path, data={}, content_type=MULTIPART_CONTENT, follow=False, **extra):
+    def patch(self, path, data=None, content_type=MULTIPART_CONTENT, follow=False, **extra):
         " Send a resource to the server using PATCH. "
 
+        data = data or dict()
         patch_data = self._encode_data(data, content_type)
         parsed = urlparse(path)
         r = {

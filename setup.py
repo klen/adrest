@@ -31,7 +31,7 @@ def run_tests():
 META_DATA = dict(
     name=PROJECT,
     version=version,
-    LICENSE=LICENSE,
+    license=LICENSE,
     description=read('DESCRIPTION'),
     long_description=read('README.rst'),
     platforms=('Any'),

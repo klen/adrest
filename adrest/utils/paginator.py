@@ -2,8 +2,8 @@ from urllib import urlencode
 
 from django.core.paginator import InvalidPage, Paginator as DjangoPaginator
 
-from . import status as http_status
 from .exceptions import HttpError
+from .status import HTTP_400_BAD_REQUEST
 
 
 class Paginator(object):
@@ -17,7 +17,7 @@ class Paginator(object):
         try:
             self.page = self.paginator.page(page_num)
         except InvalidPage:
-            raise HttpError("Invalid page", status=http_status.HTTP_400_BAD_REQUEST)
+            raise HttpError("Invalid page", status=HTTP_400_BAD_REQUEST)
 
     @property
     def count(self):

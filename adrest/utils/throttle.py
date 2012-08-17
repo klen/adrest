@@ -3,7 +3,7 @@ import hashlib
 
 from django.core.cache import cache
 
-from adrest.settings import THROTTLE_AT, THROTTLE_TIMEFRAME
+from ..settings import THROTTLE_AT, THROTTLE_TIMEFRAME
 
 
 class BaseThrottle(object):

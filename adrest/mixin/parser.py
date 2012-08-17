@@ -1,6 +1,6 @@
-from adrest.utils.parser import FormParser, XMLParser, JSONParser, BaseParser
-from adrest.utils import MetaOptions
-from adrest.utils.tools import as_tuple
+from ..utils import MetaOptions
+from ..utils.parser import FormParser, XMLParser, JSONParser, BaseParser
+from ..utils.tools import as_tuple
 
 
 class ParserMeta(type):

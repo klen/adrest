@@ -1,7 +1,7 @@
 " Adrest API settings. "
 from django.conf import settings
 
-from adrest.utils.tools import as_tuple
+from .utils.tools import as_tuple
 
 
 # Enable Adrest API logs
