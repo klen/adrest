@@ -116,7 +116,7 @@ class HandlerMixin(object):
 
             updated.append(form.save())
 
-        return updated if isinstance(resource, list) else updated[-1]
+        return updated if len(updated) > 1 else updated[-1]
 
     def delete(self, request, **resources):
         " Default DELETE method. Allow bulk delete. "

@@ -9,7 +9,7 @@ from .status import HTTP_400_BAD_REQUEST
 class Paginator(object):
     """ Paginate querysets.
     """
-    def __init__(self, request, qs,  max_res):
+    def __init__(self, request, qs, max_res):
         self.query_dict = dict(request.GET.items())
         self.paginator = DjangoPaginator(qs, int(self.query_dict.get('max') or max_res))
         self.path = request.path

@@ -10,37 +10,21 @@ clean:
 	find . -name "*.pyc" -delete
 	find . -name "*.orig" -delete
 
-.PHONY: install
-install: remove _install clean
-
 .PHONY: register
-register: _register clean
-
-.PHONY: upload
-upload: _upload install _commit doc
-
-_upload:
-	python setup.py sdist upload || echo 'Upload already'
-
-_commit:
-	git add .
-	git add . -u
-	git commit || echo 'No commits'
-	git push origin
-
-_register:
+register:
 	python setup.py register
 
-.PHONY: remove
-remove:
-	sudo pip uninstall -y $(MODULE) || echo "not installed"
-
-_install:
-	sudo pip install -U .
+.PHONY: upload
+upload: doc
+	python setup.py sdist upload || echo 'Upload already'
 
 .PHONY: test
-test:
+test: audit
 	python setup.py test
+
+.PHONY: audit
+audit:
+	pylama $(MODULE) -i E501
 
 .PHONY: doc
 doc:

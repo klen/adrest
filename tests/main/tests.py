@@ -189,6 +189,7 @@ class ResourceTest(AdrestTestCase):
             author=self.author.pk,
             book=[b.pk for b in status1]
         ))
+        self.assertContains(response, 'count="%s"' % len(status1))
         self.assertContains(response, '<status>3</status>')
         self.assertNotContains(response, '<status>1</status>')
         self.assertFalse(Book.objects.filter(status=1).count())

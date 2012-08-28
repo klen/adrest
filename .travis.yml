@@ -9,4 +9,7 @@ branches:
         - master
         - develop
 
+install:
+    - pip install -IM pylama
+
 script: make test
