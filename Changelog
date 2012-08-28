@@ -1,3 +1,7 @@
+2012-08-28  klen  1.8.1
+
+	* Fix bulk operation
+
 2012-08-17  klen  1.8.0
 
 	* Code-refactoring
