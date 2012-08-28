@@ -36,7 +36,7 @@ META_DATA = dict(
     packages=find_packages(),
     package_data = {'': PACKAGE_DATA},
 
-    install_requires = ('mimeparse', 'Django>=1.3.0'),
+    install_requires = ('mimeparse', 'Django>=1.4.0'),
     test_suite = 'tests.run_tests',
     tests_require = 'pymongo'
 )
