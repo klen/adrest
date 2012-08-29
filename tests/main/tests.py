@@ -150,12 +150,12 @@ class AdrestTest(AdrestTestCase):
         self.assertTrue('OPTIONS' in ArticleResource.allowed_methods)
         uri = self.reverse('author-test-book-article', book=self.book.pk)
         response = self.client.options(uri, data=dict(author=self.author.pk))
-        self.assertContains(response, 'Options OK')
+        self.assertContains(response, 'OK')
 
         user = User.objects.create(username='test2')
         author = Author.objects.create(name='Tester', user=user)
         response = self.client.options(uri, data=dict(author=author.pk))
-        self.assertContains(response, 'Options OK')
+        self.assertContains(response, 'OK')
 
 
 class ResourceTest(AdrestTestCase):
@@ -189,6 +189,7 @@ class ResourceTest(AdrestTestCase):
             author=self.author.pk,
             book=[b.pk for b in status1]
         ))
+        self.assertContains(response, 'count="%s"' % len(status1))
         self.assertContains(response, '<status>3</status>')
         self.assertNotContains(response, '<status>1</status>')
         self.assertFalse(Book.objects.filter(status=1).count())

@@ -21,17 +21,10 @@ def read(fname):
         return ''
 
 
-def run_tests():
-    """Run tests without install library into python path
-    """
-    from tests import run_tests
-    return run_tests()
-
-
 META_DATA = dict(
     name=PROJECT,
     version=version,
-    LICENSE=LICENSE,
+    license=LICENSE,
     description=read('DESCRIPTION'),
     long_description=read('README.rst'),
     platforms=('Any'),
@@ -43,8 +36,8 @@ META_DATA = dict(
     packages=find_packages(),
     package_data = {'': PACKAGE_DATA},
 
-    install_requires = ('mimeparse', 'Django>=1.3.0'),
-    test_suite = '__main__.run_tests',
+    install_requires = ('mimeparse', 'Django>=1.4.0'),
+    test_suite = 'tests.run_tests',
     tests_require = 'pymongo'
 )
 

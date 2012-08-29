@@ -3,7 +3,7 @@ import base64
 from django.contrib.auth import authenticate
 from django.middleware.csrf import CsrfViewMiddleware
 
-from adrest import models
+from ..models import AccessKey
 
 
 class BaseAuthenticator(object):
@@ -44,7 +44,7 @@ class _UserAuthenticator(BaseAuthenticator):
         super(_UserAuthenticator, self).__init__(resource)
         self.user = None
 
-    def get_identifier(self, request):
+    def get_identifier(self, request=None):
         if self.user and self.user.is_active:
             self.identifier = self.user.username
         return self.identifier
@@ -107,11 +107,11 @@ class AccessKeyAuthenticator(_UserAuthenticator):
         """
         try:
             access_key = request.META.get('HTTP_AUTHORIZATION') or request.REQUEST['key']
-            api_key = models.AccessKey.objects.get(key=access_key)
+            api_key = AccessKey.objects.get(key=access_key)
             self.user = request.user = api_key.user
             return self.get_identifier(request)
 
-        except(KeyError, models.AccessKey.DoesNotExist):
+        except(KeyError, AccessKey.DoesNotExist):
             return False
 
         return False

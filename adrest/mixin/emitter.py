@@ -1,10 +1,10 @@
 import mimeparse
 from django.http import HttpResponse
 
-from adrest.utils import MetaOptions
-from adrest.utils.emitter import JSONEmitter, BaseEmitter
-from adrest.utils.tools import as_tuple
-from adrest.utils.paginator import Paginator
+from ..utils import MetaOptions
+from ..utils.emitter import JSONEmitter, BaseEmitter
+from ..utils.paginator import Paginator
+from ..utils.tools import as_tuple
 
 
 class EmitterMeta(type):

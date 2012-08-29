@@ -57,3 +57,6 @@ class RPCResource(ResourceView):
         if self.target_resource:
             return self.target_resource.meta.name
         return self.meta.name
+
+
+# pymode:lint_ignore=E1103

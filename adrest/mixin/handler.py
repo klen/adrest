@@ -1,4 +1,3 @@
-from copy import deepcopy
 from logging import getLogger
 
 from django.core.exceptions import FieldError
@@ -6,18 +5,19 @@ from django.db.models import get_model, Model
 from django.db.models.sql.constants import LOOKUP_SEP
 from django.http import HttpResponse
 
-from adrest.forms import PartitialForm
-from adrest.settings import LIMIT_PER_PAGE
-from adrest.utils import status, MetaOptions, UpdatedList
-from adrest.utils.exceptions import HttpError
-from adrest.utils.paginator import Paginator
-from adrest.utils.tools import as_tuple
+from ..forms import PartitialForm
+from ..settings import LIMIT_PER_PAGE
+from ..utils import status, MetaOptions, UpdatedList
+from ..utils.exceptions import HttpError
+from ..utils.paginator import Paginator
+from ..utils.tools import as_tuple
 
 
 logger = getLogger('django.request')
 
 
 class HandlerMeta(type):
+
     def __new__(mcs, name, bases, params):
 
         params['meta'] = params.get('meta', MetaOptions())
@@ -26,10 +26,11 @@ class HandlerMeta(type):
         # Create model from string
         if isinstance(cls.model, basestring):
             assert '.' in cls.model, ("'model_class' must be either a model"
-                                    " or a model name in the format"
-                                    " app_label.model_name")
+                                      " or a model name in the format"
+                                      " app_label.model_name")
             cls.model = get_model(*cls.model.split("."))
 
+        # Check meta.name and queryset
         if cls.model:
             assert issubclass(cls.model, Model), "'model' attribute must be subclass of Model "
             cls.meta.name = cls.model._meta.module_name
@@ -65,79 +66,118 @@ class HandlerMixin(object):
                'HEAD': 'head'}
 
     def __init__(self, *args, **kwargs):
+        " Copy self queryset for prevent query caching. "
+
         super(HandlerMixin, self).__init__(*args, **kwargs)
-        # Copy self queryset for prevent query caching
+
         if not self.queryset is None:
             self.queryset = self.queryset.all()
 
     @staticmethod
     def head(*args, **kwargs):
+        " Default HEAD method. "
+
         return HttpResponse()
 
     def get(self, request, **resources):
-        assert self.model, "This auto method required in model."
+        " Default GET method. Return instanse (collection) by model. "
+
         instance = resources.get(self.meta.name)
-        if instance:
+        if not instance is None:
             return instance
 
-        return self.paginate(request, self.get_queryset(request, **resources))
+        return self.paginate(request, self.get_collection(request, **resources))
 
     def post(self, request, **resources):
-        form = self.form(data=deepcopy(request.data), **resources)
+        " Default POST method. Uses self form. "
+
+        form = self.form(request.data, **resources)
         if form.is_valid():
             return form.save()
-        raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
+
+        raise HttpError(
+            form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, **resources):
-        content = resources.get(self.meta.name)
-        if not content:
-            raise HttpError("Bad request", status=status.HTTP_404_NOT_FOUND)
+        " Default PUT method. Uses self form. Allow bulk update. "
+
+        resource = resources.get(self.meta.name)
+        if not resource:
+            raise HttpError("Resource not found.", status=status.HTTP_404_NOT_FOUND)
 
         updated = UpdatedList()
-        for o in as_tuple(content):
-            form = self.form(data=deepcopy(request.data), instance=o, **resources)
+        for o in as_tuple(resource):
+            form = self.form(
+                data=request.data, instance=o, **resources)
+
             if not form.is_valid():
-                raise HttpError(form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
+                raise HttpError(
+                    form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
+
             updated.append(form.save())
 
-        return updated if isinstance(content, list) else updated[-1]
+        return updated if len(updated) > 1 else updated[-1]
 
     def delete(self, request, **resources):
-        content = resources.get(self.meta.name)
-        if not content:
+        " Default DELETE method. Allow bulk delete. "
+
+        resource = resources.get(self.meta.name)
+        if not resource:
             raise HttpError("Bad request", status=status.HTTP_404_NOT_FOUND)
 
-        for o in as_tuple(content):
+        for o in as_tuple(resource):
             o.delete()
 
         return HttpResponse("")
 
     def patch(self, request, **resources):
+        " Default PATCH method. Do nothing. "
+
         pass
 
     @staticmethod
-    def options(request, **kwargs):
-        return HttpResponse("Options OK")
+    def options(request, **resources):
+        " Default OPTIONS method. Always response OK. "
 
-    def get_queryset(self, request, **resources):
+        return HttpResponse("OK")
+
+    def get_collection(self, request, **resources):
+        " Get filters and return filtered result. "
 
         if self.queryset is None:
             return None
 
         # Make filters from URL variables or resources
-        filters = dict((k, v) for k, v in resources.iteritems() if k in self.meta.model_fields)
+        default_filters = self.get_default_filters(**resources)
+        filters = self.get_filters(request, **resources)
+        filters.update(default_filters)
 
-        qs = self.queryset.filter(**filters)
+        # Get collection by queryset
+        qs = self.queryset
+        for key, value in filters.items():
+            try:
+                qs = qs.filter(**{key: value})
+            except FieldError, e:
+                logger.warning(e)
 
-        # Make filters from GET variables
+        return qs
+
+    def get_default_filters(self, **resources):
+        return dict((k, v) for k, v in resources.items() if k in self.meta.model_fields)
+
+    def get_filters(self, request, **resources):
+        " Make filters from GET variables. "
+
+        filters = dict()
         for field in request.GET.iterkeys():
             tokens = field.split(LOOKUP_SEP)
             field_name = tokens[0]
 
-            if not field_name in self.meta.model_fields or field_name in filters:
+            if not field_name in self.meta.model_fields:
                 continue
 
-            converter = self.model._meta.get_field(field).to_python if len(tokens) == 1 else lambda v: v
+            converter = self.model._meta.get_field(
+                field).to_python if len(tokens) == 1 else lambda v: v
             value = map(converter, request.GET.getlist(field))
 
             if len(value) > 1:
@@ -145,14 +185,14 @@ class HandlerMixin(object):
             else:
                 value = value.pop()
 
-            try:
-                qs = qs.filter(**{LOOKUP_SEP.join(tokens): value})
-            except FieldError, e:
-                logger.warning(e)
+            filters[LOOKUP_SEP.join(tokens)] = value
 
-        return qs
+        return filters
 
     def paginate(self, request, qs):
-        """ Paginate queryset.
-        """
+        " Paginate queryset. "
+
         return Paginator(request, qs, self.limit_per_page)
+
+
+# pymode:lint_ignore=E1102

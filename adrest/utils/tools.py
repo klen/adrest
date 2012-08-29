@@ -7,6 +7,9 @@ def as_tuple(obj):
     if isinstance(obj, (tuple, set, list)):
         return tuple(obj)
 
+    if hasattr(obj, '__iter__'):
+        return obj
+
     return obj,
 
 
@@ -31,7 +34,7 @@ def gen_url_regex(resource):
             yield r.url_regex.rstrip('/$').lstrip('^')
         else:
             yield '%(name)s/(?P<%(name)s>[^/]+)' % dict(
-                    name=r.meta.name)
+                name=r.meta.name)
 
     for p in resource.url_params:
         yield '%(name)s/(?P<%(name)s>[^/]+)' % dict(name=p)

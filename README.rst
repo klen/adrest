@@ -5,11 +5,33 @@ Adrest is Another Django REST. Django application for simple make HTTP REST API.
 
 Documentation in construction.
 
+.. image:: https://secure.travis-ci.org/klen/adrest.png?branch=develop
+    :target: http://travis-ci.org/klen/adrest
+    :alt: Build Status
+
+Examples: ::
+
+    from adrest.api import Api
+    from adrest.views import ResourceView
+
+    class BookResource(ResourceView):
+        allowed_methods = 'get', 'post'
+        model = 'books.book'
+
+    api = Api(version(1, 0, 0))
+    api.register(BookResource)
+
+    urlpatterns = api.urls
+
+    
+
+
 Requirements
 =============
 
-- python >= 2.5
-- django >= 1.2
+- python >= 2.6
+- django >= 1.4.0
+
 
 Installation
 =============
@@ -17,6 +39,7 @@ Installation
 **Adrest** should be installed using pip: ::
 
     pip install adrest
+
 
 Setup
 =====

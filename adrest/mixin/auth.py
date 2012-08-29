@@ -1,8 +1,8 @@
-from adrest.utils import status
-from adrest import settings
-from adrest.utils.auth import AnonimousAuthenticator, BaseAuthenticator
-from adrest.utils.exceptions import HttpError
-from adrest.utils.tools import as_tuple
+from ..settings import ALLOW_OPTIONS
+from ..utils import status
+from ..utils.auth import AnonimousAuthenticator, BaseAuthenticator
+from ..utils.exceptions import HttpError
+from ..utils.tools import as_tuple
 
 
 def check_authenticators(authenticators):
@@ -35,7 +35,7 @@ class AuthMixin(object):
         """
         authenticators = self.authenticators
 
-        if request.method == 'OPTIONS' and settings.ALLOW_OPTIONS:
+        if request.method == 'OPTIONS' and ALLOW_OPTIONS:
             authenticators = AnonimousAuthenticator,
 
         for authenticator in authenticators:

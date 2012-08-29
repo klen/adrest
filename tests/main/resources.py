@@ -11,7 +11,7 @@ class AuthorResource(ResourceView):
 
 
 class BookResource(ResourceView):
-    allowed_methods = 'GET', 'POST', 'PUT', 'DELETE'
+    allowed_methods = 'GET', 'post', 'pUt', 'DELETE'
     model = 'main.book'
     parent = AuthorResource
 

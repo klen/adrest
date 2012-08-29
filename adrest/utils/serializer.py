@@ -110,3 +110,5 @@ def _xml_dump(o):
 
     if tag:
         yield "</%s>" % tag
+
+# lint_ignore=W901

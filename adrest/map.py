@@ -38,7 +38,7 @@ class MapResource(ResourceView):
                         required=f.required and f.initial is None,
                         label=f.label,
                         help=smart_unicode(f.help_text + ''))
-                    )
+                     )
                     for name, f in resource.form.base_fields.iteritems()
                     if not (isinstance(f, ModelChoiceField) and f.choices.queryset.model in models)
                 ]
@@ -46,6 +46,8 @@ class MapResource(ResourceView):
             for a in resource.authenticators:
                 info['fields'] += a.get_fields()
 
-            info['auth'] = set(a.__doc__ or 'Custom' for a in resource.authenticators)
-            key = resource.meta.url_regex.replace("(?P", "").replace("[^/]+)", "").replace("?:", "").replace("$", "")
+            info['auth'] = set(
+                a.__doc__ or 'Custom' for a in resource.authenticators)
+            key = resource.meta.url_regex.replace("(?P", "").replace(
+                "[^/]+)", "").replace("?:", "").replace("$", "")
             yield key, info
