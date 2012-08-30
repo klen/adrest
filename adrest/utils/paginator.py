@@ -13,6 +13,7 @@ class Paginator(object):
         self.query_dict = dict(request.GET.items())
         self.paginator = DjangoPaginator(qs, int(self.query_dict.get('max') or max_res))
         self.path = request.path
+        self.request = request
         page_num = int(request.REQUEST.get('page', 1))
         try:
             self.page = self.paginator.page(page_num)
@@ -25,6 +26,8 @@ class Paginator(object):
 
     @property
     def resources(self):
+        if 'reverse' in self.request.REQUEST:
+            return reversed(self.page.object_list)
         return self.page.object_list
 
     @property

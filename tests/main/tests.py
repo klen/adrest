@@ -255,6 +255,23 @@ class ResourceTest(AdrestTestCase):
         response = self.client.get(uri + "?title=book2&title=book3&author=%s" % self.author.pk)
         self.assertContains(response, 'count="2"')
 
+    def test_reverse(self):
+        uri = self.reverse('author-test-book')
+
+        # Normal ordering
+        response1 = self.client.get(uri, data=dict(
+            author=self.author.pk))
+
+        # Reversed ordering
+        response2 = self.client.get(uri, data=dict(
+            author=self.author.pk,
+            reverse=''))
+
+        for x, y in zip(response1.context['content'].resources,
+                        reversed(list(response2.context['content'].resources))):
+            self.assertEquals(x, y)
+
+
     def test_custom(self):
         uri = self.reverse('book')
         response = self.client.get(uri)
