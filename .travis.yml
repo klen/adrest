@@ -12,4 +12,6 @@ branches:
 install:
     - pip install -IM pylama
 
-script: make test
+script:
+    - make audit
+    - make test
