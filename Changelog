@@ -1,6 +1,7 @@
-2012-08-31  klen  1.8.2
+2012-08-31  klen  1.8.3
 
 	* Support multivalues in FormParser
+	* request.data is immutable now
 
 2012-08-28  klen  1.8.1
 
