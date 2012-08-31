@@ -24,7 +24,7 @@ class FormParser(BaseParser):
 
     @staticmethod
     def parse(request):
-        return dict(request.POST.iteritems())
+        return dict((k, v if len(v) > 1 else v[0]) for k, v in request.POST.iterlists())
 
 
 class JSONParser(BaseParser):
