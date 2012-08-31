@@ -2,6 +2,7 @@ from django.utils import simplejson as json
 
 from .exceptions import HttpError
 from .status import HTTP_400_BAD_REQUEST
+from .tools import FrozenDict
 
 
 class BaseParser(object):
@@ -24,7 +25,7 @@ class FormParser(BaseParser):
 
     @staticmethod
     def parse(request):
-        return dict((k, v if len(v) > 1 else v[0]) for k, v in request.POST.iterlists())
+        return FrozenDict((k, v if len(v) > 1 else v[0]) for k, v in request.POST.iterlists())
 
 
 class JSONParser(BaseParser):

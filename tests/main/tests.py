@@ -276,7 +276,7 @@ class ResourceTest(AdrestTestCase):
         self.assertEqual(mail.outbox[-1].subject, '[Django] ADREST API Error (400): /1.0.0/owner/book/%s/article/' % Book.objects.all().count())
 
         response = self.post_resource('book')
-        self.assertContains(response, '{"error": true}', status_code=400)
+        self.assertContains(response, '{"error": "\'Frozen', status_code=400)
 
     def test_some_other(self):
         response = self.get_resource('test')
