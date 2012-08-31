@@ -58,7 +58,10 @@ class CustomResource(ResourceView):
         return list(self.queryset)
 
     def post(self, request, **resources):
-        raise HttpError(dict(error=True), status=400, emitter=JSONEmitter)
+        try:
+            request.data['test'] = 123
+        except TypeError, e:
+            raise HttpError(dict(error=str(e)), status=400, emitter=JSONEmitter)
 
 
 class DummyResource(ResourceView):
