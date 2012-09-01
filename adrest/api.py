@@ -1,9 +1,10 @@
 import logging
+
 from django.conf.urls.defaults import patterns
 from django.dispatch import Signal
 
-from .map import MapResource
-from .rpc import RPCResource
+from .resources.map import MapResource
+from .resources.rpc import RPCResource
 from .views import ResourceView
 
 

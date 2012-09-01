@@ -1,9 +1,9 @@
 from django.forms.models import ModelChoiceField
 from django.utils.encoding import smart_unicode
 
-from .utils.auth import AnonimousAuthenticator
-from .utils.emitter import HTMLTemplateEmitter, JSONEmitter
-from .views import ResourceView
+from ..utils.auth import AnonimousAuthenticator
+from ..utils.emitter import HTMLTemplateEmitter, JSONEmitter
+from ..views import ResourceView
 
 
 class MapResource(ResourceView):
