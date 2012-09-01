@@ -1,10 +1,10 @@
 from django.http import QueryDict
 from django.utils import simplejson
 
-from .utils.emitter import JSONPEmitter, JSONEmitter
-from .utils.exceptions import HttpError
-from .utils.status import HTTP_402_PAYMENT_REQUIRED
-from .views import ResourceView
+from ..utils.emitter import JSONPEmitter, JSONEmitter
+from ..utils.exceptions import HttpError
+from ..utils.status import HTTP_402_PAYMENT_REQUIRED
+from ..views import ResourceView
 
 
 class RPCResource(ResourceView):

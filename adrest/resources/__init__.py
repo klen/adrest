@@ -1,0 +1,1 @@
+" Predefined resources for ADREST. "
