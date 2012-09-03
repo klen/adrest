@@ -216,7 +216,7 @@ class ResourceView(handler.HandlerMixin,
         pks = resources.get(
             cls.meta.name) or request.REQUEST.getlist(cls.meta.name)
 
-        if not pks or not cls.queryset:
+        if not pks or cls.queryset is None:
             return resources
 
         pks = as_tuple(pks)

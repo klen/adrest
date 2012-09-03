@@ -1,3 +1,7 @@
+2012-09-03  klen  1.8.5
+
+	* Fix 'get_resources'
+
 2012-09-01  klen  1.8.4
 
 	* Beta Google Analytics support
