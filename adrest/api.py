@@ -48,6 +48,7 @@ class Api(object):
         if params:
             params['name'] = ''.join(bit for bit in resource.__name__.split('Resource') if bit).lower()
             params['__module__'] = '%s.%s' % (self.prefix, self.str_version.replace('.', '_'))
+            params['__doc__'] = resource.__doc__
             resource = type('%s%s' % (resource.__name__, len(self.resources)), (resource,), params)
 
         if self.resources.get(resource.meta.url_name):

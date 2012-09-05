@@ -24,6 +24,8 @@ class MapResource(ResourceView):
             resource = self.api.resources[url_name]
             info = dict(
                 name=url_name,
+                emitters=', '.join([e.media_type for e in resource.emitters]),
+                doc=resource.__doc__,
                 methods=resource.allowed_methods,
                 fields=[]
             )
@@ -49,5 +51,5 @@ class MapResource(ResourceView):
             info['auth'] = set(
                 a.__doc__ or 'Custom' for a in resource.authenticators)
             key = resource.meta.url_regex.replace("(?P", "").replace(
-                "[^/]+)", "").replace("?:", "").replace("$", "")
+                "[^/]+)", "").replace("?:", "").replace("$", "").replace("^", "/")
             yield key, info

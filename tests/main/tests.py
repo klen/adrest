@@ -331,11 +331,10 @@ class AdrestMapTest(TestCase):
         uri = reverse("main-%s-map" % str(api))
         self.assertEqual(uri, "/%s/map" % api)
         response = self.client.get(uri)
-        self.assertContains(response, 'MAP')
+        self.assertContains(response, 'API')
         self.assertContains(response, 'nickname')
 
         response = self.client.get(uri, HTTP_ACCEPT="application/json")
-        self.assertNotContains(response, 'MAP')
         self.assertContains(response, '"price", {"required": false')
 
 
