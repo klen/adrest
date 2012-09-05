@@ -95,3 +95,9 @@ class FrozenDict(collections.Mapping):
                 self._hash ^= hash(key)
                 self._hash ^= hash(value)
         return self._hash
+
+    def __str__(self):
+        return str(dict(self.iteritems()))
+
+    def __repr__(self):
+        return "<FrozenDict: %s>" % repr(dict(self.iteritems()))
