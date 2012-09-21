@@ -51,6 +51,11 @@ if settings.ACCESS_LOG:
         if not resource.log:
             return
 
+        try:
+            content = response.content.decode('utf-8')[:5000]
+        except (UnicodeDecodeError, UnicodeEncodeError):
+            content = response.content[:5000]
+
         Access.objects.create(
             uri=request.path_info,
             method=request.method,
@@ -58,7 +63,7 @@ if settings.ACCESS_LOG:
             status_code=response.status_code,
             request='%s\n\n%s' % (str(request.META), str(getattr(request, 'data', ''))),
             identifier=resource.identifier or request.META.get('REMOTE_ADDR', 'anonymous'),
-            response=response.content.decode('utf-8')[:5000],
+            response=content,
         )
 
     api_request_finished.connect(save_log)
