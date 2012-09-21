@@ -1,3 +1,7 @@
+2012-09-21  klen  1.8.8
+
+	* Fix adrest's admin integration'
+
 2012-09-05  klen  1.8.7
 
 	* Fix FrozenDict repr in logs
