@@ -1,4 +1,3 @@
-from django.contrib import admin
 from django.db import models
 
 from adrest import settings
@@ -45,13 +44,6 @@ if settings.ACCESS_LOG:
         def __unicode__(self):
             return "#%s %s:%s:%s" % (self.pk, self.method, self.status_code, self.uri)
 
-    class AccessAdmin(admin.ModelAdmin):
-        list_display = 'status_code', 'uri', 'method', 'identifier', 'created_at', 'version'
-        list_filter = 'method', 'version'
-        search_fields = 'uri', 'identifier'
-        date_hierarchy = 'created_at'
-    admin.site.register(Access, AccessAdmin)
-
     def save_log(sender, response=None, request=None, **resources):
 
         resource = sender
@@ -97,12 +89,6 @@ if settings.ACCESSKEY:
             self.key = self.key or str(uuid.uuid4()).replace('-', '')
             super(AccessKey, self).save(**kwargs)
 
-    class AccessKeyAdmin(admin.ModelAdmin):
-        list_display = 'key', 'user', 'created'
-        search_fields = '=key', '=user'
-        raw_id_fields = 'user',
-    admin.site.register(AccessKey, AccessKeyAdmin)
-
     # Auto create key for created user
     def create_api_key(sender, created=False, instance=None, **kwargs):
         if created and instance:
@@ -111,3 +97,6 @@ if settings.ACCESSKEY:
     # Connect create handler to user save event
     if settings.AUTO_CREATE_ACCESSKEY:
         models.signals.post_save.connect(create_api_key, sender=User)
+
+
+# pymode:lint_ignore=W0704
