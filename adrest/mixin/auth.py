@@ -1,6 +1,6 @@
 from ..settings import ALLOW_OPTIONS
 from ..utils import status
-from ..utils.auth import AnonimousAuthenticator, BaseAuthenticator
+from ..utils.auth import AnonimousAuthenticator, AbstractAuthenticator
 from ..utils.exceptions import HttpError
 from ..utils.tools import as_tuple
 
@@ -8,7 +8,7 @@ from ..utils.tools import as_tuple
 def check_authenticators(authenticators):
     authenticators = as_tuple(authenticators)
     for a in authenticators:
-        assert issubclass(a, BaseAuthenticator), "Authenticators must be subclasses of BaseAuthenticator"
+        assert issubclass(a, AbstractAuthenticator), "Authenticators must be subclasses of AbstractAuthenticator"
     return authenticators
 
 
@@ -26,8 +26,8 @@ class AuthMixin(object):
     __metaclass__ = AuthMeta
 
     authenticators = AnonimousAuthenticator
-    identifier = ''
     auth = None
+    identifier = ''
 
     def authenticate(self, request):
         """ Attempt to authenticate the request, returning an authentication context or None.
@@ -39,12 +39,11 @@ class AuthMixin(object):
             authenticators = AnonimousAuthenticator,
 
         for authenticator in authenticators:
-            self.auth = authenticator(self)
-            self.identifier = self.auth.authenticate(request)
-            if self.identifier:
-                return self.identifier
+            auth = authenticator(self)
+            if auth.authenticate(request):
+                auth.configure(request)
+                return True
 
-        self.auth, self.identifier = None, ''
         raise HttpError("Authorization required.", status=status.HTTP_401_UNAUTHORIZED)
 
     def check_rights(self, resources, request=None):

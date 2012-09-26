@@ -1,5 +1,5 @@
 from ..utils import MetaOptions
-from ..utils.parser import FormParser, XMLParser, JSONParser, BaseParser
+from ..utils.parser import FormParser, XMLParser, JSONParser, AbstractParser
 from ..utils.tools import as_tuple
 
 
@@ -12,7 +12,7 @@ class ParserMeta(type):
         cls.meta.default_parser = cls.parsers[0] if cls.parsers else None
 
         for p in cls.parsers:
-            assert issubclass(p, BaseParser), "Parser must be subclass of BaseParser"
+            assert issubclass(p, AbstractParser), "Parser must be subclass of AbstractParser"
             cls.meta.parsers_dict[p.media_type] = p
 
         return cls

@@ -3,13 +3,14 @@ from adrest.api import Api
 from adrest.utils.auth import AnonimousAuthenticator, AccessKeyAuthenticator, UserAuthenticator
 from adrest.utils.emitter import XMLTemplateEmitter, JSONEmitter, BSONEmitter
 from adrest.utils.parser import BSONParser
+from adrest.utils.throttle import CacheThrottle
 
 
 class CustomUserAuth(UserAuthenticator):
     username_fieldname = 'nickname'
 
 
-API = Api(version=(1, 0, 0), emitters=(XMLTemplateEmitter, JSONEmitter), api_prefix='main')
+API = Api(version=(1, 0, 0), emitters=(XMLTemplateEmitter, JSONEmitter), throttle=CacheThrottle, api_prefix='main')
 
 API.register(AuthorResource,
              authenticators=(CustomUserAuth, AnonimousAuthenticator))
