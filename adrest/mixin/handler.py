@@ -154,16 +154,20 @@ class HandlerMixin(object):
 
         # Get collection by queryset
         qs = self.queryset
-        for key, value in filters.items():
+        for key, (value, exclude) in filters.items():
             try:
-                qs = qs.filter(**{key: value})
+                if exclude:
+                    qs = qs.exclude(**{key: value})
+
+                else:
+                    qs = qs.filter(**{key: value})
             except FieldError, e:
                 logger.warning(e)
 
         return qs
 
     def get_default_filters(self, **resources):
-        return dict((k, v) for k, v in resources.items() if k in self.meta.model_fields)
+        return dict((k, (v, False)) for k, v in resources.items() if k in self.meta.model_fields)
 
     def get_filters(self, request, **resources):
         " Make filters from GET variables. "
@@ -173,11 +177,16 @@ class HandlerMixin(object):
             tokens = field.split(LOOKUP_SEP)
             field_name = tokens[0]
 
+            exclude = False
+            if tokens[-1] == 'not':
+                exclude = True
+                tokens.pop()
+
             if not field_name in self.meta.model_fields:
                 continue
 
             converter = self.model._meta.get_field(
-                field).to_python if len(tokens) == 1 else lambda v: v
+                field_name).to_python if len(tokens) == 1 else lambda v: v
             value = map(converter, request.GET.getlist(field))
 
             if len(value) > 1:
@@ -185,7 +194,7 @@ class HandlerMixin(object):
             else:
                 value = value.pop()
 
-            filters[LOOKUP_SEP.join(tokens)] = value
+            filters[LOOKUP_SEP.join(tokens)] = (value, exclude)
 
         return filters
 

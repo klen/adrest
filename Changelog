@@ -1,3 +1,7 @@
+2012-09-26  klen  1.9.0
+
+	* Added exclude support to filters (field__not=...). Thanks Lispython
+
 2012-09-21  klen  1.8.9
 
 	* Fix adrest's admin integration'
