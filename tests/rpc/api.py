@@ -1,14 +1,16 @@
 from adrest.api import Api
-from adrest.utils.auth import BaseAuthenticator
+from adrest.utils.auth import AnonimousAuthenticator
 from adrest.utils.emitter import XMLEmitter
 from adrest.views import ResourceView
 
 
-class TestAuth(BaseAuthenticator):
+class TestAuth(AnonimousAuthenticator):
 
-    def authenticate(self, request=None):
-        self.identifier = request.META.get('HTTP_AUTHORIZATION')
-        return self.identifier
+    def authenticate(self, request):
+        return request.META.get('HTTP_AUTHORIZATION')
+
+    def configure(self, request):
+        self.resource.identifier = request.META.get('HTTP_AUTHORIZATION')
 
 
 class TestResource(ResourceView):

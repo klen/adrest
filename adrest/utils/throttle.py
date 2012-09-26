@@ -1,3 +1,4 @@
+import abc
 import time
 import hashlib
 
@@ -6,12 +7,20 @@ from django.core.cache import cache
 from ..settings import THROTTLE_AT, THROTTLE_TIMEFRAME
 
 
-class BaseThrottle(object):
+class AbstractThrottle(object):
     """ Fake throttle class.
     """
-    def __init__(self, throttle_at=THROTTLE_AT, timeframe=THROTTLE_TIMEFRAME):
-        self.throttle_at = throttle_at
-        self.timeframe = timeframe
+
+    __meta__ = abc.ABCMeta
+
+    throttle_at = THROTTLE_AT
+    timeframe = THROTTLE_TIMEFRAME
+
+    @abc.abstractmethod
+    def should_be_throttled(self, resource):
+        """ Returns whether or not the user has exceeded their throttle limit.
+        """
+        pass
 
     @staticmethod
     def convert_identifier_to_key(identifier):
@@ -24,28 +33,30 @@ class BaseThrottle(object):
 
         return "%s_accesses" % key
 
+
+class NullThrottle(AbstractThrottle):
+    " Anybody never be throttled. "
+
     @staticmethod
-    def should_be_throttled(identifier, **kwargs):
-        """ Returns whether or not the user has exceeded their throttle limit.
-        """
+    def should_be_throttled(resource):
         return 0
 
 
-class CacheThrottle(BaseThrottle):
+class CacheThrottle(AbstractThrottle):
     """ A throttling mechanism that uses just the cache.
     """
-    def _get_params(self, key):
-        count, expiration = cache.get(key, (1, None))
-        now = time.time()
-        if expiration is None:
-            expiration = now + self.timeframe
-        return count, expiration, now
-
-    def should_be_throttled(self, identifier, **kwargs):
-        key = self.convert_identifier_to_key(identifier)
+    def should_be_throttled(self, resource):
+        key = self.convert_identifier_to_key(resource.identifier)
         count, expiration, now = self._get_params(key)
         if count >= self.throttle_at and expiration > now:
             return expiration - now
 
         cache.set(key, (count + 1, expiration), (expiration - now))
         return 0
+
+    def _get_params(self, key):
+        count, expiration = cache.get(key, (1, None))
+        now = time.time()
+        if expiration is None:
+            expiration = now + self.timeframe
+        return count, expiration, now
