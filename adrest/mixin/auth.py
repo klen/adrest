@@ -38,13 +38,17 @@ class AuthMixin(object):
         if request.method == 'OPTIONS' and ALLOW_OPTIONS:
             authenticators = AnonimousAuthenticator,
 
+        error_message = "Authorization required."
         for authenticator in authenticators:
             auth = authenticator(self)
-            if auth.authenticate(request):
+            try:
+                assert auth.authenticate(request), error_message
                 auth.configure(request)
                 return True
+            except AssertionError, e:
+                error_message = str(e)
 
-        raise HttpError("Authorization required.", status=status.HTTP_401_UNAUTHORIZED)
+        raise HttpError(error_message, status=status.HTTP_401_UNAUTHORIZED)
 
     def check_rights(self, resources, request=None):
         " Check rights of client for queried resources "

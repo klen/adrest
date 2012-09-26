@@ -109,5 +109,5 @@ class AccessKeyAuthenticator(UserLoggedInAuthenticator):
             request.user = accesskey.user
             return request.user and request.user.is_active
 
-        except(KeyError, AssertionError, AccessKey.DoesNotExist):
+        except(KeyError, AccessKey.DoesNotExist):
             return False
