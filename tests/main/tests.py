@@ -255,6 +255,40 @@ class ResourceTest(AdrestTestCase):
         response = self.client.get(uri + "?title=book2&title=book3&author=%s" % self.author.pk)
         self.assertContains(response, 'count="2"')
 
+    def test_not_filter(self):
+        uri = self.reverse('author-test-book')
+
+        exclude_author = Author.objects.create(
+            name="exclude_author",
+            user=User.objects.create(username="exclude_user"))
+
+        for i in xrange(5):
+            Book.objects.create(
+                author=exclude_author, title="book_for_exclude%s" % i,
+                status=random.choice([1, 2, 3]), price=482)
+
+        response = self.client.get(uri, data=dict(
+            author__not=self.author.pk))
+
+        self.assertContains(response, '<results count="5" page="1">')
+        self.assertContains(response, '<name>exclude_author</name>')
+
+        for i in xrange(5):
+            self.assertContains(response, '<title>book_for_exclude%s</title>' % i)
+
+        response = self.client.get(uri, data=dict(
+            author__not=self.author.pk,
+            status__not=[1, 3]))
+
+        self.assertContains(response, '<results count="%s" page="1">' %
+                            Book.objects.filter(author=exclude_author).\
+                            exclude(status__in=[1, 3]).count())
+        self.assertNotContains(response, '<status>3</status>')
+        self.assertNotContains(response, '<status>1</status>')
+        self.assertContains(response, '<status>2</status>')
+        self.assertContains(response, '<name>exclude_author</name>')
+
+
     def test_custom(self):
         uri = self.reverse('book')
         response = self.client.get(uri)
