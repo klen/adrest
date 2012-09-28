@@ -50,12 +50,6 @@ class AbstractSerializer(object):
         if isinstance(value, dict):
             return dict((k, self.to_simple(v, **options)) for k, v in value.iteritems())
 
-        if isinstance(value, collections.Iterable):
-            return [self.to_simple(o, **options) for o in value]
-
-        if isinstance(value, Model):
-            return self.to_simple_model(value, **options)
-
         if isinstance(value, Paginator):
             return dict(
                 count=value.count,
@@ -64,6 +58,12 @@ class AbstractSerializer(object):
                 prev=value.previous,
                 resources=self.to_simple(value.resources, **options)
             )
+
+        if isinstance(value, collections.Iterable):
+            return [self.to_simple(o, **options) for o in value]
+
+        if isinstance(value, Model):
+            return self.to_simple_model(value, **options)
 
         return smart_unicode(value)
 
