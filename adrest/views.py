@@ -88,7 +88,7 @@ class ResourceView(handler.HandlerMixin,
     # Allowed methods
     allowed_methods = 'GET',
 
-    # Name (Defaul by model name or class name)
+    # Name (By default this set from model or class name)
     name = None
 
     # Link to api if connected

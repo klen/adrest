@@ -3,8 +3,6 @@ import base64
 
 from django.contrib.auth import authenticate
 
-from ..models import AccessKey
-
 
 class AbstractAuthenticator(object):
     " Abstract base authenticator "
@@ -97,17 +95,23 @@ class UserAuthenticator(UserLoggedInAuthenticator):
         return [(cls.username_fieldname, dict(required=True)), (cls.password_fieldname, dict(required=True))]
 
 
-class AccessKeyAuthenticator(UserLoggedInAuthenticator):
-    " Authorization by API token. "
+try:
+    from ..models import AccessKey
 
-    def authenticate(self, request=None):
-        """ Authenticate user using AccessKey from HTTP Header or GET params.
-        """
-        try:
-            token = request.META.get('HTTP_AUTHORIZATION') or request.REQUEST['key']
-            accesskey = AccessKey.objects.select_related('user').get(key=token)
-            request.user = accesskey.user
-            return request.user and request.user.is_active
+    class AccessKeyAuthenticator(UserLoggedInAuthenticator):
+        " Authorization by API token. "
 
-        except(KeyError, AccessKey.DoesNotExist):
-            return False
+        def authenticate(self, request=None):
+            """ Authenticate user using AccessKey from HTTP Header or GET params.
+            """
+            try:
+                token = request.META.get('HTTP_AUTHORIZATION') or request.REQUEST['key']
+                accesskey = AccessKey.objects.select_related('user').get(key=token)
+                request.user = accesskey.user
+                return request.user and request.user.is_active
+
+            except(KeyError, AccessKey.DoesNotExist):
+                return False
+
+except ImportError:
+    pass

@@ -9,5 +9,5 @@ class TaskResource(ResourceView):
     emitters = emitter.XMLTemplateEmitter
 
 
-API = Api()
+API = Api(version='1.0b')
 API.register(TaskResource)

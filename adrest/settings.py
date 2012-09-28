@@ -1,5 +1,12 @@
 " Adrest API settings. "
-from django.conf import settings
+try:
+    from django.conf import settings
+
+    getattr(settings, 'DEBUG')
+
+except ImportError:
+
+    settings.configure()
 
 from .utils.tools import as_tuple
 
