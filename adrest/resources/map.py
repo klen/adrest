@@ -17,7 +17,8 @@ class MapResource(ResourceView):
     url_regex = r'^map$'
 
     def get(self, *args, **Kwargs):
-        return self.api.str_version, list(self.gen_apimap())
+        selfmap = list(self.gen_apimap())
+        return self.api.str_version, selfmap
 
     def gen_apimap(self):
         for url_name in sorted(self.api.resources.iterkeys()):

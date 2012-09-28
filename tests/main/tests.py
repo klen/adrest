@@ -7,6 +7,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.test import TestCase, Client, RequestFactory
 from django.views.generic import View
+from milkman.dairy import milkman
 
 from .api import API as api
 from .models import Author, Book
@@ -14,7 +15,7 @@ from .resources import AuthorResource, BookPrefixResource, ArticleResource, Some
 from adrest.mixin.emitter import EmitterMixin
 from adrest.models import Access
 from adrest.tests.utils import AdrestTestCase
-from adrest.utils import serializer, paginator, emitter, parser
+from adrest.utils import emitter, parser
 
 
 class MixinTest(TestCase):
@@ -108,9 +109,8 @@ class AdrestTest(AdrestTestCase):
     api = api
 
     def setUp(self):
-        user = User.objects.create(username='test')
-        self.author = Author.objects.create(name='John', user=user)
-        self.book = Book.objects.create(author=self.author, title='test', status=1)
+        self.author = milkman.deliver('main.author')
+        self.book = milkman.deliver('main.book', author=self.author)
         super(AdrestTest, self).setUp()
 
     def test_urls(self):
@@ -152,8 +152,7 @@ class AdrestTest(AdrestTestCase):
         response = self.client.options(uri, data=dict(author=self.author.pk))
         self.assertContains(response, 'OK')
 
-        user = User.objects.create(username='test2')
-        author = Author.objects.create(name='Tester', user=user)
+        author = milkman.deliver('main.author')
         response = self.client.options(uri, data=dict(author=author.pk))
         self.assertContains(response, 'OK')
 
@@ -224,6 +223,7 @@ class ResourceTest(AdrestTestCase):
             status=2,
             author=self.author.pk))
         self.assertContains(response, '<price>0</price>')
+        self.assertContains(response, '<json>{"fields": {"status": 2}, "model": "main.book", "pk": 149}</json>')
 
         uri = self.reverse('author-test-book', book=1)
         uri = "%s?author=%s" % (uri, self.author.pk)
@@ -265,7 +265,7 @@ class ResourceTest(AdrestTestCase):
         for i in xrange(5):
             Book.objects.create(
                 author=exclude_author, title="book_for_exclude%s" % i,
-                status=random.choice([1, 2, 3]), price=482)
+                status=i % 3 + 1, price=482)
 
         response = self.client.get(uri, data=dict(
             author__not=self.author.pk))
@@ -281,13 +281,12 @@ class ResourceTest(AdrestTestCase):
             status__not=[1, 3]))
 
         self.assertContains(response, '<results count="%s" page="1">' %
-                            Book.objects.filter(author=exclude_author).\
+                            Book.objects.filter(author=exclude_author).
                             exclude(status__in=[1, 3]).count())
         self.assertNotContains(response, '<status>3</status>')
         self.assertNotContains(response, '<status>1</status>')
         self.assertContains(response, '<status>2</status>')
         self.assertContains(response, '<name>exclude_author</name>')
-
 
     def test_custom(self):
         uri = self.reverse('book')
@@ -370,31 +369,3 @@ class AdrestMapTest(TestCase):
 
         response = self.client.get(uri, HTTP_ACCEPT="application/json")
         self.assertContains(response, '"price", {"required": false')
-
-
-class SerializerTest(TestCase):
-
-    def setUp(self):
-        self.rf = RequestFactory()
-        for i in range(1, 100):
-            user = User.objects.create(username='test%s' % i)
-            self.author = Author.objects.create(name='John %s' % i, user=user)
-            self.book = Book.objects.create(author=self.author, title='test %s' % i, status=random.choice((1, 2, 3)))
-
-    def test_json(self):
-        authors = Author.objects.all()
-        test = serializer.json_dumps(authors)
-        self.assertTrue("main.author" in test)
-        request = self.rf.get("/")
-        pg = paginator.Paginator(request, authors, 10)
-        test = serializer.json_dumps(pg)
-        self.assertTrue("count" in test)
-        books = Book.objects.all()
-        test = serializer.json_dumps(books)
-        self.assertTrue("author" in test)
-        self.assertFalse("publisher" in test)
-
-    def test_xml(self):
-        authors = Author.objects.all()
-        test = serializer.xml_dumps(authors)
-        self.assertTrue("author" in test)

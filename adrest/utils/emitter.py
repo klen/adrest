@@ -9,7 +9,7 @@ from django.template import RequestContext, loader
 from ..utils import UpdatedList
 from .paginator import Paginator
 from .response import SerializedHttpResponse
-from .serializer import json_dumps, xml_dumps
+from .serializer import JSONSerializer, XMLSerializer
 from .status import HTTP_200_OK
 
 
@@ -64,17 +64,24 @@ class TextEmitter(BaseEmitter):
 class JSONEmitter(BaseEmitter):
     media_type = 'application/json'
 
-    @staticmethod
-    def serialize(content):
-        return json_dumps(content)
+    def serialize(self, content):
+        worker = JSONSerializer(
+            _fields=getattr(self.resource, 'fields', None),
+            _include=getattr(self.resource, 'include', None),
+            _exclude=getattr(self.resource, 'exclude', None),
+            **getattr(self.resource, 'related', dict())
+        )
+        return worker.serialize(content)
 
 
-class JSONPEmitter(BaseEmitter):
+class JSONPEmitter(JSONEmitter):
     media_type = 'text/javascript'
 
     def serialize(self, content):
+        content = super(JSONPEmitter, self).serialize(content)
+
         callback = self.request.GET.get('callback', 'callback')
-        return '%s(%s)' % (callback, json_dumps(content))
+        return u'%s(%s)' % (callback, content)
 
 
 class XMLEmitter(BaseEmitter):
@@ -83,11 +90,17 @@ class XMLEmitter(BaseEmitter):
     xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>'
 
     def serialize(self, content):
+        worker = XMLSerializer(
+            _fields=getattr(self.resource, 'fields', None),
+            _include=getattr(self.resource, 'include', None),
+            _exclude=getattr(self.resource, 'exclude', None),
+            **getattr(self.resource, 'related', dict())
+        )
         return self.xmldoc_tpl % (
             'true' if self.response.status_code == HTTP_200_OK else 'false',
             self.resource.version,
             int(mktime(datetime.now().timetuple())),
-            xml_dumps(content)
+            worker.serialize(content)
         )
 
 
