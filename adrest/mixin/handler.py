@@ -158,6 +158,7 @@ class HandlerMixin(object):
             try:
                 if exclude:
                     qs = qs.exclude(**{key: value})
+
                 else:
                     qs = qs.filter(**{key: value})
             except FieldError, e:
@@ -176,17 +177,16 @@ class HandlerMixin(object):
             tokens = field.split(LOOKUP_SEP)
             field_name = tokens[0]
 
+            exclude = False
             if tokens[-1] == 'not':
                 exclude = True
                 tokens.pop()
-            else:
-                exclude = False
 
             if not field_name in self.meta.model_fields:
                 continue
 
             converter = self.model._meta.get_field(
-                LOOKUP_SEP.join(tokens)).to_python if len(tokens) == 1 else lambda v: v
+                field_name).to_python if len(tokens) == 1 else lambda v: v
             value = map(converter, request.GET.getlist(field))
 
             if len(value) > 1:

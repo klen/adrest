@@ -1,3 +1,12 @@
+2012-09-28  klen  1.9.4
+
+	* Upgrade default serialization
+
+2012-09-26  klen  1.9.1
+
+	* Added exclude support to filters (field__not=...). Thanks Lispython
+	* Refactor authentication. Some custom authenticators can be not worked.
+
 2012-09-21  klen  1.8.9
 
 	* Fix adrest's admin integration'

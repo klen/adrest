@@ -38,7 +38,7 @@ META_DATA = dict(
 
     install_requires = ('mimeparse', 'Django>=1.4.0'),
     test_suite = 'tests.run_tests',
-    tests_require = 'pymongo',
+    tests_require = ['pymongo', 'milkman']
 )
 
 

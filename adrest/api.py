@@ -12,14 +12,22 @@ LOG = logging.getLogger('adrest')
 
 
 class Api(object):
+
     """ Implements a registry to tie together the various resources that make up
         an API.
 
-        Especially useful for navigation, HATEOAS and for providing multiple
-        versions of your API.
+        Especially useful for navigation, providing multiple versions of your API.
+
+        :param version: Version info as string or iterable.
+        :param api_map: Enable API map (true by default)
+        :param api_prefix: API Url prefix ('api' by default)
+        :param api_rpc: Enable automatic Json RPC (default false)
+
+        Additional params will be putted in self resources.
+
     """
     def __init__(self, version=None, api_map=True, api_prefix='api', api_rpc=False, **params):
-        self.version = version
+        self.version = self.str_version = version
         self.prefix = api_prefix
         self.params = params
         self.resources = dict()
@@ -32,13 +40,22 @@ class Api(object):
         if api_rpc:
             self.resources[RPCResource.meta.url_name] = RPCResource
 
-        try:
-            self.str_version = '.'.join(map(str, version or list()))
-        except TypeError:
-            self.str_version = str(version)
+        if not isinstance(self.str_version, basestring):
+            try:
+                self.str_version = '.'.join(map(str, version or list()))
+            except TypeError:
+                self.str_version = str(version)
+
+    def __str__(self):
+        return self.str_version
 
     def register(self, resource, **params):
-        " Registers resource subclass for the API. "
+        """ Registers resource for the API.
+
+            :param resource: Resource class for registration
+
+            Additional params will be putted in the resource.
+        """
 
         # Must be instance of ResourceView
         assert issubclass(resource, ResourceView), "%s not subclass of ResourceView" % resource
@@ -73,6 +90,3 @@ class Api(object):
             ))
 
         return patterns(self.prefix, *urls)
-
-    def __str__(self):
-        return self.str_version
