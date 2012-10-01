@@ -54,7 +54,11 @@ if settings.ACCESS_LOG:
         try:
             content = response.content.decode('utf-8')[:5000]
         except (UnicodeDecodeError, UnicodeEncodeError):
-            content = response.content[:5000]
+            if response and response['Content-Type'].lower() not in \
+                   [emitter.media_type.lower() for emitter in resource.emitters]:
+                content = 'Invalid response content encoding'
+            else:
+                content.content[:5000]
 
         Access.objects.create(
             uri=request.path_info,
@@ -63,8 +67,7 @@ if settings.ACCESS_LOG:
             status_code=response.status_code,
             request='%s\n\n%s' % (str(request.META), str(getattr(request, 'data', ''))),
             identifier=resource.identifier or request.META.get('REMOTE_ADDR', 'anonymous'),
-            response=content,
-        )
+            response=content)
 
     api_request_finished.connect(save_log)
 
