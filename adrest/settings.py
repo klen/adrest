@@ -31,3 +31,5 @@ THROTTLE_TIMEFRAME = getattr(settings, 'ADREST_THROTTLE_TIMEFRAME', 60)
 
 # We do not restrict access for OPTIONS request.
 ALLOW_OPTIONS = getattr(settings, 'ADREST_ALLOW_OPTIONS', False)
+
+MAP_TEMPLATE = getattr(settings, 'ADREST_MAP_TEMPLATE', 'api/map.html')
