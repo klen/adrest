@@ -38,14 +38,14 @@ class AbstractSerializer(object):
         if isinstance(value, basestring):
             return smart_unicode(value)
 
+        if isinstance(value, Decimal):
+            return float(str(value))
+
         if isinstance(value, numbers.Number):
             return value
 
         if isinstance(value, (datetime, date, time)):
             return self.to_simple_datetime(value)
-
-        if isinstance(value, Decimal):
-            return str(value)
 
         if isinstance(value, dict):
             return dict((k, self.to_simple(v, **options)) for k, v in value.iteritems())
