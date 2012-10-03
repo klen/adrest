@@ -1,4 +1,7 @@
 from .models import Book
+
+from django.http import HttpResponse
+
 from adrest.utils.emitter import JSONEmitter
 from adrest.utils.exceptions import HttpError
 from adrest.views import ResourceView
@@ -81,3 +84,10 @@ class BSONResource(ResourceView):
     def post(self, request, **resources):
         self.COUNTER += request.data.get('counter', 0)
         return dict(counter=self.COUNTER)
+
+
+class CSVResource(ResourceView):
+    allowed_methods = 'GET'
+
+    def get(self, request, **resources):
+        return HttpResponse('value'.encode("utf-16"), mimetype="text/csv")
