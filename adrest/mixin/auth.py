@@ -34,15 +34,18 @@ class AuthMixin(object):
             An authentication context may be any object, although in many cases it will simply be a :class:`User` instance.
         """
         authenticators = self.authenticators
+        self.identifier = request.META.get('REMOTE_ADDR', 'anonymous')
 
         if request.method == 'OPTIONS' and ALLOW_OPTIONS:
-            authenticators = AnonimousAuthenticator,
+            self.auth = AnonimousAuthenticator(self)
+            return True
 
         error_message = "Authorization required."
         for authenticator in authenticators:
             auth = authenticator(self)
             try:
                 assert auth.authenticate(request), error_message
+                self.auth = auth
                 auth.configure(request)
                 return True
             except AssertionError, e:
