@@ -1,4 +1,4 @@
-from .resources import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, CustomResource, BSONResource
+from .resources import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, CustomResource, BSONResource, CSVResource
 from adrest.api import Api
 from adrest.utils.auth import AnonimousAuthenticator, AccessKeyAuthenticator, UserAuthenticator
 from adrest.utils.emitter import XMLTemplateEmitter, JSONEmitter, BSONEmitter
@@ -19,3 +19,4 @@ API.register(CustomResource)
 API.register(ArticleResource, authenticators=AccessKeyAuthenticator)
 API.register(SomeOtherResource, url_name='test', url_regex='test/mem/$')
 API.register(BSONResource, parsers=(BSONParser,), emitters=(BSONEmitter,))
+API.register(CSVResource)
