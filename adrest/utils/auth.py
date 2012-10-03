@@ -37,8 +37,7 @@ class AnonimousAuthenticator(AbstractAuthenticator):
         return True
 
     def configure(self, request):
-        self.resource.auth = self
-        self.resource.identifier = request.META.get('REMOTE_ADDR', 'anonymous')
+        pass
 
 
 class UserLoggedInAuthenticator(AbstractAuthenticator):
@@ -54,7 +53,6 @@ class UserLoggedInAuthenticator(AbstractAuthenticator):
 
     def configure(self, request):
         self.user = request.user
-        self.resource.auth = self
         self.resource.identifier = self.user.username
 
 

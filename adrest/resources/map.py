@@ -1,6 +1,7 @@
 from django.forms.models import ModelChoiceField
 from django.utils.encoding import smart_unicode
 
+from ..settings import MAP_TEMPLATE
 from ..utils.auth import AnonimousAuthenticator
 from ..utils.emitter import HTMLTemplateEmitter, JSONEmitter
 from ..views import ResourceView
@@ -12,7 +13,7 @@ class MapResource(ResourceView):
     log = False
     emitters = HTMLTemplateEmitter, JSONEmitter
     authenticators = AnonimousAuthenticator
-    template = 'api/map.html'
+    template = MAP_TEMPLATE
 
     url_regex = r'^map$'
 

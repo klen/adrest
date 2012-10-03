@@ -1,3 +1,7 @@
+2012-10-03  klen  1.9.9
+
+	* Fix access logging
+
 2012-09-28  klen  1.9.4
 
 	* Upgrade default serialization
