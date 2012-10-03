@@ -37,8 +37,8 @@ class MixinTest(TestCase):
         response = test.dispatch(request)
         self.assertContains(response, 'test')
 
-        content = emitter.JSONSerializer().serialize([1, Decimal('3.4')])
-        self.assertEqual(content, '[1, 3.4]')
+        content = emitter.JSONSerializer().serialize([1, Decimal('3.4'), None])
+        self.assertTrue('3.' in content and 'null' in content)
 
 
 class MetaTest(TestCase):
