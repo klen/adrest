@@ -146,6 +146,13 @@ class AdrestTest(AdrestTestCase):
         self.assertEqual(access.uri, uri)
         self.assertEqual(access.version, str(api))
 
+        # Do not write to access log
+        response = self.get_resource('csv')
+        self.assertEquals(response['Content-Type'], 'text/csv')
+        access = Access.objects.filter(uri=response.request['PATH_INFO'])
+        self.assertEquals(access.count(), 1)
+        self.assertEquals(access.get().response, "Invalid response content encoding")
+
     def test_options(self):
         self.assertTrue('OPTIONS' in ArticleResource.allowed_methods)
         uri = self.reverse('author-test-book-article', book=self.book.pk)
