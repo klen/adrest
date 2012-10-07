@@ -1,3 +1,7 @@
+2012-10-08  klen  1.9.10
+
+	* Fix serialization
+
 2012-10-03  klen  1.9.9
 
 	* Fix access logging
