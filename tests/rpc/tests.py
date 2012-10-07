@@ -1,4 +1,5 @@
 from adrest.tests.utils import AdrestTestCase
+from milkman.dairy import milkman
 
 from .api import API
 from .models import Root, Child
@@ -24,26 +25,26 @@ class RPCTestCase(AdrestTestCase):
         self.assertContains(response, 'true')
 
     def test_rpc_resource(self):
-        uri = self.reverse('rpc')
+        uri = self.reverse('jsonrpc')
         self.assertEqual(uri, '/rpc/rpc')
 
-        response = self.get_resource('rpc')
-        self.assertContains(response, 'Payload', status_code=402)
+        response = self.get_resource('jsonrpc')
+        self.assertContains(response, 'Payload', status_code=409)
 
         response = self.rpc(dict(
             method='blablabla'
         ))
-        self.assertContains(response, 'Wrong method', status_code=402)
+        self.assertContains(response, 'Wrong method', status_code=409)
 
         response = self.rpc(dict(
             method='bla.bla'
         ))
-        self.assertContains(response, 'Invalid', status_code=402)
+        self.assertContains(response, 'Unknown method', status_code=501)
 
         response = self.rpc(dict(
             method='test.bla'
         ))
-        self.assertContains(response, 'Invalid', status_code=402)
+        self.assertContains(response, 'method', status_code=501)
 
     def test_rpc_get(self):
         response = self.rpc(dict(
@@ -139,3 +140,12 @@ class RPCTestCase(AdrestTestCase):
         ), headers=dict(HTTP_ACCEPT='text/javascript'))
         self.assertEqual(response.get('Content-type'), 'text/javascript')
         self.assertContains(response, 'callback("Custom error")', status_code=400)
+
+    def test_custom(self):
+        milkman.deliver('rpc.custom')
+        response = self.rpc(dict(
+            method='custom.get',
+        ))
+
+        import ipdb; ipdb.set_trace() ### XXX BREAKPOINT
+

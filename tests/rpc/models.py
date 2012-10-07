@@ -13,3 +13,7 @@ class Child(models.Model):
     name = models.CharField(max_length=100)
     odd = models.IntegerField(default=0)
     root = models.ForeignKey(Root)
+
+
+class Custom(models.Model):
+    name = models.CharField(max_length=100)

@@ -2,10 +2,12 @@ import logging
 
 from django.conf.urls.defaults import patterns
 from django.dispatch import Signal
+from django.http import HttpRequest
 
 from .resources.map import MapResource
-from .resources.rpc import RPCResource
+from .resources.rpc import JSONRPCResource
 from .views import ResourceView
+from .utils import exceptions, status
 
 
 LOG = logging.getLogger('adrest')
@@ -38,7 +40,7 @@ class Api(object):
             self.resources[MapResource.meta.url_name] = MapResource
 
         if api_rpc:
-            self.resources[RPCResource.meta.url_name] = RPCResource
+            self.resources[JSONRPCResource.meta.url_name] = JSONRPCResource
 
         if not isinstance(self.str_version, basestring):
             try:
@@ -63,10 +65,13 @@ class Api(object):
         # Fabric of resources
         params = dict(self.params, **params)
         if params:
-            params['name'] = ''.join(bit for bit in resource.__name__.split('Resource') if bit).lower()
-            params['__module__'] = '%s.%s' % (self.prefix, self.str_version.replace('.', '_'))
+            params['name'] = ''.join(bit for bit in resource.__name__.split(
+                'Resource') if bit).lower()
+            params['__module__'] = '%s.%s' % (
+                self.prefix, self.str_version.replace('.', '_'))
             params['__doc__'] = resource.__doc__
-            resource = type('%s%s' % (resource.__name__, len(self.resources)), (resource,), params)
+            resource = type('%s%s' % (
+                resource.__name__, len(self.resources)), (resource,), params)
 
         if self.resources.get(resource.meta.url_name):
             LOG.warning("A new resource '%r' is replacing the existing record for '%s'" % (resource, self.resources.get(resource.url_name)))
@@ -85,8 +90,20 @@ class Api(object):
             resource = self.resources[url_name]
             urls.append(resource.as_url(
                 api=self,
-                name_prefix='-'.join((self.prefix, self.str_version)).strip('-'),
+                name_prefix='-'.join(
+                    (self.prefix, self.str_version)).strip('-'),
                 url_prefix=self.str_version
             ))
 
         return patterns(self.prefix, *urls)
+
+    def call(self, name, request=None, _emit_=True, **params):
+        """ Call resource by ``Api`` name.
+        """
+        if not name in self.resources:
+            raise exceptions.HttpError('Unknown method \'%s\'' % name,
+                                       status=status.HTTP_501_NOT_IMPLEMENTED)
+        request = request or HttpRequest()
+        resource = self.resources[name]
+        view = resource.as_view(api=self)
+        return view(request, _emit_=_emit_, **params)

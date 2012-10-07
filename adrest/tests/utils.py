@@ -72,7 +72,7 @@ class AdrestTestCase(TestCase):
             headers = dict(HTTP_ACCEPT='text/javascript')
             key = None
 
-        return self.get_resource('rpc', data=data, headers=headers, key=key, **kwargs)
+        return self.get_resource('jsonrpc', data=data, headers=headers, key=key, **kwargs)
 
     put_resource = curry(get_resource, method='put')
     post_resource = curry(get_resource, method='post')
