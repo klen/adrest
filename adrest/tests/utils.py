@@ -38,10 +38,15 @@ class AdrestTestCase(TestCase):
     api = None
 
     def setUp(self):
-        assert self.api, "API must be defined"
+        assert self.api, "AdrestTestCase must have the api attribute."
         self.client = AdrestClient()
 
     def reverse(self, resource, **kwargs):
+        """ Reverse resource by ResourceClass or name.
+
+            :param resource: Resource Class or String name.
+            :param **kwargs: Uri params
+        """
         if isinstance(resource, basestring):
             url_name = resource
             assert self.api.resources.get(url_name), "Invalid resource name: %s" % url_name
@@ -53,26 +58,50 @@ class AdrestTestCase(TestCase):
         name_ver = '' if not str(self.api) else '%s-' % str(self.api)
         return reverse('%s-%s%s' % (self.api.prefix, name_ver, url_name), kwargs=kwargs)
 
-    def get_resource(self, resource, method='get', data=None, key=None, headers=None, **kwargs):
-        uri = self.reverse(resource, **kwargs)
-        method = getattr(self.client, method)
+    def get_params(self, resource, headers=None, data=None, key=None, **kwargs):
+        headers = headers or dict()
+        data = data or dict()
         if isinstance(key, Model):
             key = key.key
-        headers = dict() if headers is None else headers
         headers['HTTP_AUTHORIZATION'] = key or headers.get('HTTP_AUTHORIZATION')
-        return method(uri, data=data or dict(), **headers)
+        resource = self.reverse(resource, **kwargs)
+        return resource, headers, data
 
-    def rpc(self, data, callback=None, headers=None, key=None, **kwargs):
-        data = dict(payload=simplejson.dumps(data))
+    def get_resource(self, resource, method='get', data=None, headers=None, **kwargs):
+        """ Simply run resource method.
+
+            :param resource: Resource Class or String name.
+            :param data: Request data
+            :param headers: Request headers
+            :param key: HTTP_AUTHORIZATION token
+        """
+        method = getattr(self.client, method)
+        resource, headers, data = self.get_params(resource, headers, data, **kwargs)
+        return method(resource, data=data, **headers)
+
+    def rpc(self, resource, rpc=None, headers=None, callback=None, **kwargs):
+        """ Emulate RPC call.
+
+            :param resource: Resource Class or String name.
+            :param rpc: RPC params.
+            :param headers: Send headers
+            :param callback: JSONP callback
+        """
+        resource, headers, data = self.get_params(resource, headers, data=rpc, **kwargs)
+
         if callback:
-            data['callback'] = callback
+            headers['HTTP_ACCEPT'] = 'text/javascript'
+            method = self.client.get
+            data = dict(
+                callback=callback,
+                payload=simplejson.dumps(data))
 
-        # JSONP not support headers
-        if headers and headers.get('HTTP_ACCEPT') == 'text/javascript':
-            headers = dict(HTTP_ACCEPT='text/javascript')
-            key = None
+        else:
+            headers['HTTP_ACCEPT'] = 'application/json'
+            method = self.client.post
+            data = simplejson.dumps(data)
 
-        return self.get_resource('jsonrpc', data=data, headers=headers, key=key, **kwargs)
+        return method(resource, data=data, content_type='application/json', **headers)
 
     put_resource = curry(get_resource, method='put')
     post_resource = curry(get_resource, method='post')

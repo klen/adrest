@@ -5,9 +5,9 @@ from django.dispatch import Signal
 from django.http import HttpRequest
 
 from .resources.map import MapResource
-from .resources.rpc import JSONRPCResource
+from .resources.rpc import AutoJSONRPC
 from .views import ResourceView
-from .utils import exceptions, status
+from .utils import exceptions, status, tools, emitter
 
 
 LOG = logging.getLogger('adrest')
@@ -39,8 +39,12 @@ class Api(object):
         if api_map:
             self.resources[MapResource.meta.url_name] = MapResource
 
+        # Enable Auto JSON RPC resource
         if api_rpc:
-            self.resources[JSONRPCResource.meta.url_name] = JSONRPCResource
+            self.resources[AutoJSONRPC.meta.url_name] = AutoJSONRPC
+            self.params['emitters'] = tools.as_tuple(params.get('emitters', [])) + (
+                emitter.JSONPEmitter, emitter.JSONEmitter
+            )
 
         if not isinstance(self.str_version, basestring):
             try:
@@ -67,9 +71,12 @@ class Api(object):
         if params:
             params['name'] = ''.join(bit for bit in resource.__name__.split(
                 'Resource') if bit).lower()
+
             params['__module__'] = '%s.%s' % (
                 self.prefix, self.str_version.replace('.', '_'))
+
             params['__doc__'] = resource.__doc__
+
             resource = type('%s%s' % (
                 resource.__name__, len(self.resources)), (resource,), params)
 
@@ -97,7 +104,7 @@ class Api(object):
 
         return patterns(self.prefix, *urls)
 
-    def call(self, name, request=None, _emit_=True, **params):
+    def call(self, name, request=None, **params):
         """ Call resource by ``Api`` name.
         """
         if not name in self.resources:
@@ -106,4 +113,4 @@ class Api(object):
         request = request or HttpRequest()
         resource = self.resources[name]
         view = resource.as_view(api=self)
-        return view(request, _emit_=_emit_, **params)
+        return view(request, **params)

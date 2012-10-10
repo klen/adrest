@@ -2,9 +2,11 @@ from django.http import QueryDict
 from django.utils import simplejson
 
 from ..utils.emitter import JSONPEmitter, JSONEmitter
+from ..utils.parser import JSONParser, FormParser
 from ..utils.exceptions import HttpError
 from ..views import ResourceView
 from ..utils.status import HTTP_409_CONFLICT
+from ..utils.tools import as_tuple
 
 
 class JSONRPCResource(ResourceView):
@@ -20,10 +22,6 @@ class JSONRPCResource(ResourceView):
     url_regex = r'^rpc$'
     emitters = JSONEmitter, JSONPEmitter
     separator = '.'
-
-    def __init__(self, *args, **kwargs):
-        self.target_resource = None
-        super(JSONRPCResource, self).__init__(*args, **kwargs)
 
     def get(self, request, **resources):
         try:
@@ -54,40 +52,93 @@ class JSONRPCResource(ResourceView):
         except (ValueError, KeyError, TypeError):
             raise HttpError('Invalid RPC Payload.', status=HTTP_409_CONFLICT)
 
-        self.target_resource = self.api.resources.get(resource_name)
         params = payload.get('params', dict())
-        return self.api.call(resource_name, request, _emit_=False, **params)
-        # resource = resource.as_view(api=self.api)
-        # return resource(request, _emit_=False, **payload.get("params", dict()))
-
-    def get_name(self):
-        if self.target_resource:
-            return self.target_resource.meta.name
-        return self.meta.name
+        response = self.api.call(resource_name, request, **params)
+        response.finaly = True
+        return response
 
 
-class AbstractRPC(object):
+class RPCResource(ResourceView):
 
-    @staticmethod
-    def dispatch(request):
+    allowed_methods = 'get', 'post'
+    url_regex = r'^rpc$'
+    emitters = JSONEmitter, JSONPEmitter
+    parsers = JSONParser, FormParser
+    scheme = None
+
+    def __init__(self, scheme=None, **kwargs):
+        self.methods = dict()
+        if scheme:
+            self.scheme = scheme
+        self.configure_rpc(self.scheme)
+        super(RPCResource, self).__init__(**kwargs)
+
+    def configure_rpc(self, scheme):
+        if scheme is None:
+            raise ValueError("Invalid RPC scheme.")
+
+        for m in [getattr(scheme, m) for m in dir(scheme) if hasattr(getattr(scheme, m), '__call__')]:
+            self.methods[m.__name__] = m
+
+    def handle_request(self, request, **resources):
+        payload = request.data
 
         try:
-            payload = request.GET.get('payload') if request.method == 'GET' else request.raw_post_data
 
             if request.method == 'GET':
-                payload = request.GET['payload']
+                payload = request.GET.get('payload')
+                try:
+                    payload = simplejson.loads(payload)
+                except TypeError:
+                    raise AssertionError("Invalid RPC Call.")
 
-            elif request.method == 'POST':
-                payload = request.raw_post_data
+            assert 'method' in payload, "Invalid RPC Call."
+            return self.rpc_call(request, **payload)
 
-            method = payload['method']
-            params = payload.get('params', payload.get('data', dict()))
+        except Exception, e:
+            return dict(error=dict(message=str(e)))
 
-            assert all(payload, method), "Wrong payload."
+    def rpc_call(self, request, method=None, params=None, **kwargs):
+        args = []
+        kwargs = dict()
+        if isinstance(params, dict):
+            kwargs.update(params)
+        else:
+            args = as_tuple(params)
 
-        except (AssertionError, KeyError, ValueError), e:
-            raise HttpError('Invalid RPC Call. %s' % e, status=HTTP_409_CONFLICT)
+        assert method in self.methods, "Unknown method: {0}".format(method)
+        return self.methods[method](*args, **kwargs)
 
 
+class AutoJSONRPC(RPCResource):
+    separator = '.'
 
-# pymode:lint_ignore=E1103
+    def configure_rpc(self, scheme):
+        pass
+
+    def rpc_call(self, request, method=None, **payload):
+        """ Call REST API with RPC force.
+        """
+        assert method and self.separator in method, "Wrong method name: {0}".format(method)
+
+        resource_name, method = method.split(self.separator, 1)
+        assert resource_name in self.api.resources, "Unknown method"
+
+        data = QueryDict('', mutable=True)
+        data.update(payload.get('data', dict()))
+        data['callback'] = payload.get('callback') or request.GET.get('callback') or request.GET.get('jsonp') or 'callback'
+        for h, v in payload.get('headers', dict()).iteritems():
+            request.META["HTTP_%s" % h.upper().replace('-', '_')] = v
+
+        request.POST = request.PUT = request.GET = data
+        delattr(request, '_request')
+        request.method = method.upper()
+        request.META['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
+        params = payload.pop('params', dict())
+        response = self.api.call(resource_name, request, **params)
+        response.finaly = True
+        assert response.status_code == 200, response.content
+        return response
+
+
+# pymode:lint_ignore=E1103,W0703

@@ -2,6 +2,8 @@ from adrest.api import Api
 from adrest.utils.auth import AnonimousAuthenticator
 from adrest.utils.emitter import XMLEmitter, JSONTemplateEmitter
 from adrest.views import ResourceView
+from adrest.resources.rpc import RPCResource
+from . import dummy
 
 
 class TestAuth(AnonimousAuthenticator):
@@ -38,7 +40,8 @@ class CustomResource(ResourceView):
 
 
 API = Api(api_rpc=True, emitters=XMLEmitter)
-API.register(TestResource)
-API.register(RootResource, authenticators=TestAuth)
 API.register(ChildResource)
 API.register(CustomResource, emitters=JSONTemplateEmitter)
+API.register(RootResource, authenticators=TestAuth)
+API.register(RPCResource, url_regex=r'^rpc2$', url_name='rpc2', scheme=dummy)
+API.register(TestResource)
