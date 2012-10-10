@@ -103,7 +103,7 @@ class XMLEmitter(BaseEmitter):
             **getattr(self.resource, 'related', dict())
         )
         return self.xmldoc_tpl % (
-            'true' if self.response.status_code == HTTP_200_OK else 'false',
+            'true' if not self.response.error else 'false',
             self.resource.version,
             int(mktime(datetime.now().timetuple())),
             worker.serialize(content)
@@ -114,7 +114,7 @@ class TemplateEmitter(BaseEmitter):
     " Serialize by django templates. "
 
     def serialize(self, content):
-        if self.response.status_code != HTTP_200_OK:
+        if self.response.error:
             template_name = op.join('api', 'error.%s' % self.format)
         else:
             template_name = self.resource.template or self.get_template_path(content)

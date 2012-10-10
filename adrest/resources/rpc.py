@@ -4,6 +4,7 @@ from django.utils import simplejson
 from ..utils.emitter import JSONPEmitter, JSONEmitter
 from ..utils.parser import JSONParser, FormParser
 from ..utils.tools import as_tuple
+from ..utils.response import SerializedHttpResponse
 from ..views import ResourceView
 
 
@@ -53,7 +54,10 @@ class RPCResource(ResourceView):
             return self.rpc_call(request, **payload)
 
         except Exception, e:
-            return dict(error=dict(message=str(e)))
+            return SerializedHttpResponse(
+                dict(error=dict(message=str(e))),
+                error=True
+            )
 
     def rpc_call(self, request, method=None, params=None, **kwargs):
         args = []
