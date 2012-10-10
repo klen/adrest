@@ -14,9 +14,16 @@ class EmitterMeta(type):
         params['meta'] = params.get('meta', MetaOptions())
         cls = super(EmitterMeta, mcs).__new__(mcs, name, bases, params)
         cls.emitters = as_tuple(cls.emitters)
+        cache = set()
         cls.meta.default_emitter = cls.emitters[0] if cls.emitters else None
         for e in cls.emitters:
             assert issubclass(e, BaseEmitter), "Emitter must be subclass of BaseEmitter"
+
+            # Skip dublicates
+            if e in cache:
+                continue
+            cache.add(e)
+
             cls.meta.emitters_dict[e.media_type] = e
             cls.meta.emitters_types.append(e.media_type)
         return cls
