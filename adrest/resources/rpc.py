@@ -3,13 +3,11 @@ from django.utils import simplejson
 
 from ..utils.emitter import JSONPEmitter, JSONEmitter
 from ..utils.parser import JSONParser, FormParser
-from ..utils.exceptions import HttpError
-from ..views import ResourceView
-from ..utils.status import HTTP_409_CONFLICT
 from ..utils.tools import as_tuple
+from ..views import ResourceView
 
 
-class JSONRPCResource(ResourceView):
+class RPCResource(ResourceView):
     """
         JSON RPC support.
         -----------------
@@ -19,47 +17,6 @@ class JSONRPCResource(ResourceView):
         and for multiple calls to be sent to the server which may be answered out of order.
 
     """
-    url_regex = r'^rpc$'
-    emitters = JSONEmitter, JSONPEmitter
-    separator = '.'
-
-    def get(self, request, **resources):
-        try:
-            payload = request.GET.get('payload')
-            payload = simplejson.loads(payload)
-            assert payload, "Payload not found."
-
-            method = payload['method']
-            assert method and self.separator in method, "Wrong method name: %s." % method
-
-            resource_name, method = method.split(self.separator, 1)
-
-            data = QueryDict('', mutable=True)
-            data.update(payload.get('data', dict()))
-            data['callback'] = payload.get('callback') or request.GET.get('callback') or request.GET.get('jsonp') or 'callback'
-
-            for h, v in payload.get('headers', dict()).iteritems():
-                request.META["HTTP_%s" % h.upper().replace('-', '_')] = v
-
-            request.POST = request.PUT = request.GET = data
-            delattr(request, '_request')
-
-            request.method = method.upper()
-
-        except AssertionError, e:
-            raise HttpError('Invalid RPC Call. %s' % e, status=HTTP_409_CONFLICT)
-
-        except (ValueError, KeyError, TypeError):
-            raise HttpError('Invalid RPC Payload.', status=HTTP_409_CONFLICT)
-
-        params = payload.get('params', dict())
-        response = self.api.call(resource_name, request, **params)
-        response.finaly = True
-        return response
-
-
-class RPCResource(ResourceView):
-
     allowed_methods = 'get', 'post'
     url_regex = r'^rpc$'
     emitters = JSONEmitter, JSONPEmitter
@@ -111,6 +68,13 @@ class RPCResource(ResourceView):
 
 
 class AutoJSONRPC(RPCResource):
+    """
+        Automatic JSONRPC Api from REST
+        -------------------------------
+
+        Automatic Implementation of remote procedure call based on your REST.
+
+    """
     separator = '.'
 
     def configure_rpc(self, scheme):
