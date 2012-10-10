@@ -18,6 +18,7 @@ def as_tuple(obj):
 
 def gen_url_name(resource):
     " URL name for resource class generator. "
+
     if resource.parent:
         yield resource.parent.meta.url_name
 
@@ -32,6 +33,7 @@ def gen_url_name(resource):
 
 def gen_url_regex(resource):
     " URL regex for resource class generator. "
+
     for r in resource.meta.parents:
         if r.url_regex:
             yield r.url_regex.rstrip('/$').lstrip('^')

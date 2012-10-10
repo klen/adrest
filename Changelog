@@ -1,3 +1,7 @@
+2012-10-10  klen  2.0.0
+
+	* Refactored RPC support.
+
 2012-10-08  klen  1.9.10
 
 	* Fix serialization

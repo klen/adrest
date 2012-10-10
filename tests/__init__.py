@@ -20,7 +20,11 @@ if not django_settings.configured:
 def run_tests(*test_args):
     from django.test.simple import DjangoTestSuiteRunner
     if not test_args:
-        test_args = ['main', 'simple', 'rpc']
+        test_args = [
+            'main',
+            'simple',
+            'rpc',
+        ]
     parent = dirname(abspath(__file__))
     sys.path.insert(0, parent)
     tests_runner = DjangoTestSuiteRunner(
