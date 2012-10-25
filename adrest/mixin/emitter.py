@@ -45,7 +45,7 @@ class EmitterMixin(object):
                 emit_fields = ['pk', 'user']
                 emit_related = {
                     'user': {
-                        _fields = ['username']
+                        _fields: ['username']
                     }
                 }
 
