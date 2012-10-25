@@ -83,9 +83,8 @@ class AbstractSerializer(object):
             fields=dict(),
         )
 
-        m2m_fields = value._meta.many_to_many
+        m2m_fields = [f.name for f in value._meta.many_to_many]
         default_fields = set([field.name for field in value._meta.fields
-                              # + m2m_fields
                               if field.serialize])
         serialized_fields = (default_fields | options['_include']) - options['_exclude']
         for fname in options['_fields'] or serialized_fields:
