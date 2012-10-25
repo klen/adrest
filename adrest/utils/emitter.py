@@ -74,10 +74,10 @@ class JSONEmitter(BaseEmitter):
 
     def serialize(self, content):
         worker = JSONSerializer(
-            _fields=getattr(self.resource, 'fields', None),
-            _include=getattr(self.resource, 'include', None),
-            _exclude=getattr(self.resource, 'exclude', None),
-            **getattr(self.resource, 'related', dict())
+            _fields=getattr(self.resource, 'emit_fields', None),
+            _include=getattr(self.resource, 'emit_include', None),
+            _exclude=getattr(self.resource, 'emit_exclude', None),
+            **getattr(self.resource, 'emit_related', dict())
         )
         return worker.serialize(content)
 

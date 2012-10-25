@@ -30,6 +30,26 @@ class EmitterMeta(type):
 
 
 class EmitterMixin(object):
+    """ Serialize response.
+
+        :param emitters: Emitter's class (list of classes), choosen by http header
+        :param template: Force template name for template based emitters
+        :param emit_fields: Manualy defined set of model fields for serializers
+        :param emit_include: Additionaly included fields for model serialization
+        :param emit_exclude: Exclude fields from model serialization
+        :param emit_related: Dict with field serialization options
+
+        Example: ::
+
+            class SomeResource():
+                emit_fields = ['pk', 'user']
+                emit_related = {
+                    'user': {
+                        _fields = ['username']
+                    }
+                }
+
+    """
 
     __metaclass__ = EmitterMeta
 
