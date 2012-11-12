@@ -3,7 +3,6 @@ from os import path as op
 from time import mktime
 
 from django.db.models.base import ModelBase, Model
-from django.http import HttpResponse
 from django.template import RequestContext, loader
 
 from ..utils import UpdatedList
@@ -15,6 +14,7 @@ from .status import HTTP_200_OK
 
 class EmitterMeta(type):
     " Preload format attribute. "
+
     def __new__(mcs, name, bases, params):
         cls = super(EmitterMeta, mcs).__new__(mcs, name, bases, params)
         if not cls.format and cls.media_type:
@@ -34,12 +34,13 @@ class BaseEmitter(object):
     def __init__(self, resource, request=None, response=None):
         self.resource = resource
         self.request = request
-        self.response = response
-        if not isinstance(response, HttpResponse):
-            self.response = SerializedHttpResponse(response, mimetype=self.media_type, status=HTTP_200_OK)
+        self.response = SerializedHttpResponse(
+            response,
+            mimetype=self.media_type,
+            status=HTTP_200_OK)
 
     def emit(self):
-        if not isinstance(self.response, SerializedHttpResponse):
+        if self.response.finaly:
             return self.response
 
         self.response.content = self.serialize(self.response.response)
@@ -50,6 +51,13 @@ class BaseEmitter(object):
     def serialize(content):
         " Get content and return string. "
         return content
+
+
+class NullEmitter(BaseEmitter):
+    media_type = 'unknown/unknown'
+
+    def emit(self):
+        return self.response
 
 
 class TextEmitter(BaseEmitter):
@@ -66,10 +74,10 @@ class JSONEmitter(BaseEmitter):
 
     def serialize(self, content):
         worker = JSONSerializer(
-            _fields=getattr(self.resource, 'fields', None),
-            _include=getattr(self.resource, 'include', None),
-            _exclude=getattr(self.resource, 'exclude', None),
-            **getattr(self.resource, 'related', dict())
+            _fields=getattr(self.resource, 'emit_fields', None),
+            _include=getattr(self.resource, 'emit_include', None),
+            _exclude=getattr(self.resource, 'emit_exclude', None),
+            **getattr(self.resource, 'emit_related', dict())
         )
         return worker.serialize(content)
 
@@ -79,13 +87,11 @@ class JSONPEmitter(JSONEmitter):
 
     def serialize(self, content):
         content = super(JSONPEmitter, self).serialize(content)
-
         callback = self.request.GET.get('callback', 'callback')
         return u'%s(%s)' % (callback, content)
 
 
 class XMLEmitter(BaseEmitter):
-
     media_type = 'application/xml'
     xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>'
 
@@ -97,7 +103,7 @@ class XMLEmitter(BaseEmitter):
             **getattr(self.resource, 'related', dict())
         )
         return self.xmldoc_tpl % (
-            'true' if self.response.status_code == HTTP_200_OK else 'false',
+            'true' if not self.response.error else 'false',
             self.resource.version,
             int(mktime(datetime.now().timetuple())),
             worker.serialize(content)
@@ -108,7 +114,7 @@ class TemplateEmitter(BaseEmitter):
     " Serialize by django templates. "
 
     def serialize(self, content):
-        if self.response.status_code != HTTP_200_OK:
+        if self.response.error:
             template_name = op.join('api', 'error.%s' % self.format)
         else:
             template_name = self.resource.template or self.get_template_path(content)
@@ -194,3 +200,5 @@ try:
 
 except ImportError:
     pass
+
+# pymode:lint_ignore=F0401,W0704

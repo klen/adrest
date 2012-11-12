@@ -1,3 +1,15 @@
+2012-10-25  klen  2.0.4
+
+	* Change serialize parameters
+
+2012-10-10  klen  2.0.2
+
+	* Refactored RPC support.
+
+2012-10-08  klen  1.9.10
+
+	* Fix serialization
+
 2012-10-03  klen  1.9.9
 
 	* Fix access logging

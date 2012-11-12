@@ -113,7 +113,7 @@ class ResourceView(handler.HandlerMixin,
     allow_public_access = False
 
     @csrf_exempt
-    def dispatch(self, request, _emit_=True, **resources):
+    def dispatch(self, request, **resources):
 
         # Fix PUT and PATH methods in Django request
         request = fix_request(request)
@@ -125,13 +125,10 @@ class ResourceView(handler.HandlerMixin,
         if self.api:
             self.api.request_started.send(self, request=request)
 
-        # Current HTTP method
-        method = request.method.upper()
-
         try:
 
             # Check request method
-            self.check_method_allowed(method)
+            self.check_method_allowed(request.method)
 
             # Authentificate
             self.authenticate(request)
@@ -154,28 +151,22 @@ class ResourceView(handler.HandlerMixin,
                 # Parse content
                 request.data = self.parse(request)
 
-            # Get the appropriate create/read/update/delete function
-            view = getattr(self, self.callmap.get(method, None))
-
-            # Get function data
-            response = view(request, **resources)
+            response = self.handle_request(request, **resources)
 
             # Serialize response
-            response = self.emit(response, request=request) if _emit_ else SerializedHttpResponse(response)
+            response = self.emit(response, request=request)
             response["Allow"] = ', '.join(self.allowed_methods)
             response["Vary"] = 'Authenticate, Accept'
 
         except HttpError, e:
             response = SerializedHttpResponse(e.content, status=e.status)
-            if _emit_:
-                response = self.emit(
-                    response, request=request, emitter=e.emitter)
+            response = self.emit(
+                response, request=request, emitter=e.emitter)
 
         except (AssertionError, ValidationError), e:
             response = SerializedHttpResponse(
                 unicode(e), status=status.HTTP_400_BAD_REQUEST)
-            if _emit_:
-                response = self.emit(response, request=request)
+            response = self.emit(response, request=request)
 
         except Exception, e:
             response = self.handle_exception(e, request=request)
@@ -192,6 +183,14 @@ class ResourceView(handler.HandlerMixin,
             self.api.request_finished.send(self, request=request, response=response, **resources)
 
         return response
+
+    def handle_request(self, request, **resources):
+
+        # Get the appropriate create/read/update/delete function
+        view = getattr(self, self.callmap[request.method])
+
+        # Get function data
+        return view(request, **resources)
 
     @classmethod
     def check_method_allowed(cls, method):

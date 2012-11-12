@@ -14,15 +14,42 @@ class EmitterMeta(type):
         params['meta'] = params.get('meta', MetaOptions())
         cls = super(EmitterMeta, mcs).__new__(mcs, name, bases, params)
         cls.emitters = as_tuple(cls.emitters)
+        cache = set()
         cls.meta.default_emitter = cls.emitters[0] if cls.emitters else None
         for e in cls.emitters:
             assert issubclass(e, BaseEmitter), "Emitter must be subclass of BaseEmitter"
+
+            # Skip dublicates
+            if e in cache:
+                continue
+            cache.add(e)
+
             cls.meta.emitters_dict[e.media_type] = e
             cls.meta.emitters_types.append(e.media_type)
         return cls
 
 
 class EmitterMixin(object):
+    """ Serialize response.
+
+        :param emitters: Emitter's class (list of classes), choosen by http header
+        :param template: Force template name for template based emitters
+        :param emit_fields: Manualy defined set of model fields for serializers
+        :param emit_include: Additionaly included fields for model serialization
+        :param emit_exclude: Exclude fields from model serialization
+        :param emit_related: Dict with field serialization options
+
+        Example: ::
+
+            class SomeResource():
+                emit_fields = ['pk', 'user']
+                emit_related = {
+                    'user': {
+                        _fields: ['username']
+                    }
+                }
+
+    """
 
     __metaclass__ = EmitterMeta
 

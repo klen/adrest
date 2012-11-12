@@ -401,3 +401,5 @@ class AdrestMapTest(TestCase):
 
         response = self.client.get(uri, HTTP_ACCEPT="application/json")
         self.assertContains(response, '"price", {"required": false')
+
+# pymode:lint_ignore=F0401
