@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from ..forms import PartitialForm
 from ..settings import LIMIT_PER_PAGE
 from ..utils import status, MetaOptions, UpdatedList
-from ..utils.exceptions import HttpError
+from ..utils.exceptions import HttpError, FormError
 from ..utils.paginator import Paginator
 from ..utils.tools import as_tuple
 
@@ -95,8 +95,7 @@ class HandlerMixin(object):
         if form.is_valid():
             return form.save()
 
-        raise HttpError(
-            form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
+        raise FormError(form)
 
     def put(self, request, **resources):
         " Default PUT method. Uses self form. Allow bulk update. "
@@ -111,8 +110,7 @@ class HandlerMixin(object):
                 data=request.data, instance=o, **resources)
 
             if not form.is_valid():
-                raise HttpError(
-                    form.errors.as_text(), status=status.HTTP_400_BAD_REQUEST)
+                raise FormError(form)
 
             updated.append(form.save())
 
