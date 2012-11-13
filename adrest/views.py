@@ -15,7 +15,7 @@ from .mixin import auth, emitter, handler, parser, throttle
 from .settings import ALLOW_OPTIONS, DEBUG, MAIL_ERRORS
 from .signals import api_request_started, api_request_finished
 from .utils import status, MetaOptions
-from .utils.exceptions import HttpError
+from .utils.exceptions import HttpError, FormError
 from .utils.response import SerializedHttpResponse
 from .utils.tools import as_tuple, gen_url_name, gen_url_regex, fix_request
 
@@ -155,21 +155,12 @@ class ResourceView(handler.HandlerMixin,
 
             # Serialize response
             response = self.emit(response, request=request)
-            response["Allow"] = ', '.join(self.allowed_methods)
-            response["Vary"] = 'Authenticate, Accept'
-
-        except HttpError, e:
-            response = SerializedHttpResponse(e.content, status=e.status)
-            response = self.emit(
-                response, request=request, emitter=e.emitter)
-
-        except (AssertionError, ValidationError), e:
-            response = SerializedHttpResponse(
-                unicode(e), status=status.HTTP_400_BAD_REQUEST)
-            response = self.emit(response, request=request)
 
         except Exception, e:
             response = self.handle_exception(e, request=request)
+
+        response["Allow"] = ', '.join(self.allowed_methods)
+        response["Vary"] = 'Authenticate, Accept'
 
         # Send errors on mail
         errors_mail(response, request)
@@ -266,10 +257,26 @@ class ResourceView(handler.HandlerMixin,
 
         return True
 
-    @staticmethod
-    def handle_exception(e, request=None):
+    def handle_exception(self, e, request=None):
         """ Handle code exception.
         """
+        if isinstance(e, HttpError):
+            response = SerializedHttpResponse(e.content, status=e.status)
+            return self.emit(
+                response, request=request, emitter=e.emitter)
+
+        if isinstance(e, (AssertionError, ValidationError)):
+
+            content = unicode(e)
+
+            if isinstance(e, FormError):
+                content = e.form.errors
+
+            response = SerializedHttpResponse(
+                content, status=status.HTTP_400_BAD_REQUEST)
+
+            return self.emit(response, request=request)
+
         if DEBUG:
             raise
 

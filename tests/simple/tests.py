@@ -25,15 +25,27 @@ class SerializerTest(TestCase):
     def test_simply(self):
         from adrest.utils.serializer import BaseSerializer
         from .models import Task
+        user = milkman.deliver('auth.User', username="testusername")
+        data = [milkman.deliver(Task, user=user), milkman.deliver(Task, user=user),
+                28, 'string']
 
-        data = [milkman.deliver(Task), milkman.deliver(Task), 28, 'string']
         serializer = BaseSerializer(_exclude='fake', _include='username', user=dict(
-            _fields='email',
-        ))
+            _fields='email'))
         self.assertEqual(serializer.options['_exclude'], set(['fake']))
 
         out = serializer.to_simple(data)
         self.assertEqual(out[0]['fields']['username'], data[0].user.username)
+
+        # Test m2o serialization
+        serializer = BaseSerializer(_include="task_set", task_set=dict(
+            _fields=[]))
+        out = serializer.to_simple(user)
+
+        self.assertEquals(len(out['fields']['task_set']), 2)
+        for task in out['fields']['task_set']:
+            self.assertEquals(task['fields']['user'], user.pk)
+            self.assertTrue('title' in task['fields'].keys())
+
 
     def test_xml(self):
         from adrest.utils.serializer import XMLSerializer

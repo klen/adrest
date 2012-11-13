@@ -1,5 +1,6 @@
 import abc
 import collections
+from numbers import Number
 from datetime import datetime, date, time
 from decimal import Decimal
 
@@ -37,8 +38,8 @@ class AbstractSerializer(object):
         if isinstance(value, basestring):
             return smart_unicode(value)
 
-        if isinstance(value, Decimal):
-            return float(str(value))
+        if isinstance(value, Number):
+            return float(str(value)) if isinstance(value, Decimal) else value
 
         if isinstance(value, (datetime, date, time)):
             return self.to_simple_datetime(value)
@@ -61,7 +62,10 @@ class AbstractSerializer(object):
         if isinstance(value, Model):
             return self.to_simple_model(value, **options)
 
-        return value
+        if value is None or value is True or value is False:
+            return value
+
+        return str(value)
 
     @staticmethod
     def to_simple_datetime(value):
@@ -84,6 +88,8 @@ class AbstractSerializer(object):
         )
 
         m2m_fields = [f.name for f in value._meta.many_to_many]
+        o2m_fields = [f.get_accessor_name()
+                      for f in value._meta.get_all_related_objects()]
         default_fields = set([field.name for field in value._meta.fields
                               if field.serialize])
         serialized_fields = (default_fields | options['_include']) - options['_exclude']
@@ -92,7 +98,7 @@ class AbstractSerializer(object):
             # Related serialization
             if options.get(fname):
                 target = getattr(value, fname)
-                if fname in m2m_fields:
+                if fname in m2m_fields + o2m_fields:
                     target = target.all()
                 result['fields'][fname] = self.to_simple(target, **self.init_options(**options.get(fname)))
                 continue
