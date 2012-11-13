@@ -88,6 +88,8 @@ class AbstractSerializer(object):
         )
 
         m2m_fields = [f.name for f in value._meta.many_to_many]
+        o2m_fields = [f.get_accessor_name()
+                      for f in value._meta.get_all_related_objects()]
         default_fields = set([field.name for field in value._meta.fields
                               if field.serialize])
         serialized_fields = (default_fields | options['_include']) - options['_exclude']
@@ -96,7 +98,7 @@ class AbstractSerializer(object):
             # Related serialization
             if options.get(fname):
                 target = getattr(value, fname)
-                if fname in m2m_fields:
+                if fname in m2m_fields + o2m_fields:
                     target = target.all()
                 result['fields'][fname] = self.to_simple(target, **self.init_options(**options.get(fname)))
                 continue
