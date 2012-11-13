@@ -1,8 +1,9 @@
 from .status import HTTP_400_BAD_REQUEST
+from django.core.exceptions import ValidationError
 
 
 class HttpError(Exception):
-    " Represent HTTP Error. "
+    " Represents HTTP Error. "
 
     def __init__(self, content, status=HTTP_400_BAD_REQUEST, emitter=None):
         self.content, self.status, self.emitter = content, status, emitter
@@ -12,3 +13,11 @@ class HttpError(Exception):
         return self.content
 
     __repr__ = __str__
+
+
+class FormError(ValidationError):
+    " Represents Form Error. "
+
+    def __init__(self, form, emitter=None):
+        self.form, self.emitter = form, emitter
+        super(FormError, self).__init__(form.errors.as_text())
