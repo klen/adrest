@@ -201,6 +201,9 @@ class ResourceTest(AdrestTestCase):
         response = self.post_resource('author', data=dict(name="new author", user=User.objects.create(username="new user").pk))
         self.assertContains(response, 'new author')
 
+        response = self.post_resource('author', data=dict(name="author 22"))
+        self.assertContains(response, 'field is required', status_code=400)
+
     def test_collection_put_delete(self):
         status1 = Book.objects.filter(status=1)
         response = self.put_resource('author-test-book', data=dict(

@@ -257,21 +257,27 @@ class ResourceView(handler.HandlerMixin,
 
         return True
 
-    @staticmethod
-    def handle_exception(e, request=None):
+    def handle_exception(self, e, request=None):
         """ Handle code exception.
         """
         if isinstance(e, HttpError):
             response = SerializedHttpResponse(e.content, status=e.status)
-            response = self.emit(
+            return self.emit(
                 response, request=request, emitter=e.emitter)
 
-        elif isinstance(e, AssertionError, ValidationError):
-            response = SerializedHttpResponse(
-                unicode(e), status=status.HTTP_400_BAD_REQUEST)
-            response = self.emit(response, request=request)
+        if isinstance(e, (AssertionError, ValidationError)):
 
-        elif DEBUG:
+            content = unicode(e)
+
+            if isinstance(e, FormError):
+                content = e.form.errors
+
+            response = SerializedHttpResponse(
+                content, status=status.HTTP_400_BAD_REQUEST)
+
+            return self.emit(response, request=request)
+
+        if DEBUG:
             raise
 
         logger.exception('\nADREST API Error: %s' % request.path)
