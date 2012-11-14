@@ -9,5 +9,12 @@ class TaskResource(ResourceView):
     emitters = emitter.XMLTemplateEmitter
 
 
+class Task2Resource(ResourceView):
+    allowed_methods = 'GET', 'POST'
+    emitters = emitter.JSONEmitter
+    model = Task
+
+
 API = Api(version='1.0b')
 API.register(TaskResource)
+API.register(Task2Resource, url_name='task2', url_regex='task2')
