@@ -1,3 +1,7 @@
+2012-11-19  klen  2.0.6
+
+	* Fix OPTIONS method in RPC calls
+
 2012-11-13  klen  2.0.5
 
 	* Fix serialization errors
