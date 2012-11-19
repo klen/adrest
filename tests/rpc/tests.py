@@ -20,6 +20,9 @@ class RPCTestCase(AdrestTestCase):
 
     def test_base_rpc(self):
 
+        response = self.get_resource('rpc2', method='options')
+        self.assertEqual(response.content, 'OK')
+
         # POST args
         response = self.rpc(
             'rpc2',
