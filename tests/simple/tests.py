@@ -15,6 +15,9 @@ class SimpleTestCase(AdrestTestCase):
         response = self.get_resource('task')
         self.assertContains(response, 'true')
 
+        response = self.post_resource('task2', data=dict(title='new'))
+        self.assertEqual(response.content, '{"user": ["This field is required."]}')
+
 
 class SerializerTest(TestCase):
 
@@ -45,7 +48,6 @@ class SerializerTest(TestCase):
         for task in out['fields']['task_set']:
             self.assertEquals(task['fields']['user'], user.pk)
             self.assertTrue('title' in task['fields'].keys())
-
 
     def test_xml(self):
         from adrest.utils.serializer import XMLSerializer

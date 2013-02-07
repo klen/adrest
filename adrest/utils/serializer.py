@@ -1,5 +1,6 @@
 import abc
 import collections
+from numbers import Number
 from datetime import datetime, date, time
 from decimal import Decimal
 
@@ -37,8 +38,8 @@ class AbstractSerializer(object):
         if isinstance(value, basestring):
             return smart_unicode(value)
 
-        if isinstance(value, Decimal):
-            return float(str(value))
+        if isinstance(value, Number):
+            return float(str(value)) if isinstance(value, Decimal) else value
 
         if isinstance(value, (datetime, date, time)):
             return self.to_simple_datetime(value)
@@ -61,7 +62,10 @@ class AbstractSerializer(object):
         if isinstance(value, Model):
             return self.to_simple_model(value, **options)
 
-        return value
+        if value is None or value is True or value is False:
+            return value
+
+        return str(value)
 
     @staticmethod
     def to_simple_datetime(value):
