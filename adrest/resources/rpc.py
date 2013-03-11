@@ -39,6 +39,7 @@ class RPCResource(ResourceView):
             self.methods[m.__name__] = m
 
     def handle_request(self, request, **resources):
+
         if request.method == 'OPTIONS':
             return super(RPCResource, self).handle_request(request, **resources)
 

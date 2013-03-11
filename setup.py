@@ -20,27 +20,21 @@ def read(fname):
     except IOError:
         return ''
 
+install_requires = read('requirements.txt').split()
 
-META_DATA = dict(
-    name=PROJECT,
-    version=version,
-    license=LICENSE,
-    description=read('DESCRIPTION'),
-    long_description=read('README.rst'),
-    platforms=('Any'),
-
-    author='Kirill Klenov',
+setup(
     author_email='horneds@gmail.com',
-    url=' http://github.com/klen/adrest',
-
+    author='Kirill Klenov',
+    description=read('DESCRIPTION'),
+    install_requires=install_requires,
+    license=LICENSE,
+    long_description=read('README.rst'),
+    name=PROJECT,
+    package_data={'': PACKAGE_DATA},
     packages=find_packages(),
-    package_data = {'': PACKAGE_DATA},
-
-    install_requires = ('mimeparse', 'Django>=1.4.0'),
-    test_suite = 'tests.run_tests',
-    tests_require = ['pymongo', 'milkman']
+    platforms=('Any'),
+    tests_require=['pymongo', 'milkman'],
+    test_suite='tests.run_tests',
+    url=' http://github.com/klen/{0}'.format(PROJECT),
+    version=version,
 )
-
-
-if __name__ == "__main__":
-    setup(**META_DATA)

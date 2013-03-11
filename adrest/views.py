@@ -329,4 +329,4 @@ Request information:
 """ % (stack_trace, repr(getattr(request, 'data', None)), repr(request))
     return mail_admins(subject, message, fail_silently=True)
 
-# pymode:lint_ignore=E1120
+# pymode:lint_ignore=E1120,W0703
