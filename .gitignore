@@ -1,11 +1,12 @@
-._
-build
-dist
-docs/_build
 *.egg
 *.egg-info
 *.pyc
+._
+.env
 .ropeproject
 .tags
 .tox
 .vimrc
+build
+dist
+docs/_build
