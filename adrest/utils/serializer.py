@@ -1,12 +1,12 @@
 import abc
 import collections
+import json
 from numbers import Number
 from datetime import datetime, date, time
 from decimal import Decimal
 
 from django.db.models import Model
 from django.http import HttpResponse
-from django.utils import simplejson
 from django.utils.encoding import smart_unicode
 
 from .paginator import Paginator
@@ -135,7 +135,7 @@ class JSONSerializer(BaseSerializer):
         if isinstance(value, HttpResponse):
             return value.content
 
-        return simplejson.dumps(self.to_simple(value))
+        return json.dumps(self.to_simple(value), ensure_ascii=False)
 
 
 class XMLSerializer(BaseSerializer):
