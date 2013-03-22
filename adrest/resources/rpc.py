@@ -5,7 +5,21 @@ from ..utils.emitter import JSONPEmitter, JSONEmitter
 from ..utils.parser import JSONParser, FormParser
 from ..utils.tools import as_tuple
 from ..utils.response import SerializedHttpResponse
-from ..views import ResourceView
+from ..views import ResourceView, ResourceMetaClass
+
+
+class RPCMeta(ResourceMetaClass):
+    def __new__(mcs, name, bases, params):
+        cls = super(RPCMeta, mcs).__new__(mcs, name, bases, params)
+        cls.configure_rpc()
+        return cls
+
+
+def get_request(func):
+    """ Mark function as needed in request.
+    """
+    func.request = True
+    return func
 
 
 class RPCResource(ResourceView):
@@ -14,8 +28,9 @@ class RPCResource(ResourceView):
         -----------------
 
         Implementation of remote procedure call encoded in JSON.
-        Allows for notifications (info sent to the server that does not require a response)
-        and for multiple calls to be sent to the server which may be answered out of order.
+        Allows for notifications (info sent to the server that does not require
+        a response) and for multiple calls to be sent to the server which may
+        be answered out of order.
 
     """
     allowed_methods = 'get', 'post'
@@ -23,25 +38,30 @@ class RPCResource(ResourceView):
     emitters = JSONEmitter, JSONPEmitter
     parsers = JSONParser, FormParser
     scheme = None
+    methods = dict()
+
+    __metaclass__ = RPCMeta
 
     def __init__(self, scheme=None, **kwargs):
-        self.methods = dict()
         if scheme:
-            self.scheme = scheme
-        self.configure_rpc(self.scheme)
+            self.configure_rpc(scheme)
         super(RPCResource, self).__init__(**kwargs)
 
-    def configure_rpc(self, scheme):
-        if scheme is None:
-            raise ValueError("Invalid RPC scheme.")
+    @classmethod
+    def configure_rpc(cls, scheme=None):
+        scheme = scheme or cls.scheme
+        if not cls.scheme:
+            return False
 
-        for m in [getattr(scheme, m) for m in dir(scheme) if hasattr(getattr(scheme, m), '__call__')]:
-            self.methods[m.__name__] = m
+        for m in [getattr(cls.scheme, m) for m in dir(cls.scheme)
+                  if hasattr(getattr(cls.scheme, m), '__call__')]:
+            cls.methods[m.__name__] = m
 
     def handle_request(self, request, **resources):
 
         if request.method == 'OPTIONS':
-            return super(RPCResource, self).handle_request(request, **resources)
+            return super(RPCResource, self).handle_request(
+                request, **resources)
 
         payload = request.data
 
@@ -69,10 +89,14 @@ class RPCResource(ResourceView):
         if isinstance(params, dict):
             kwargs.update(params)
         else:
-            args = as_tuple(params)
+            args = list(as_tuple(params))
 
         assert method in self.methods, "Unknown method: {0}".format(method)
-        return self.methods[method](*args, **kwargs)
+        method = self.methods[method]
+        if hasattr(method, 'request'):
+            args.insert(0, request)
+
+        return method(*args, **kwargs)
 
 
 class AutoJSONRPC(RPCResource):
@@ -85,20 +109,23 @@ class AutoJSONRPC(RPCResource):
     """
     separator = '.'
 
-    def configure_rpc(self, scheme):
+    @staticmethod
+    def configure_rpc(scheme=None):
         pass
 
     def rpc_call(self, request, method=None, **payload):
         """ Call REST API with RPC force.
         """
-        assert method and self.separator in method, "Wrong method name: {0}".format(method)
+        assert method and self.separator in method, \
+            "Wrong method name: {0}".format(method)
 
         resource_name, method = method.split(self.separator, 1)
         assert resource_name in self.api.resources, "Unknown method"
 
         data = QueryDict('', mutable=True)
         data.update(payload.get('data', dict()))
-        data['callback'] = payload.get('callback') or request.GET.get('callback') or request.GET.get('jsonp') or 'callback'
+        data['callback'] = payload.get('callback') or request.GET.get(
+            'callback') or request.GET.get('jsonp') or 'callback'
         for h, v in payload.get('headers', dict()).iteritems():
             request.META["HTTP_%s" % h.upper().replace('-', '_')] = v
 

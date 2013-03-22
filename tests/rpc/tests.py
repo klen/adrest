@@ -210,3 +210,13 @@ class RPCTestCase(AdrestTestCase):
             'autojsonrpc',
             rpc=dict(method='custom.get'))
         self.assertContains(response, 'Custom template')
+
+    def test_request(self):
+        response = self.rpc(
+            'rpc2',
+            rpc=dict(
+                jsonrpc='2.0',
+                method='method3',
+                params=['test'],
+            ))
+        self.assertEqual(response.content, '"POSTtest"')
