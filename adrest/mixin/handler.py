@@ -208,7 +208,7 @@ class HandlerMixin(object):
         """ Paginate collection.
         """
         p = Paginator(request, collection, self.limit_per_page)
-        return p.paginator and p or list(collection)
+        return p.paginator and p or UpdatedList(collection)
 
 
 # pymode:lint_ignore=E1102,W0212,R0924
