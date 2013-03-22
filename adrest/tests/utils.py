@@ -13,7 +13,7 @@ MULTIPART_CONTENT = 'multipart/form-data; boundary=BoUnDaRyStRiNg'
 
 class AdrestClient(Client):
 
-    def patch(self, path, data=None, content_type=MULTIPART_CONTENT, follow=False, **extra):
+    def patch(self, path, data=None, content_type=MULTIPART_CONTENT, follow=False, **extra):  # nolint
         " Send a resource to the server using PATCH. "
 
         data = data or dict()
@@ -49,34 +49,45 @@ class AdrestTestCase(TestCase):
         """
         if isinstance(resource, basestring):
             url_name = resource
-            assert self.api.resources.get(url_name), "Invalid resource name: %s" % url_name
+            assert self.api.resources.get(
+                url_name), "Invalid resource name: %s" % url_name
 
         else:
             url_name = resource.meta.url_name
 
         kwargs = dict((k, getattr(v, "pk", v)) for k, v in kwargs.iteritems())
         name_ver = '' if not str(self.api) else '%s-' % str(self.api)
-        return reverse('%s-%s%s' % (self.api.prefix, name_ver, url_name), kwargs=kwargs)
+        return reverse(
+            '%s-%s%s' % (self.api.prefix, name_ver, url_name), kwargs=kwargs)
 
-    def get_params(self, resource, headers=None, data=None, key=None, **kwargs):
+    def get_params(self, resource, headers=None, data=None, key=None, **kwargs):  # nolint
         headers = headers or dict()
         data = data or dict()
         if isinstance(key, Model):
             key = key.key
-        headers['HTTP_AUTHORIZATION'] = key or headers.get('HTTP_AUTHORIZATION')
+        headers['HTTP_AUTHORIZATION'] = key or headers.get(
+            'HTTP_AUTHORIZATION')
         resource = self.reverse(resource, **kwargs)
         return resource, headers, data
 
-    def get_resource(self, resource, method='get', data=None, headers=None, **kwargs):
+    def get_resource(self, resource, method='get', data=None, headers=None, json=False, **kwargs):  # nolint
         """ Simply run resource method.
 
             :param resource: Resource Class or String name.
             :param data: Request data
+            :param json: Make JSON request
             :param headers: Request headers
             :param key: HTTP_AUTHORIZATION token
         """
         method = getattr(self.client, method)
-        resource, headers, data = self.get_params(resource, headers, data, **kwargs)
+        resource, headers, data = self.get_params(
+            resource, headers, data, **kwargs)
+
+        # Support JSON request
+        if json:
+            headers['content_type'] = 'application/json'
+            data = simplejson.dumps(data)
+
         return method(resource, data=data, **headers)
 
     def rpc(self, resource, rpc=None, headers=None, callback=None, **kwargs):
@@ -87,7 +98,8 @@ class AdrestTestCase(TestCase):
             :param headers: Send headers
             :param callback: JSONP callback
         """
-        resource, headers, data = self.get_params(resource, headers, data=rpc, **kwargs)
+        resource, headers, data = self.get_params(
+            resource, headers, data=rpc, **kwargs)
 
         if callback:
             headers['HTTP_ACCEPT'] = 'text/javascript'
@@ -101,7 +113,8 @@ class AdrestTestCase(TestCase):
             method = self.client.post
             data = simplejson.dumps(data)
 
-        return method(resource, data=data, content_type='application/json', **headers)
+        return method(
+            resource, data=data, content_type='application/json', **headers)
 
     put_resource = curry(get_resource, method='put')
     post_resource = curry(get_resource, method='post')
@@ -123,7 +136,7 @@ class FakePayload(object):
     def read(self, num_bytes=None):
         if num_bytes is None:
             num_bytes = self.__len or 0
-        assert self.__len >= num_bytes, "Cannot read more than the available bytes from the HTTP incoming data."
+        assert self.__len >= num_bytes, "Cannot read more than the available bytes from the HTTP incoming data."  # nolint
         content = self.__content.read(num_bytes)
         self.__len -= num_bytes
         return content

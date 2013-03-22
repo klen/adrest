@@ -32,7 +32,9 @@ class HandlerMeta(type):
 
         # Check meta.name and queryset
         if cls.model:
-            assert issubclass(cls.model, Model), "'model' attribute must be subclass of Model "
+            assert issubclass(
+                cls.model, Model), \
+                "'model' attribute must be subclass of Model "
             cls.meta.name = cls.model._meta.module_name
             cls.meta.model_fields = set(f.name for f in cls.model._meta.fields)
             if cls.queryset is None:
@@ -86,7 +88,9 @@ class HandlerMixin(object):
         if not instance is None:
             return instance
 
-        return self.paginate(request, self.get_collection(request, **resources))
+        return self.paginate(
+            request,
+            self.get_collection(request, **resources))
 
     def post(self, request, **resources):
         " Default POST method. Uses self form. "
@@ -102,7 +106,8 @@ class HandlerMixin(object):
 
         resource = resources.get(self.meta.name)
         if not resource:
-            raise HttpError("Resource not found.", status=status.HTTP_404_NOT_FOUND)
+            raise HttpError(
+                "Resource not found.", status=status.HTTP_404_NOT_FOUND)
 
         updated = UpdatedList()
         for o in as_tuple(resource):
@@ -165,7 +170,10 @@ class HandlerMixin(object):
         return qs
 
     def get_default_filters(self, **resources):
-        return dict((k, (v, False)) for k, v in resources.items() if k in self.meta.model_fields)
+        return dict(
+            (k, (v, False))
+            for k, v in resources.items()
+            if k in self.meta.model_fields)
 
     def get_filters(self, request, **resources):
         " Make filters from GET variables. "
@@ -196,10 +204,11 @@ class HandlerMixin(object):
 
         return filters
 
-    def paginate(self, request, qs):
-        " Paginate queryset. "
+    def paginate(self, request, collection):
+        """ Paginate collection.
+        """
+        p = Paginator(request, collection, self.limit_per_page)
+        return p.paginator and p or list(collection)
 
-        return Paginator(request, qs, self.limit_per_page)
 
-
-# pymode:lint_ignore=E1102
+# pymode:lint_ignore=E1102,W0212,R0924
