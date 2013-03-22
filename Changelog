@@ -1,3 +1,10 @@
+2013-03-22  klen 2.0.7
+
+	* Respect resource.name;
+	* '***_resource' test helper now supported json=True;
+	* Pagination can be disabled by set `limit_per_page=0` in resource
+	class. Also you can send max=0 for disable it dinamicly;
+
 2012-11-19  klen  2.0.6
 
 	* Fix OPTIONS method in RPC calls

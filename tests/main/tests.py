@@ -12,7 +12,8 @@ from milkman.dairy import milkman
 
 from .api import API as api
 from .models import Author, Book
-from .resources import AuthorResource, BookPrefixResource, ArticleResource, SomeOtherResource, BookResource
+from .resources import (AuthorResource, BookPrefixResource,
+                        ArticleResource, SomeOtherResource, BookResource)
 from adrest.mixin.emitter import EmitterMixin
 from adrest.models import Access
 from adrest.tests.utils import AdrestTestCase
@@ -91,8 +92,12 @@ class MetaTest(TestCase):
         self.assertEqual(AuthorResource.meta.url_regex, '^owner/$')
         self.assertEqual(BookPrefixResource.meta.url_regex,
                          'owner/test/book/(?:(?P<book>[^/]+)/)?')
-        self.assertEqual(ArticleResource.meta.url_regex, 'owner/book/(?P<book>[^/]+)/article/(?:(?P<article>[^/]+)/)?')
-        self.assertEqual(SomeOtherResource.meta.url_regex, 'owner/device/(?P<device>[^/]+)/someother/(?:(?P<someother>[^/]+)/)?')
+        self.assertEqual(
+            ArticleResource.meta.url_regex,
+            'owner/book/(?P<book>[^/]+)/article/(?:(?P<article>[^/]+)/)?')
+        self.assertEqual(
+            SomeOtherResource.meta.url_regex,
+            'owner/device/(?P<device>[^/]+)/someother/(?:(?P<someother>[^/]+)/)?')  # nolint
 
 
 class ApiTest(AdrestTestCase):
@@ -124,8 +129,8 @@ class AdrestTest(AdrestTestCase):
         super(AdrestTest, self).setUp()
 
     def test_urls(self):
-        uri = reverse('dummy')
-        self.assertEqual(uri, '/dummy/')
+        uri = reverse('iamdummy')
+        self.assertEqual(uri, '/iamdummy/')
 
     def test_methods(self):
         uri = self.reverse('author')
@@ -140,13 +145,15 @@ class AdrestTest(AdrestTestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_owners_checking(self):
-        response = self.get_resource('author-test-book-article', book=self.book.pk, data=dict(
+        response = self.get_resource(
+            'author-test-book-article', book=self.book.pk, data=dict(
             author=self.author.pk
-        ))
+            ))
         self.assertContains(response, 'false', status_code=401)
 
         response = self.get_resource(
-            'author-test-book-article', key=self.author.user.accesskey_set.get(),
+            'author-test-book-article',
+            key=self.author.user.accesskey_set.get(),
             book=self.book.pk, data=dict(author=self.author.pk))
         self.assertContains(response, 'true')
 
@@ -198,7 +205,9 @@ class ResourceTest(AdrestTestCase):
         response = self.get_resource('author')
         self.assertContains(response, 'count="5"')
 
-        response = self.post_resource('author', data=dict(name="new author", user=User.objects.create(username="new user").pk))
+        response = self.post_resource('author', data=dict(
+            name="new author",
+            user=User.objects.create(username="new user").pk))
         self.assertContains(response, 'new author')
 
         response = self.post_resource('author', data=dict(name="author 22"))
@@ -248,7 +257,15 @@ class ResourceTest(AdrestTestCase):
             status=2,
             author=self.author.pk))
         self.assertContains(response, '<price>0</price>')
-        self.assertContains(response, '<json>{"fields": {"status": 2}, "model": "main.book", "pk": 149}</json>')
+        self.assertContains(
+            response,
+            '<json>{"fields": {"status": 2}, "model": "main.book", "pk": 149}</json>')  # nolint
+
+        response = self.post_resource('author-test-book', json=True, data=dict(
+            title="new book",
+            status=2,
+            author=self.author.pk))
+        self.assertContains(response, '<price>0</price>')
 
         uri = self.reverse('author-test-book', book=1)
         uri = "%s?author=%s" % (uri, self.author.pk)
@@ -328,17 +345,22 @@ class ResourceTest(AdrestTestCase):
 
         uri = self.reverse('author-test-book-article',
                            book=book.pk) + "?author=" + str(self.author.pk)
-        response = self.client.delete(uri,
-                                      HTTP_AUTHORIZATION=self.author.user.accesskey_set.get().key)
+        response = self.client.delete(
+            uri,
+            HTTP_AUTHORIZATION=self.author.user.accesskey_set.get().key)
         self.assertContains(response, 'Some error', status_code=500)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[-1].subject, '[Django] ADREST API Error (500): /1.0.0/owner/book/%s/article/' % Book.objects.all().count())
+        self.assertEqual(
+            mail.outbox[
+            -1].subject, '[Django] ADREST API Error (500): /1.0.0/owner/book/%s/article/' % Book.objects.all().count())  # nolint
 
         response = self.client.put(
             uri, HTTP_AUTHORIZATION=self.author.user.accesskey_set.get().key)
         self.assertContains(response, 'Assertion error', status_code=400)
         self.assertEqual(len(mail.outbox), 2)
-        self.assertEqual(mail.outbox[-1].subject, '[Django] ADREST API Error (400): /1.0.0/owner/book/%s/article/' % Book.objects.all().count())
+        self.assertEqual(
+            mail.outbox[
+            -1].subject, '[Django] ADREST API Error (400): /1.0.0/owner/book/%s/article/' % Book.objects.all().count())  # nolint
 
         response = self.post_resource('book')
         self.assertContains(response, '{"error": "\'Frozen', status_code=400)
@@ -359,7 +381,9 @@ class ResourceTest(AdrestTestCase):
         response = self.get_resource('author-test-book',
                                      data=dict(author=self.author.pk))
         self.assertTrue(response.has_header("Link"))
-        self.assertEquals(response["Link"], '<%s?page=2&author=5>; rel="next"' % self.reverse('author-test-book'))
+        self.assertEquals(
+            response[
+            "Link"], '<%s?page=2&author=5>; rel="next"' % self.reverse('author-test-book'))  # nolint
         # Get objects by links on Link header
         response = self.client.get(link_re.findall(response['Link'])[0][0])
 
@@ -372,6 +396,10 @@ class ResourceTest(AdrestTestCase):
         self.assertEquals(
             links[1][0], '%s?author=5' % self.reverse('author-test-book'))
         self.assertEquals(links[1][1], 'previous')
+
+        response = self.get_resource('author-test-book',
+                                     data=dict(author=self.author.pk, max=0))
+        self.assertFalse(response.has_header("Link"))
 
     def test_bson(self):
         " Test BSON support. "
@@ -405,4 +433,5 @@ class AdrestMapTest(TestCase):
         response = self.client.get(uri, HTTP_ACCEPT="application/json")
         self.assertContains(response, '"price", {"required": false')
 
-# pymode:lint_ignore=F0401
+
+# lint_ignore=F0401

@@ -3,6 +3,7 @@ SPHINXBUILD=sphinx-build
 ALLSPHINXOPTS= -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 BUILDDIR=_build
 
+all: .env
 
 .PHONY: help
 # target: help - Display callable targets
@@ -43,3 +44,7 @@ audit:
 docs:
 	python setup.py build_sphinx --source-dir=docs/ --build-dir=docs/_build --all-files
 	python setup.py upload_sphinx --upload-dir=docs/_build/html
+
+.env: requirements.txt
+	virtualenv --no-site-packages .env
+	.env/bin/pip install -M -r requirements.txt

@@ -7,17 +7,27 @@ from .status import HTTP_400_BAD_REQUEST
 
 
 class Paginator(object):
-    """ Paginate querysets.
+    """ Paginate collections.
     """
     def __init__(self, request, qs, max_res):
         self.query_dict = dict(request.GET.items())
-        self.paginator = DjangoPaginator(qs, int(self.query_dict.get('max') or max_res))
+        self.paginator = None
+        self._page = None
         self.path = request.path
-        page_num = int(request.REQUEST.get('page', 1))
-        try:
-            self.page = self.paginator.page(page_num)
-        except InvalidPage:
-            raise HttpError("Invalid page", status=HTTP_400_BAD_REQUEST)
+
+        max_items = int(self.query_dict.get('max') or max_res)
+        if max_items:
+            self.paginator = DjangoPaginator(qs, max_items)
+
+    @property
+    def page(self):
+        if not self._page:
+            try:
+                self._page = self.paginator.page(
+                    self.query_dict.get('page', 1))
+            except InvalidPage:
+                raise HttpError("Invalid page", status=HTTP_400_BAD_REQUEST)
+        return self._page
 
     @property
     def count(self):
