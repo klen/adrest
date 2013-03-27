@@ -5,8 +5,8 @@ from adrest.views import ResourceView
 
 
 class TaskResource(ResourceView):
-    model = Task
     emitters = emitter.XMLTemplateEmitter
+    model = Task
 
 
 class Task2Resource(ResourceView):

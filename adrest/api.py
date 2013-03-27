@@ -15,10 +15,11 @@ LOG = logging.getLogger('adrest')
 
 class Api(object):
 
-    """ Implements a registry to tie together the various resources that make up
-        an API.
+    """ Implements a registry to tie together the various resources that make
+        up an API.
 
-        Especially useful for navigation, providing multiple versions of your API.
+        Especially useful for navigation, providing multiple versions of your
+        API.
 
         :param version: Version info as string or iterable.
         :param api_map: Enable API map (true by default)
@@ -28,7 +29,8 @@ class Api(object):
         Additional params will be putted in self resources.
 
     """
-    def __init__(self, version=None, api_map=True, api_prefix='api', api_rpc=False, **params):
+    def __init__(self, version=None, api_map=True, api_prefix='api',
+                 api_rpc=False, **params):
         self.version = self.str_version = version
         self.prefix = api_prefix
         self.params = params
@@ -42,9 +44,10 @@ class Api(object):
         # Enable Auto JSON RPC resource
         if api_rpc:
             self.resources[AutoJSONRPC.meta.url_name] = AutoJSONRPC
-            self.params['emitters'] = tools.as_tuple(params.get('emitters', [])) + (
-                emitter.JSONPEmitter, emitter.JSONEmitter
-            )
+            self.params['emitters'] = tools.as_tuple(
+                params.get('emitters', [])) + (
+                    emitter.JSONPEmitter, emitter.JSONEmitter
+                )
 
         if not isinstance(self.str_version, basestring):
             try:
@@ -64,13 +67,17 @@ class Api(object):
         """
 
         # Must be instance of ResourceView
-        assert issubclass(resource, ResourceView), "%s not subclass of ResourceView" % resource
+        assert issubclass(
+            resource,
+            ResourceView), "%s not subclass of ResourceView" % resource
 
         # Fabric of resources
         params = dict(self.params, **params)
         if params:
-            params['name'] = ''.join(bit for bit in resource.__name__.split(
-                'Resource') if bit).lower()
+            params['name'] = resource.name \
+                or params.get('name') \
+                or ''.join(bit for bit in resource.__name__.split(
+                           'Resource') if bit).lower()
 
             params['__module__'] = '%s.%s' % (
                 self.prefix, self.str_version.replace('.', '_'))
@@ -81,7 +88,9 @@ class Api(object):
                 resource.__name__, len(self.resources)), (resource,), params)
 
         if self.resources.get(resource.meta.url_name):
-            LOG.warning("A new resource '%r' is replacing the existing record for '%s'" % (resource, self.resources.get(resource.url_name)))
+            LOG.warning(
+                "A resource '%r' is replacing the existing record for '%s'",
+                resource, self.resources.get(resource.meta.url_name))
 
         self.resources[resource.meta.url_name] = resource
 

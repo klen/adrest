@@ -64,10 +64,13 @@ class CustomResource(ResourceView):
         try:
             request.data['test'] = 123
         except TypeError, e:
-            raise HttpError(dict(error=str(e)), status=400, emitter=JSONEmitter)
+            raise HttpError(dict(error=str(
+                e)), status=400, emitter=JSONEmitter)
 
 
 class DummyResource(ResourceView):
+    name = 'iamdummy'
+
     def get(self, request, **resources):
         return True
 

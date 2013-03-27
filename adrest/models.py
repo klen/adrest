@@ -56,7 +56,7 @@ if settings.ACCESS_LOG:
             content = smart_unicode(response.content)[:5000]
         except (UnicodeDecodeError, UnicodeEncodeError):
             if response and response['Content-Type'].lower() not in \
-                   [emitter.media_type.lower() for emitter in resource.emitters]:
+                    [emitter.media_type.lower() for emitter in resource.emitters]:
                 content = 'Invalid response content encoding'
             else:
                 content = response.content[:5000]
