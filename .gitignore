@@ -1,11 +1,4 @@
-*.egg
 *.egg-info
-*.pyc
-._
-.env
-.ropeproject
-.tags
-.tox
 .vimrc
 build
 dist
