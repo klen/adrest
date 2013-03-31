@@ -52,7 +52,9 @@
                 <span class="uri_link">{{ uri }}</span>
                 <sup class="uri_name">[{{ info.name }}]</sup>
                 <span class="uri_item uri_methods"> {% for m in info.methods %}{{ m }}&nbsp;{% endfor %}</span>
-                    <p class="uri_resource">{{ info.doc }}</p>
+                    {% if info.doc %}
+                        <p class="uri_resource">{{ info.doc }}</p>
+                    {% endif %}
                     {% if info.resource %}
                     <dl>
                         <dt>Resource:</dt>
