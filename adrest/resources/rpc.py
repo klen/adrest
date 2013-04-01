@@ -38,12 +38,13 @@ class RPCResource(ResourceView):
         be answered out of order.
 
     """
+
     allowed_methods = 'get', 'post'
-    url_regex = r'^rpc$'
     emitters = JSONEmitter, JSONPEmitter
+    methods = dict()
     parsers = JSONParser, FormParser
     scheme = None
-    methods = dict()
+    url_regex = r'^rpc$'
 
     __metaclass__ = RPCMeta
 
@@ -122,6 +123,7 @@ class AutoJSONRPC(RPCResource):
 
     """
     separator = '.'
+    url_name = 'autojsonrpc'
 
     @staticmethod
     def configure_rpc(scheme=None):
