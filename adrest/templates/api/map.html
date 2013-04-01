@@ -43,22 +43,30 @@
     </head>
     <body>
         <div class="navbar">
-            <div class="container"><h1>API v.{{ content.0 }} Map</h1></div>
+            <div class="container"><h1>API version {{ resource.api }}</h1></div>
         </div>
-        <div class="container">
 
-            {% for uri, info in content.1 %}
+        <div class="container">
+            {% for uri, info in content %}
             <div class="uri">
                 <span class="uri_link">{{ uri }}</span>
-                <sup class="uri_name">[{{ info.name }}]</sup>
-                <span class="uri_item uri_methods"> {% for m in info.methods %}{{ m }}&nbsp;{% endfor %}</span>
+                <sup class="uri_name">[{{ info.resource.meta.url_name }}]</sup>
+                <span class="uri_item uri_methods"> {% for m in info.resource.allowed_methods %}{{ m }}&nbsp;{% endfor %}</span>
                     {% if info.doc %}
-                        <p class="uri_resource">{{ info.doc }}</p>
+                        <p class="uri_resource">{{ info.doc|linebreaksbr }}</p>
                     {% endif %}
-                    {% if info.resource %}
+                    {% if info.model %}
                     <dl>
                         <dt>Resource:</dt>
-                        <dd>{{ info.resource }}</dd>
+                        <span class="uri_link-active" href="#">{{ info.model.name }}</span>
+                        <table class="uri_info info">
+                            {% for f in info.model.fields %}
+                                <tr>
+                                    <td> {{ f.name }} </td>
+                                    <td> {{ f.get_internal_type }} </td>
+                                </tr>
+                            {% endfor %}
+                        </table>
                     </dl>
                     {% endif %}
                     <dl>
@@ -77,6 +85,15 @@
                         <tr>
                             <td {% if v.required %} class="uri_info_required" {% endif %}> {{ f }} </td>
                             <td> {{ v.label }}. {{ v.help }} </td>
+                    {% endfor %}
+                </table>{% endif %}
+                {% if info.methods %}
+                <span class="uri_link-active" href="#">RPC methods</span>
+                <table class="uri_info info">
+                    {% for name, inspect in info.methods.items %}
+                        <tr>
+                            <td> {{ name }} </td>
+                            <td> {{ inspect.args }} </td>
                     {% endfor %}
                 </table>{% endif %}
             </div>

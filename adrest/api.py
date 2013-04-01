@@ -70,9 +70,12 @@ class Api(object):
         """
 
         # Must be instance of ResourceView
-        assert issubclass(
-            resource,
-            ResourceView), "%s not subclass of ResourceView" % resource
+        assert issubclass(resource, ResourceView), \
+            "{0} not subclass of ResourceView".format(resource)
+
+        # Cannot be abstract
+        assert not resource.abstract, \
+            "Attempt register of abstract resource: {0}.".format(resource)
 
         # Fabric of resources
         params = dict(self.params, **params)

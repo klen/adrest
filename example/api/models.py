@@ -1,0 +1,2 @@
+""" Hello Django tests runner!
+"""

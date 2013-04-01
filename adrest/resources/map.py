@@ -21,21 +21,26 @@ class MapResource(ResourceView):
     url_regex = r'^map$'
 
     def get(self, *args, **Kwargs):
-        selfmap = list(self.gen_apimap())
-        return self.api.str_version, selfmap
+        return list(self.gen_apimap())
 
     def gen_apimap(self):
         for url_name in sorted(self.api.resources.iterkeys()):
             resource = self.api.resources[url_name]
             info = dict(
-                name=url_name,
-                emitters=', '.join([e.media_type for e in resource.emitters]),
+                resource=resource,
                 doc=resource.__doc__,
-                methods=resource.allowed_methods,
-                fields=[]
+                emitters=', '.join([e.media_type for e in resource.emitters]),
+                fields=[],
+                model=None,
             )
             if resource.model:
-                info['resource'] = resource.model.__name__
+                info['model'] = dict(
+                    name="{0}.{1}".format(
+                        resource.model._meta.module_name, # nolint
+                        resource.model._meta.object_name, # nolint
+                    ),
+                    fields=resource.model._meta.fields # nolint
+                )
 
             models = [p.model for p in resource.meta.parents if p.model]
 
@@ -58,10 +63,17 @@ class MapResource(ResourceView):
 
             info['auth'] = set(
                 a.__doc__ or 'Custom' for a in resource.authenticators)
+
             key = resource.meta.url_regex\
                 .replace("(?P", "")\
                 .replace("[^/]+)", "")\
                 .replace("?:", "")\
                 .replace("$", "")\
                 .replace("^", "/")
+
+            if getattr(resource, "methods", None):
+                import inspect
+                info['methods'] = dict()
+                for name, method in resource.methods.items():
+                    info['methods'][name] = inspect.getargspec(method)
             yield key, info

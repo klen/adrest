@@ -38,9 +38,13 @@ class ResourceMetaClass(
 
         # Create meta if not exists
         params['meta'] = params.get('meta', MetaOptions())
+        params['abstract'] = params.get('abstract', False)
 
         # Run other meta classes
         cls = super(ResourceMetaClass, mcs).__new__(mcs, name, bases, params)
+
+        if cls.abstract:
+            return cls
 
         # Prepare allowed methods
         cls.allowed_methods = mcs.prepare_methods(cls.allowed_methods)
@@ -88,6 +92,9 @@ class ResourceView(handler.HandlerMixin,
 
     # Create meta options
     __metaclass__ = ResourceMetaClass
+
+    # This abstract class
+    abstract = True
 
     # Allowed methods
     allowed_methods = 'GET',

@@ -10,11 +10,15 @@ from django.conf import settings as django_settings
 from tests import settings
 
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s', datefmt='%d.%m %H:%M:%S')
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+    datefmt='%d.%m %H:%M:%S')
 
 if not django_settings.configured:
     django_settings.configure(
-        **dict([(x, getattr(settings, x)) for x in dir(settings) if x.isupper()]))
+        **dict([(x, getattr(settings, x))
+                for x in dir(settings) if x.isupper()]))
 
 
 def run_tests(*test_args):
