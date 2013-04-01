@@ -5,7 +5,8 @@ import traceback
 from logging import getLogger
 
 from django.conf.urls.defaults import url
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
+from django.core.exceptions import (
+    ObjectDoesNotExist, MultipleObjectsReturned, ValidationError)
 from django.core.mail import mail_admins
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -21,6 +22,9 @@ from .utils.tools import as_tuple, gen_url_name, gen_url_regex, fix_request
 
 
 logger = getLogger('django.request')
+
+
+__all__ = 'ResourceView',
 
 
 class ResourceMetaClass(
@@ -171,7 +175,8 @@ class ResourceView(handler.HandlerMixin,
 
         # Send finished signal in API context
         if self.api:
-            self.api.request_finished.send(self, request=request, response=response, **resources)
+            self.api.request_finished.send(
+                self, request=request, response=response, **resources)
 
         return response
 
@@ -185,7 +190,8 @@ class ResourceView(handler.HandlerMixin,
 
     @classmethod
     def check_method_allowed(cls, method):
-        """ Ensure the request HTTP method is permitted for this resource, raising a ResourceException if it is not.
+        """ Ensure the request HTTP method is permitted for this resource,
+            raising a ResourceException if it is not.
         """
         if not method in cls.callmap.keys():
             raise HttpError('Unknown or unsupported method \'%s\'' % method,
@@ -201,7 +207,8 @@ class ResourceView(handler.HandlerMixin,
         " Parse resource objects from URL and GET. "
 
         if cls.parent:
-            resources = cls.parent.get_resources(request, resource=resource, **resources)
+            resources = cls.parent.get_resources(
+                request, resource=resource, **resources)
 
         pks = resources.get(
             cls.meta.name) or request.REQUEST.getlist(cls.meta.name)
@@ -235,8 +242,9 @@ class ResourceView(handler.HandlerMixin,
 
             We check that in request like /author/1/book/2/page/3
 
-            Page object with pk=3 has ForeignKey field linked to Book object with pk=2
-            and Book with pk=2 has ForeignKey field linked to Author object with pk=1.
+            Page object with pk=3 has ForeignKey field linked to Book object
+            with pk=2 and Book with pk=2 has ForeignKey field linked to Author
+            object with pk=1.
         """
 
         if cls.allow_public_access or not cls.parent:
@@ -248,8 +256,10 @@ class ResourceView(handler.HandlerMixin,
         if cls.model and cls.parent.model and objects:
             try:
                 pr = resources.get(cls.parent.meta.name)
-                assert pr and all(pr.pk == getattr(
-                    o, "%s_id" % cls.parent.meta.name, None) for o in as_tuple(objects))
+                assert pr and all(
+                    pr.pk == getattr(
+                        o, "%s_id" % cls.parent.meta.name, None)
+                    for o in as_tuple(objects))
             except AssertionError:
                 # 403 Error if there is error in parent-children relationship
                 raise HttpError(
@@ -280,7 +290,7 @@ class ResourceView(handler.HandlerMixin,
         if DEBUG:
             raise
 
-        logger.exception('\nADREST API Error: %s' % request.path)
+        logger.exception('\nADREST API Error: %s', request.path)
 
         return HttpResponse(str(e), status=500)
 

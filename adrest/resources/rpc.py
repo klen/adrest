@@ -8,6 +8,9 @@ from ..utils.response import SerializedHttpResponse
 from ..views import ResourceView, ResourceMetaClass
 
 
+__all__ = 'get_request', 'RPCResource', 'AutoJSONRPC'
+
+
 def get_request(func):
     """ Mark function as needed in request.
     """

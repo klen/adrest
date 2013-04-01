@@ -7,6 +7,9 @@ from ..utils.emitter import HTMLTemplateEmitter, JSONEmitter
 from ..views import ResourceView
 
 
+__all__ = 'MapResource',
+
+
 class MapResource(ResourceView):
     " Simple Api Map. "
 

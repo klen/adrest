@@ -10,7 +10,10 @@ from .views import ResourceView
 from .utils import exceptions, status, tools, emitter
 
 
-LOG = logging.getLogger('adrest')
+__all__ = 'Api',
+
+
+logger = logging.getLogger('adrest')
 
 
 class Api(object):
@@ -88,7 +91,7 @@ class Api(object):
                 resource.__name__, len(self.resources)), (resource,), params)
 
         if self.resources.get(resource.meta.url_name):
-            LOG.warning(
+            logger.warning(
                 "A resource '%r' is replacing the existing record for '%s'",
                 resource, self.resources.get(resource.meta.url_name))
 

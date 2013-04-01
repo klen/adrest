@@ -7,6 +7,9 @@ from ..utils.paginator import Paginator
 from ..utils.tools import as_tuple
 
 
+__all__ = 'EmitterMixin',
+
+
 class EmitterMeta(type):
 
     def __new__(mcs, name, bases, params):

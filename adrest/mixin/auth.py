@@ -5,6 +5,9 @@ from ..utils.exceptions import HttpError
 from ..utils.tools import as_tuple
 
 
+__all__ = 'AuthMixin',
+
+
 def check_authenticators(authenticators):
     authenticators = as_tuple(authenticators)
     for a in authenticators:

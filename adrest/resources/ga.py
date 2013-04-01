@@ -3,6 +3,9 @@ from pyga.requests import Tracker, Visitor, Session, Page
 from ..views import ResourceView
 
 
+__all__ = 'GaResource',
+
+
 class GaResource(ResourceView):
     """
         Google Analytics support.
