@@ -29,9 +29,9 @@ register:
 upload: docs
 	@python setup.py sdist upload || echo 'Upload already'
 
-.PHONY: test
-# target: test - Runs tests
-test: clean
+.PHONY: t
+# target: t - Runs tests
+t: clean
 	@python setup.py test
 
 .PHONY: audit

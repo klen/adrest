@@ -5,10 +5,14 @@ from ..utils.exceptions import HttpError
 from ..utils.tools import as_tuple
 
 
+__all__ = 'AuthMixin',
+
+
 def check_authenticators(authenticators):
     authenticators = as_tuple(authenticators)
     for a in authenticators:
-        assert issubclass(a, AbstractAuthenticator), "Authenticators must be subclasses of AbstractAuthenticator"
+        assert issubclass(a, AbstractAuthenticator), \
+            "Authenticators must be subclasses of AbstractAuthenticator"
     return authenticators
 
 
@@ -30,8 +34,11 @@ class AuthMixin(object):
     identifier = ''
 
     def authenticate(self, request):
-        """ Attempt to authenticate the request, returning an authentication context or None.
-            An authentication context may be any object, although in many cases it will simply be a :class:`User` instance.
+        """ Attempt to authenticate the request, returning an authentication
+            context or None.
+
+            An authentication context may be any object, although in many cases
+            it will simply be a :class:`User` instance.
         """
         authenticators = self.authenticators
         self.identifier = request.META.get('REMOTE_ADDR', 'anonymous')
@@ -61,4 +68,7 @@ class AuthMixin(object):
         try:
             assert self.auth.test_rights(resources, request=request)
         except AssertionError, e:
-            raise HttpError("Access forbidden. %s" % str(e), status=status.HTTP_403_FORBIDDEN)
+            raise HttpError(
+                "Access forbiden. {0}".format(e),
+                status=status.HTTP_403_FORBIDDEN
+            )

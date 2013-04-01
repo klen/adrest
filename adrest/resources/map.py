@@ -7,6 +7,9 @@ from ..utils.emitter import HTMLTemplateEmitter, JSONEmitter
 from ..views import ResourceView
 
 
+__all__ = 'MapResource',
+
+
 class MapResource(ResourceView):
     " Simple Api Map. "
 
@@ -36,7 +39,9 @@ class MapResource(ResourceView):
 
             models = [p.model for p in resource.meta.parents if p.model]
 
-            if resource.form and ('POST' in resource.allowed_methods or 'PUT' in resource.allowed_methods):
+            if resource.form and (
+                'POST' in resource.allowed_methods
+                    or 'PUT' in resource.allowed_methods):
                 info['fields'] += [
                     (name, dict(
                         required=f.required and f.initial is None,
@@ -44,7 +49,8 @@ class MapResource(ResourceView):
                         help=smart_unicode(f.help_text + ''))
                      )
                     for name, f in resource.form.base_fields.iteritems()
-                    if not (isinstance(f, ModelChoiceField) and f.choices.queryset.model in models)
+                    if not (isinstance(f, ModelChoiceField)
+                            and f.choices.queryset.model in models)
                 ]
 
             for a in resource.authenticators:
@@ -52,6 +58,10 @@ class MapResource(ResourceView):
 
             info['auth'] = set(
                 a.__doc__ or 'Custom' for a in resource.authenticators)
-            key = resource.meta.url_regex.replace("(?P", "").replace(
-                "[^/]+)", "").replace("?:", "").replace("$", "").replace("^", "/")
+            key = resource.meta.url_regex\
+                .replace("(?P", "")\
+                .replace("[^/]+)", "")\
+                .replace("?:", "")\
+                .replace("$", "")\
+                .replace("^", "/")
             yield key, info

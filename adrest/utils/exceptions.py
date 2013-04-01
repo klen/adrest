@@ -1,5 +1,6 @@
-from .status import HTTP_400_BAD_REQUEST
 from django.core.exceptions import ValidationError
+
+from .status import HTTP_400_BAD_REQUEST
 
 
 class HttpError(Exception):

@@ -14,4 +14,4 @@ install:
 
 script:
     - make audit
-    - make test
+    - make t
