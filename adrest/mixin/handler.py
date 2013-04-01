@@ -2,7 +2,6 @@ from logging import getLogger
 
 from django.core.exceptions import FieldError
 from django.db.models import get_model, Model
-from django.db.models.sql.constants import LOOKUP_SEP
 from django.http import HttpResponse
 
 from ..forms import PartitialForm
@@ -12,6 +11,9 @@ from ..utils.exceptions import HttpError, FormError
 from ..utils.paginator import Paginator
 from ..utils.tools import as_tuple
 
+
+# Separator used to split filter strings apart.
+LOOKUP_SEP = '__'
 
 logger = getLogger('django.request')
 

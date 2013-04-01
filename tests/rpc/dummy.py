@@ -17,3 +17,7 @@ def error_method():
 @get_request
 def method3(request, name):
     return request.method + name
+
+
+def __private_method():
+    raise Exception("I am hidden!")
