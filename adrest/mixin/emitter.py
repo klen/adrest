@@ -62,6 +62,7 @@ class EmitterMixin(object):
     emit_related = None
     emit_include = None
     emit_exclude = None
+    emit_format = 'django'
 
     def emit(self, content, request=None, emitter=None):
         """ Serialize response.
