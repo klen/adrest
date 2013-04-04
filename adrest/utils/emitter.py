@@ -40,7 +40,9 @@ class BaseEmitter(object):
             status=HTTP_200_OK)
 
     def emit(self):
-        if self.response.finaly:
+
+        # Skip serialize
+        if not isinstance(self.response, SerializedHttpResponse):
             return self.response
 
         self.response.content = self.serialize(self.response.response)
@@ -49,7 +51,6 @@ class BaseEmitter(object):
 
     @staticmethod
     def serialize(content):
-        " Get content and return string. "
         return content
 
 
@@ -74,10 +75,11 @@ class JSONEmitter(BaseEmitter):
 
     def serialize(self, content):
         worker = JSONSerializer(
-            _fields=getattr(self.resource, 'emit_fields', None),
-            _include=getattr(self.resource, 'emit_include', None),
-            _exclude=getattr(self.resource, 'emit_exclude', None),
-            **getattr(self.resource, 'emit_related', dict())
+            _scheme=self.resource,
+            _fields=self.resource.emit_fields,
+            _include=self.resource.emit_include,
+            _exclude=self.resource.emit_exclude,
+            **self.resource.emit_related or dict()
         )
         return worker.serialize(content)
 
@@ -93,14 +95,15 @@ class JSONPEmitter(JSONEmitter):
 
 class XMLEmitter(BaseEmitter):
     media_type = 'application/xml'
-    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>'
+    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>' # nolint
 
     def serialize(self, content):
         worker = XMLSerializer(
-            _fields=getattr(self.resource, 'fields', None),
-            _include=getattr(self.resource, 'include', None),
-            _exclude=getattr(self.resource, 'exclude', None),
-            **getattr(self.resource, 'related', dict())
+            _scheme=self.resource,
+            _fields=self.resource.emit_fields,
+            _include=self.resource.emit_include,
+            _exclude=self.resource.emit_exclude,
+            **self.resource.emit_related or dict()
         )
         return self.xmldoc_tpl % (
             'true' if not self.response.error else 'false',
@@ -117,7 +120,8 @@ class TemplateEmitter(BaseEmitter):
         if self.response.error:
             template_name = op.join('api', 'error.%s' % self.format)
         else:
-            template_name = self.resource.template or self.get_template_path(content)
+            template_name = (self.resource.emit_template
+                             or self.get_template_path(content))
 
         template = loader.get_template(template_name)
         return template.render(RequestContext(self.request, dict(
@@ -140,10 +144,11 @@ class TemplateEmitter(BaseEmitter):
             content = self.resource.model
 
         if isinstance(content, (Model, ModelBase)):
-            app = content._meta.app_label
-            name = content._meta.module_name
+            app = content._meta.app_label # nolint
+            name = content._meta.module_name # nolint
 
-        basedir = self.resource.api.prefix if getattr(self.resource, 'api', None) else 'api'
+        basedir = self.resource.api.prefix \
+            if getattr(self.resource, 'api', None) else 'api'
         return op.join(
             basedir,
             self.resource.version,
@@ -177,7 +182,7 @@ class XMLTemplateEmitter(TemplateEmitter):
     " Template emitter with XML media type. "
 
     media_type = 'application/xml'
-    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>'
+    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>' # nolint
 
     def serialize(self, content):
         return self.xmldoc_tpl % (

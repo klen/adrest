@@ -1,3 +1,10 @@
+2013-04-04  klen
+
+	* [WARNING] Change resource.template attribute
+	  template -> emit_template
+	* Added to_simple__<fieldname> method support to resources;
+	* Added to_simple method to resources (finished serialization);
+
 2013-04-01  klen 2.0.11
 
 	* RPC scheme could be defined as string;

@@ -13,10 +13,10 @@ __all__ = 'MapResource',
 class MapResource(ResourceView):
     " Simple Api Map. "
 
-    log = False
-    emitters = HTMLTemplateEmitter, JSONEmitter
     authenticators = AnonimousAuthenticator
-    template = MAP_TEMPLATE
+    emit_template = MAP_TEMPLATE
+    emitters = HTMLTemplateEmitter, JSONEmitter
+    log = False
 
     url_regex = r'^map$'
 

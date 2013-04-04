@@ -96,6 +96,8 @@ class ResourceView(handler.HandlerMixin,
     # This abstract class
     abstract = True
 
+    identifier = None
+
     # Allowed methods
     allowed_methods = 'GET',
 
@@ -128,6 +130,9 @@ class ResourceView(handler.HandlerMixin,
 
         # Fix PUT and PATH methods in Django request
         request = fix_request(request)
+
+        # Set self identifier
+        self.identifier = request.META.get('REMOTE_ADDR', 'anonymous')
 
         # Send ADREST started signal
         api_request_started.send(self, request=request)
