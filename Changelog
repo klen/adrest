@@ -2,6 +2,7 @@
 
 	* [WARNING] Change resource.template attribute
 	  template -> emit_template
+	* [WARNING] Change Paginator attribute, next -> next_page, previous -> previous_page;
 	* Added to_simple__<fieldname> method support to resources;
 	* Added to_simple method to resources (finished serialization);
 
