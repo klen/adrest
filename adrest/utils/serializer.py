@@ -27,10 +27,8 @@ class BaseSerializer(object):
         options.update(related)
         return options
 
-    def to_simple(self, value, **options): # nolint
+    def to_simple(self, value, **options):  # nolint
         " Simplify object. "
-
-        options = options or self.options
 
         # (string, unicode)
         if isinstance(value, basestring):
@@ -97,9 +95,10 @@ class BaseSerializer(object):
                       for f in value._meta.get_all_related_objects()]
         default_fields = set([field.name for field in value._meta.fields
                               if field.serialize])
-        serialized_fields = (default_fields | options[
-                             '_include']) - options['_exclude']
-        for fname in options['_fields'] or serialized_fields:
+        serialized_fields = options.get('_fields') or (
+            default_fields | options.get(
+                '_include', set())) - options.get('_exclude', set())
+        for fname in serialized_fields:
 
             to_simple = getattr(self.scheme,
                                 'to_simple__{0}'.format(fname),
@@ -120,16 +119,16 @@ class BaseSerializer(object):
             if fname in default_fields:
                 field = value._meta.get_field(fname)
                 result['fields'][fname] = self.to_simple(
-                    field.value_from_object(value))
+                    field.value_from_object(value), **options)
                 continue
 
             result['fields'][fname] = self.to_simple(
-                getattr(value, fname, None))
+                getattr(value, fname, None), **options)
 
         return result
 
     def serialize(self, value):
-        simple = self.to_simple(value)
+        simple = self.to_simple(value, **self.options)
         if self.scheme:
             to_simple = getattr(self.scheme, 'to_simple', lambda s: s)
             simple = to_simple(value, simple, serializer=self)
@@ -150,7 +149,7 @@ class XMLSerializer(BaseSerializer):
         simple = super(XMLSerializer, self).serialize(value)
         return ''.join(s for s in self._dumps(simple))
 
-    def _dumps(self, value): # nolint
+    def _dumps(self, value):  # nolint
         tag = it = None
 
         if isinstance(value, list):
