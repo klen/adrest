@@ -105,7 +105,7 @@ class BaseSerializer(object):
                                 'to_simple__{0}'.format(fname),
                                 None)
             if to_simple:
-                result['fields'][fname] = to_simple(value)
+                result['fields'][fname] = to_simple(value, serializer=self)
                 continue
 
             # Related serialization
@@ -132,7 +132,7 @@ class BaseSerializer(object):
         simple = self.to_simple(value)
         if self.scheme:
             to_simple = getattr(self.scheme, 'to_simple', lambda s: s)
-            simple = to_simple(value, simple)
+            simple = to_simple(value, simple, serializer=self)
 
         return simple
 
