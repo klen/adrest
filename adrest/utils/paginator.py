@@ -38,14 +38,14 @@ class Paginator(object):
         return self.page.object_list
 
     @property
-    def next(self):
+    def next_page(self):
         if self.page.has_next():
             self.query_dict['page'] = self.page.next_page_number()
             return "%s?%s" % (self.path, urlencode(self.query_dict))
         return ""
 
     @property
-    def previous(self):
+    def previous_page(self):
         if self.page.has_previous():
             previous = self.page.previous_page_number()
             if previous == 1:

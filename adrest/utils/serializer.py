@@ -59,8 +59,8 @@ class BaseSerializer(object):
             return dict(
                 count=value.count,
                 page=value.page.number,
-                next=value.next,
-                prev=value.previous,
+                next=value.next_page,
+                prev=value.previous_page,
                 resources=self.to_simple(value.resources, **options)
             )
 

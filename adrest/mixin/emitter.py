@@ -79,11 +79,12 @@ class EmitterMixin(object):
         # Append pagination headers
         if isinstance(content, Paginator):
             linked_resources = []
-            if content.next:
-                linked_resources.append('<%s>; rel="next"' % content.next)
-            if content.previous:
+            if content.next_page:
+                linked_resources.append('<{0}>; rel="next"'.format(
+                    content.next_page))
+            if content.previous_page:
                 linked_resources.append(
-                    '<%s>; rel="previous"' % content.previous)
+                    '<{0}>; rel="previous"'.format(content.previous_page))
             response["Link"] = ", ".join(linked_resources)
 
         return response
