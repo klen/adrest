@@ -1,4 +1,4 @@
-2013-04-04  klen
+2013-04-04  klen 2.1.0
 
 	* [WARNING] Change resource.template attribute
 	  template -> emit_template
