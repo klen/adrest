@@ -11,8 +11,17 @@ class TaskResource(ResourceView):
 
 class Task2Resource(ResourceView):
     allowed_methods = 'GET', 'POST'
+    emit_include = 'description'
     emitters = emitter.JSONEmitter
     model = Task
+
+    @staticmethod
+    def to_simple__description(task):
+        return "{0} -- {1}".format(task.title, task.user.username)
+
+    def to_simple(self, content, simple):
+        simple['api'] = self.api.version
+        return simple
 
 
 API = Api(version='1.0b')

@@ -1,4 +1,4 @@
-from django.http import QueryDict
+from django.http import QueryDict, HttpResponse
 from django.utils import simplejson, importlib
 
 from ..utils.emitter import JSONPEmitter, JSONEmitter
@@ -151,9 +151,13 @@ class AutoJSONRPC(RPCResource):
         request.META['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
         params = payload.pop('params', dict())
         response = self.api.call(resource_name, request, **params)
-        response.finaly = True
-        assert response.status_code == 200, response.content
-        return response
+
+        # Make response for prevent serialization
+        new_response = HttpResponse(response.content,
+                                    status=response.status_code)
+        new_response._headers = response._headers # nolint
+        assert new_response.status_code == 200, new_response.content
+        return new_response
 
 
 # pymode:lint_ignore=E1103,W0703

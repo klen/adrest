@@ -56,11 +56,6 @@ class MetaTest(TestCase):
         self.assertEqual(AuthorResource.meta.emitters_dict, {
             emitter.JSONEmitter.media_type: emitter.JSONEmitter,
         })
-        self.assertEqual(AuthorResource.meta.emitters_types, [
-            emitter.JSONEmitter.media_type,
-        ])
-        self.assertEqual(
-            AuthorResource.meta.default_emitter, emitter.JSONEmitter)
         self.assertEqual(AuthorResource.meta.parsers_dict, {
             parser.FormParser.media_type: parser.FormParser,
             parser.XMLParser.media_type: parser.XMLParser,

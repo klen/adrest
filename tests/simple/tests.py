@@ -1,5 +1,7 @@
+from milkman.dairy import milkman # nolint
+
 from .api import API
-from milkman.dairy import milkman
+from .models import Task
 from adrest.tests.utils import AdrestTestCase, TestCase
 
 
@@ -16,7 +18,15 @@ class SimpleTestCase(AdrestTestCase):
         self.assertContains(response, 'true')
 
         response = self.post_resource('task2', data=dict(title='new'))
-        self.assertEqual(response.content, '{"user": ["This field is required."]}')
+        self.assertEqual(
+            response.content,
+            '{"api": "1.0b", "user": ["This field is required."]}')
+
+        task = milkman.deliver(Task)
+        response = self.get_resource('task2')
+        self.assertContains(
+            response,
+            "{0} -- {1}".format(task.title, task.user.username))
 
 
 class SerializerTest(TestCase):
@@ -27,13 +37,15 @@ class SerializerTest(TestCase):
 
     def test_simply(self):
         from adrest.utils.serializer import BaseSerializer
-        from .models import Task
         user = milkman.deliver('auth.User', username="testusername")
-        data = [milkman.deliver(Task, user=user), milkman.deliver(Task, user=user),
-                28, 'string']
+        data = [
+            milkman.deliver(Task, user=user),
+            milkman.deliver(Task, user=user),
+            28, 'string']
 
-        serializer = BaseSerializer(_exclude='fake', _include='username', user=dict(
-            _fields='email'))
+        serializer = BaseSerializer(
+            _exclude='fake', _include='username', user=dict(
+                _fields='email'))
         self.assertEqual(serializer.options['_exclude'], set(['fake']))
 
         out = serializer.to_simple(data)
@@ -63,3 +75,24 @@ class SerializerTest(TestCase):
         worker = JSONSerializer()
         test = worker.serialize(authors)
         self.assertTrue("main.author" in test)
+
+    def test_types(self):
+        from adrest.utils.serializer import BaseSerializer
+        from collections import OrderedDict
+        from datetime import datetime
+
+        serializer = BaseSerializer()
+        data = dict(
+            string_='test',
+            unicode_=unicode('test'),
+            datetime_=datetime(2007, 01, 01),
+            odict_=OrderedDict(value=1),
+        )
+
+        value = serializer.serialize(data)
+        self.assertEqual(value, dict(
+            string_=u'test',
+            unicode_=u'test',
+            datetime_='2007-01-01T00:00:00',
+            odict_=dict(value=1),
+        ))

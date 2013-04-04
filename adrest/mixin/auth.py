@@ -8,19 +8,16 @@ from ..utils.tools import as_tuple
 __all__ = 'AuthMixin',
 
 
-def check_authenticators(authenticators):
-    authenticators = as_tuple(authenticators)
-    for a in authenticators:
-        assert issubclass(a, AbstractAuthenticator), \
-            "Authenticators must be subclasses of AbstractAuthenticator"
-    return authenticators
-
-
 class AuthMeta(type):
-
+    """ Prepare and checks resource.authenticators.
+    """
     def __new__(mcs, name, bases, params):
         cls = super(AuthMeta, mcs).__new__(mcs, name, bases, params)
-        cls.authenticators = check_authenticators(cls.authenticators)
+        cls.authenticators = as_tuple(cls.authenticators)
+        for a in cls.authenticators:
+            assert issubclass(a, AbstractAuthenticator), \
+                "{0}.authenticators should be subclasses \
+                    of `adrest.utils.auth.AbstractAuthenticator`"
         return cls
 
 
@@ -30,8 +27,10 @@ class AuthMixin(object):
     __metaclass__ = AuthMeta
 
     authenticators = AnonimousAuthenticator
-    auth = None
-    identifier = ''
+
+    def __init__(self, *args, **kwargs):
+        super(AuthMixin, self).__init__(*args, **kwargs)
+        self.auth = None
 
     def authenticate(self, request):
         """ Attempt to authenticate the request, returning an authentication
@@ -41,7 +40,6 @@ class AuthMixin(object):
             it will simply be a :class:`User` instance.
         """
         authenticators = self.authenticators
-        self.identifier = request.META.get('REMOTE_ADDR', 'anonymous')
 
         if request.method == 'OPTIONS' and ALLOW_OPTIONS:
             self.auth = AnonimousAuthenticator(self)

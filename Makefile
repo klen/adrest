@@ -1,9 +1,10 @@
+VIRTUALENV=$(shell echo "$${VDIR:-'.env'}")
 MODULE=adrest
 SPHINXBUILD=sphinx-build
 ALLSPHINXOPTS= -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 BUILDDIR=_build
 
-all: .env
+all: $(VIRTUALENV)
 
 .PHONY: help
 # target: help - Display callable targets
@@ -45,6 +46,6 @@ docs:
 	python setup.py build_sphinx --source-dir=docs/ --build-dir=docs/_build --all-files
 	python setup.py upload_sphinx --upload-dir=docs/_build/html
 
-.env: requirements.txt
-	virtualenv --no-site-packages .env
-	.env/bin/pip install -M -r requirements.txt
+$(VIRTUALENV): requirements.txt
+	virtualenv --no-site-packages $(VIRTUALENV)
+	$(VIRTUALENV)/bin/pip install -M -r requirements.txt

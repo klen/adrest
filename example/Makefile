@@ -1,4 +1,4 @@
-VIRTUALENV=$(CURDIR)/.env
+VIRTUALENV=$(shell echo "$${VDIR:-'.env'}")
 PYTHON=$(VIRTUALENV)/bin/python
 
 DJANGO_MANAGER=$(PYTHON) $(CURDIR)/manage.py
