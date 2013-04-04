@@ -88,7 +88,7 @@ class EmitterMixin(object):
         return response
 
     @staticmethod
-    def to_simple(content, simple):
+    def to_simple(content, simple, serializer=None):
         """ Modify simple structure before response.
         """
         return simple

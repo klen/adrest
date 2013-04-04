@@ -16,10 +16,10 @@ class Task2Resource(ResourceView):
     model = Task
 
     @staticmethod
-    def to_simple__description(task):
+    def to_simple__description(task, serializer):
         return "{0} -- {1}".format(task.title, task.user.username)
 
-    def to_simple(self, content, simple):
+    def to_simple(self, content, simple, serializer=None):
         simple['api'] = self.api.version
         return simple
 
