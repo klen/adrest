@@ -1,6 +1,6 @@
 from adrest.tests.utils import AdrestTestCase
-from milkman.dairy import milkman
 from django.utils import simplejson
+from milkman.dairy import milkman
 
 from .api import API
 from .models import Root, Child
@@ -16,7 +16,8 @@ class RPCTestCase(AdrestTestCase):
 
         self.root2 = Root.objects.create(name='test_root2')
         for i in xrange(10):
-            Child.objects.create(root=self.root2, name='test_child2', odd=i % 2)
+            Child.objects.create(
+                root=self.root2, name='test_child2', odd=i % 2)
 
     def test_base_rpc(self):
 
@@ -184,7 +185,8 @@ class RPCTestCase(AdrestTestCase):
             key=111,
             rpc=dict(
                 data=dict(name='New name'),
-                params=dict(root=self.root1.pk, child=self.root1.child_set.all()[0].pk),
+                params=dict(root=self.root1.pk,
+                            child=self.root1.child_set.all()[0].pk),
                 method='root-child.put'))
         self.assertContains(response, 'New name')
         child = self.root1.child_set.all()[0]
@@ -220,3 +222,12 @@ class RPCTestCase(AdrestTestCase):
                 params=['test'],
             ))
         self.assertEqual(response.content, '"POSTtest"')
+
+    def test_private(self):
+        response = self.rpc(
+            'rpc2',
+            rpc=dict(
+                jsonrpc='2.0',
+                method='__private_method',
+            ))
+        self.assertContains(response, 'error')

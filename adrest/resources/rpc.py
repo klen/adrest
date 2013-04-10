@@ -1,5 +1,5 @@
 from django.http import QueryDict
-from django.utils import simplejson
+from django.utils import simplejson, importlib
 
 from ..utils.emitter import JSONPEmitter, JSONEmitter
 from ..utils.parser import JSONParser, FormParser
@@ -8,11 +8,7 @@ from ..utils.response import SerializedHttpResponse
 from ..views import ResourceView, ResourceMetaClass
 
 
-class RPCMeta(ResourceMetaClass):
-    def __new__(mcs, name, bases, params):
-        cls = super(RPCMeta, mcs).__new__(mcs, name, bases, params)
-        cls.configure_rpc()
-        return cls
+__all__ = 'get_request', 'RPCResource', 'AutoJSONRPC'
 
 
 def get_request(func):
@@ -20,6 +16,15 @@ def get_request(func):
     """
     func.request = True
     return func
+
+
+class RPCMeta(ResourceMetaClass):
+    """ Setup RPC methods by Scheme.
+    """
+    def __new__(mcs, name, bases, params):
+        cls = super(RPCMeta, mcs).__new__(mcs, name, bases, params)
+        cls.configure_rpc()
+        return cls
 
 
 class RPCResource(ResourceView):
@@ -33,12 +38,13 @@ class RPCResource(ResourceView):
         be answered out of order.
 
     """
+
     allowed_methods = 'get', 'post'
-    url_regex = r'^rpc$'
     emitters = JSONEmitter, JSONPEmitter
+    methods = dict()
     parsers = JSONParser, FormParser
     scheme = None
-    methods = dict()
+    url_regex = r'^rpc$'
 
     __metaclass__ = RPCMeta
 
@@ -49,13 +55,22 @@ class RPCResource(ResourceView):
 
     @classmethod
     def configure_rpc(cls, scheme=None):
+        """ Get method from scheme.
+        """
         scheme = scheme or cls.scheme
         if not cls.scheme:
             return False
 
-        for m in [getattr(cls.scheme, m) for m in dir(cls.scheme)
-                  if hasattr(getattr(cls.scheme, m), '__call__')]:
-            cls.methods[m.__name__] = m
+        if isinstance(scheme, basestring):
+            scheme = importlib.import_module(scheme)
+
+        methods = getattr(scheme, '__all__', None) \
+            or [m for m in dir(scheme) if not m.startswith('_')]
+
+        for mname in methods:
+            method = getattr(scheme, mname)
+            if hasattr(method, '__call__'):
+                cls.methods[method.__name__] = method
 
     def handle_request(self, request, **resources):
 
@@ -108,6 +123,7 @@ class AutoJSONRPC(RPCResource):
 
     """
     separator = '.'
+    url_name = 'autojsonrpc'
 
     @staticmethod
     def configure_rpc(scheme=None):

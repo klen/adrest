@@ -10,7 +10,10 @@ from .views import ResourceView
 from .utils import exceptions, status, tools, emitter
 
 
-LOG = logging.getLogger('adrest')
+__all__ = 'Api',
+
+
+logger = logging.getLogger('adrest')
 
 
 class Api(object):
@@ -67,9 +70,12 @@ class Api(object):
         """
 
         # Must be instance of ResourceView
-        assert issubclass(
-            resource,
-            ResourceView), "%s not subclass of ResourceView" % resource
+        assert issubclass(resource, ResourceView), \
+            "{0} not subclass of ResourceView".format(resource)
+
+        # Cannot be abstract
+        assert not resource.abstract, \
+            "Attempt register of abstract resource: {0}.".format(resource)
 
         # Fabric of resources
         params = dict(self.params, **params)
@@ -88,7 +94,7 @@ class Api(object):
                 resource.__name__, len(self.resources)), (resource,), params)
 
         if self.resources.get(resource.meta.url_name):
-            LOG.warning(
+            logger.warning(
                 "A resource '%r' is replacing the existing record for '%s'",
                 resource, self.resources.get(resource.meta.url_name))
 

@@ -1,3 +1,8 @@
+2013-04-01  klen 2.0.11
+
+	* RPC scheme could be defined as string;
+	* Minor bugfixes
+
 2013-03-22  klen 2.0.9
 
 	* Respect resource.name;
