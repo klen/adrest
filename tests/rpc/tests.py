@@ -1,6 +1,6 @@
 from adrest.tests.utils import AdrestTestCase
 from django.utils import simplejson
-from milkman.dairy import milkman
+from milkman.dairy import milkman # nolint
 
 from .api import API
 from .models import Root, Child

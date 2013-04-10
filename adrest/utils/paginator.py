@@ -11,13 +11,15 @@ class Paginator(object):
     """
     def __init__(self, request, qs, max_res):
         self.query_dict = dict(request.GET.items())
-        self.paginator = None
         self._page = None
         self.path = request.path
 
-        max_items = int(self.query_dict.get('max') or max_res)
-        if max_items:
-            self.paginator = DjangoPaginator(qs, max_items)
+        try:
+            self.paginator = DjangoPaginator(
+                qs, self.query_dict.get('max') or max_res)
+            assert self.paginator.per_page
+        except (ValueError, AssertionError):
+            self.paginator = None
 
     @property
     def page(self):
@@ -38,14 +40,14 @@ class Paginator(object):
         return self.page.object_list
 
     @property
-    def next(self):
+    def next_page(self):
         if self.page.has_next():
             self.query_dict['page'] = self.page.next_page_number()
             return "%s?%s" % (self.path, urlencode(self.query_dict))
         return ""
 
     @property
-    def previous(self):
+    def previous_page(self):
         if self.page.has_previous():
             previous = self.page.previous_page_number()
             if previous == 1:

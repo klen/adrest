@@ -53,9 +53,9 @@ class SomeOtherResource(ResourceView):
 
 class CustomResource(ResourceView):
     allowed_methods = 'GET', 'POST'
+    emit_template = 'main/custom.xml'
     model = 'main.book'
     queryset = Book.objects.all()
-    template = 'main/custom.xml'
 
     def get(self, request, **kwargs):
         return list(self.queryset)

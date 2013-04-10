@@ -1,69 +1,71 @@
-import abc
 import collections
-import json
 from numbers import Number
 from datetime import datetime, date, time
 from decimal import Decimal
 
 from django.db.models import Model
-from django.http import HttpResponse
+from django.utils import simplejson
 from django.utils.encoding import smart_unicode
 
 from .paginator import Paginator
 from .tools import as_tuple
 
 
-class AbstractSerializer(object):
+class BaseSerializer(object):
 
-    __meta__ = abc.ABCMeta
-
-    def __init__(self, **options):
+    def __init__(self, _scheme=None, **options):
+        self.scheme = _scheme
         self.options = self.init_options(**options)
 
     @staticmethod
     def init_options(_fields=None, _include=None, _exclude=None, **related):
         options = dict(
-            _fields=set(_fields and as_tuple(_fields) or []),
-            _include=set(_include and as_tuple(_include) or []),
-            _exclude=set(_exclude and as_tuple(_exclude) or []),
+            _fields=set(as_tuple(_fields)),
+            _include=set(as_tuple(_include)),
+            _exclude=set(as_tuple(_exclude)),
         )
         options.update(related)
         return options
 
-    def to_simple(self, value, **options):
+    def to_simple(self, value, **options):  # nolint
         " Simplify object. "
 
-        options = options or self.options
-
+        # (string, unicode)
         if isinstance(value, basestring):
             return smart_unicode(value)
 
+        # (int, long, float, real, complex, decimal)
         if isinstance(value, Number):
             return float(str(value)) if isinstance(value, Decimal) else value
 
+        # (datetime, data, time)
         if isinstance(value, (datetime, date, time)):
             return self.to_simple_datetime(value)
 
-        if isinstance(value, dict):
-            return dict((k, self.to_simple(v, **options)) for k, v in value.iteritems())
+        # (dict, ordereddict, mutable mapping)
+        if isinstance(value, collections.MutableMapping):
+            return dict(
+                (k, self.to_simple(v, **options)) for k, v in value.items())
+
+        # (tuple, list, set, iterators)
+        if isinstance(value, collections.Iterable):
+            return [self.to_simple(o, **options) for o in value]
+
+        # (None, True, False)
+        if value is None or value is True or value is False:
+            return value
 
         if isinstance(value, Paginator):
             return dict(
                 count=value.count,
                 page=value.page.number,
-                next=value.next,
-                prev=value.previous,
+                next=value.next_page,
+                prev=value.previous_page,
                 resources=self.to_simple(value.resources, **options)
             )
 
-        if isinstance(value, collections.Iterable):
-            return [self.to_simple(o, **options) for o in value]
-
         if isinstance(value, Model):
             return self.to_simple_model(value, **options)
-
-        if value is None or value is True or value is False:
-            return value
 
         return str(value)
 
@@ -83,7 +85,8 @@ class AbstractSerializer(object):
 
         result = dict(
             model=smart_unicode(value._meta),
-            pk=smart_unicode(value._get_pk_val(), strings_only=True),
+            pk=smart_unicode(
+                value._get_pk_val(), strings_only=True),
             fields=dict(),
         )
 
@@ -92,62 +95,62 @@ class AbstractSerializer(object):
                       for f in value._meta.get_all_related_objects()]
         default_fields = set([field.name for field in value._meta.fields
                               if field.serialize])
-        serialized_fields = (default_fields | options['_include']) - options['_exclude']
-        for fname in options['_fields'] or serialized_fields:
+        serialized_fields = options.get('_fields') or (
+            default_fields | options.get(
+                '_include', set())) - options.get('_exclude', set())
+        for fname in serialized_fields:
+
+            to_simple = getattr(self.scheme,
+                                'to_simple__{0}'.format(fname),
+                                None)
+            if to_simple:
+                result['fields'][fname] = to_simple(value, serializer=self)
+                continue
 
             # Related serialization
             if options.get(fname):
                 target = getattr(value, fname)
                 if fname in m2m_fields + o2m_fields:
                     target = target.all()
-                result['fields'][fname] = self.to_simple(target, **self.init_options(**options.get(fname)))
+                result['fields'][fname] = self.to_simple(
+                    target, **self.init_options(**options.get(fname)))
                 continue
 
             if fname in default_fields:
                 field = value._meta.get_field(fname)
                 result['fields'][fname] = self.to_simple(
-                    field.value_from_object(value))
+                    field.value_from_object(value), **options)
                 continue
 
-            result['fields'][fname] = self.to_simple(getattr(value, fname, None))
+            result['fields'][fname] = self.to_simple(
+                getattr(value, fname, None), **options)
 
         return result
 
-    @abc.abstractmethod
     def serialize(self, value):
-        raise NotImplementedError
+        simple = self.to_simple(value, **self.options)
+        if self.scheme:
+            to_simple = getattr(self.scheme, 'to_simple', lambda s: s)
+            simple = to_simple(value, simple, serializer=self)
 
-
-class BaseSerializer(AbstractSerializer):
-
-    def serialize(self, value):
-
-        if isinstance(value, HttpResponse):
-            return value.content
-
-        return self.to_simple(value)
+        return simple
 
 
 class JSONSerializer(BaseSerializer):
 
     def serialize(self, value):
+        simple = super(JSONSerializer, self).serialize(value)
+        return simplejson.dumps(simple, ensure_ascii=False)
 
-        if isinstance(value, HttpResponse):
-            return value.content
-
-        return json.dumps(self.to_simple(value), ensure_ascii=False)
 
 
 class XMLSerializer(BaseSerializer):
 
     def serialize(self, value):
+        simple = super(XMLSerializer, self).serialize(value)
+        return ''.join(s for s in self._dumps(simple))
 
-        if isinstance(value, HttpResponse):
-            return value.content
-
-        return ''.join(s for s in self._dumps(self.to_simple(value)))
-
-    def _dumps(self, value):
+    def _dumps(self, value):  # nolint
         tag = it = None
 
         if isinstance(value, list):
@@ -183,4 +186,4 @@ class XMLSerializer(BaseSerializer):
             yield "</%s>" % tag
 
 
-# lint_ignore=W901,R0911
+# lint_ignore=W901,R0911,W0212

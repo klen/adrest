@@ -8,15 +8,13 @@ class MetaOptions(object):
         self.parents = []
         self.model_fields = set()
 
-        self.emitters_dict = dict()
-        self.emitters_types = []
-        self.default_emitter = None
-
         self.parsers_dict = dict()
         self.default_parser = None
 
     def __str__(self):
-        return "%(url_name)s(%(name)s) - %(url_regex)s %(parents)s" % self.__dict__
+        return "%(url_name)s(%(name)s) - %(url_regex)s %(parents)s".format(
+            self.__dict__
+        )
 
     __repr__ = __str__
 
