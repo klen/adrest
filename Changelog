@@ -23,6 +23,10 @@
 	class. Also you can send max=0 for disable it dinamicly;
 	* You can proxy a request to rpc methods (use @get_request);
 
+2013-xx-xx  denya 2.0.7
+
+	* Add ensure_ascii=False by default in json.dumps
+
 2012-11-19  klen  2.0.6
 
 	* Fix OPTIONS method in RPC calls
