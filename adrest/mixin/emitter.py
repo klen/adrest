@@ -50,7 +50,7 @@ class EmitterMixin(object):
                     }
                 }
 
-                def dehydrate__customfield(self, user):
+                def to_simple__customfield(self, user):
                     return "I'm hero! " + user.username
 
     """
