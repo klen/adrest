@@ -137,7 +137,8 @@ class JSONSerializer(BaseSerializer):
 
     def serialize(self, value):
         simple = super(JSONSerializer, self).serialize(value)
-        return simplejson.dumps(simple)
+        return simplejson.dumps(simple, ensure_ascii=False)
+
 
 
 class XMLSerializer(BaseSerializer):
