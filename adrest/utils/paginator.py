@@ -21,6 +21,16 @@ class Paginator(object):
         except (ValueError, AssertionError):
             self.paginator = None
 
+    def to_simple(self, serializer=None):
+        return dict(
+            count=self.paginator.count,
+            page=self.page,
+            num_pages=self.paginator.num_pages,
+            next=self.next_page,
+            prev=self.previous_page,
+            resources=self.resources,
+        )
+
     @property
     def page(self):
         if not self._page:

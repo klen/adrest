@@ -1,4 +1,5 @@
 import collections
+import inspect
 from numbers import Number
 from datetime import datetime, date, time
 from decimal import Decimal
@@ -7,7 +8,6 @@ from django.db.models import Model
 from django.utils import simplejson
 from django.utils.encoding import smart_unicode
 
-from .paginator import Paginator
 from .tools import as_tuple
 
 
@@ -55,13 +55,10 @@ class BaseSerializer(object):
         if value is None or value is True or value is False:
             return value
 
-        if isinstance(value, Paginator):
-            return dict(
-                count=value.count,
-                page=value.page.number,
-                next=value.next_page,
-                prev=value.previous_page,
-                resources=self.to_simple(value.resources, **options)
+        if hasattr(value, 'to_simple') and not inspect.isclass(value):
+            return self.to_simple(
+                value.to_simple(self),
+                **options
             )
 
         if isinstance(value, Model):
