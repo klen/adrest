@@ -396,8 +396,9 @@ class ResourceTest(AdrestTestCase):
                                      data=dict(author=self.author.pk, max=0))
         self.assertFalse(response.has_header("Link"))
 
-        response = self.get_resource('author-test-book',
-                                     data=dict(author=self.author.pk, max='all'))
+        response = self.get_resource(
+            'author-test-book',
+            data=dict(author=self.author.pk, max='all'))
         self.assertEquals(response.status_code, 200)
         self.assertFalse(response.has_header("Link"))
 
