@@ -44,6 +44,7 @@ class RPCResource(ResourceView):
     methods = dict()
     parsers = JSONParser, FormParser
     scheme = None
+    scheme_name = ''
     url_regex = r'^rpc$'
 
     __metaclass__ = RPCMeta
@@ -64,13 +65,16 @@ class RPCResource(ResourceView):
         if isinstance(scheme, basestring):
             scheme = importlib.import_module(scheme)
 
+        cls.scheme_name = scheme.__name__
+
         methods = getattr(scheme, '__all__', None) \
             or [m for m in dir(scheme) if not m.startswith('_')]
 
         for mname in methods:
             method = getattr(scheme, mname)
             if hasattr(method, '__call__'):
-                cls.methods[method.__name__] = method
+                cls.methods["{0}.{1}".format(
+                    cls.scheme_name, method.__name__)] = method
 
     def handle_request(self, request, **resources):
 
@@ -106,8 +110,10 @@ class RPCResource(ResourceView):
         else:
             args = list(as_tuple(params))
 
-        assert method in self.methods, "Unknown method: {0}".format(method)
-        method = self.methods[method]
+        method_key = "{0}.{1}".format(self.scheme_name, method)
+        assert method_key in self.methods, "Unknown method: {0}".format(method)
+        method = self.methods[method_key]
+
         if hasattr(method, 'request'):
             args.insert(0, request)
 

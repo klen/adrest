@@ -45,17 +45,26 @@ class SerializerTest(TestCase):
             28, 'string']
 
         serializer = BaseSerializer(
-            _exclude='fake', _include='username', user=dict(
-                _fields='email'))
-        self.assertEqual(serializer.options['_exclude'], set(['fake']))
+            exclude='fake',
+            include='username',
+            related=dict(
+                user=dict(fields='email')
+            ),
+        )
+        self.assertEqual(serializer.model_options['exclude'], set(['fake']))
 
-        out = serializer.to_simple(data, **serializer.options)
+        out = serializer.to_simple(data, **serializer.model_options)
         self.assertEqual(out[0]['fields']['username'], data[0].user.username)
 
         # Test m2o serialization
-        serializer = BaseSerializer(_include="task_set", task_set=dict(
-            _fields=[]))
-        out = serializer.to_simple(user, **serializer.options)
+        serializer = BaseSerializer(
+            include="task_set",
+            related=dict(
+                task_set=dict(
+                    fields=[])
+            ),
+        )
+        out = serializer.to_simple(user, **serializer.model_options)
 
         self.assertEquals(len(out['fields']['task_set']), 2)
         for task in out['fields']['task_set']:
@@ -73,9 +82,12 @@ class SerializerTest(TestCase):
         from ..main.models import Author
         from adrest.utils.serializer import JSONSerializer
         authors = Author.objects.all()
-        worker = JSONSerializer()
+        worker = JSONSerializer(options=dict(
+            separators=(',', ':')
+        ))
         test = worker.serialize(authors)
         self.assertTrue("main.author" in test)
+        self.assertTrue('"fields":{"active":true,"name"' in test)
 
     def test_types(self):
         from adrest.utils.serializer import BaseSerializer

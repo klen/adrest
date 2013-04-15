@@ -46,23 +46,23 @@ class EmitterMixin(object):
                 emit_fields = ['pk', 'user', 'customfield']
                 emit_related = {
                     'user': {
-                        _fields: ['username']
+                        fields: ['username']
                     }
                 }
 
-                def dehydrate__customfield(self, user):
+                def to_simple__customfield(self, user):
                     return "I'm hero! " + user.username
 
     """
     __metaclass__ = EmitterMeta
 
     emitters = JSONEmitter
-    emit_template = None
-    emit_fields = None
-    emit_related = None
-    emit_include = None
     emit_exclude = None
-    emit_format = 'django'
+    emit_fields = None
+    emit_include = None
+    emit_options = None
+    emit_related = None
+    emit_template = None
 
     def emit(self, content, request=None, emitter=None):
         """ Serialize response.
