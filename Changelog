@@ -1,3 +1,10 @@
+2013-04-15  klen
+
+	* Added field `emit_options` to resource class.
+	  Ex. emit_options = dict(ensure_ascii=False)
+	* [WARNING] Changed format of serializer's options
+	  _fields -> fields, _include -> include and etc.
+
 2013-04-12  klen
 
 	* Added num_pages property in paginator serialize result;
