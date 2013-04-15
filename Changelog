@@ -5,7 +5,7 @@
 	* [WARNING] Changed format of serializer's options
 	  _fields -> fields, _include -> include and etc.
 
-2013-04-12  klen
+2013-04-12  klen 2.1.5
 
 	* Added num_pages property in paginator serialize result;
 
