@@ -13,18 +13,19 @@ from .tools import as_tuple
 
 class BaseSerializer(object):
 
-    def __init__(self, _scheme=None, **options):
-        self.scheme = _scheme
-        self.options = self.init_options(**options)
+    def __init__(self, scheme=None, options=None, **model_options):
+        self.scheme = scheme
+        self.serializer_options = options or dict()
+        self.model_options = self.init_options(**model_options)
 
     @staticmethod
-    def init_options(_fields=None, _include=None, _exclude=None, **related):
+    def init_options(fields=None, include=None, exclude=None, related=None):
         options = dict(
-            _fields=set(as_tuple(_fields)),
-            _include=set(as_tuple(_include)),
-            _exclude=set(as_tuple(_exclude)),
+            fields=set(as_tuple(fields)),
+            include=set(as_tuple(include)),
+            exclude=set(as_tuple(exclude)),
+            related=related or dict(),
         )
-        options.update(related)
         return options
 
     def to_simple(self, value, **options):  # nolint
@@ -78,8 +79,9 @@ class BaseSerializer(object):
             result = result[:12]
         return result
 
-    def to_simple_model(self, value, **options):
-
+    def to_simple_model(self, value, fields=None, include=None, exclude=None, related=None): # nolint
+        """ Convert model to simple python structure.
+        """
         result = dict(
             model=smart_unicode(value._meta),
             pk=smart_unicode(
@@ -92,9 +94,7 @@ class BaseSerializer(object):
                       for f in value._meta.get_all_related_objects()]
         default_fields = set([field.name for field in value._meta.fields
                               if field.serialize])
-        serialized_fields = options.get('_fields') or (
-            default_fields | options.get(
-                '_include', set())) - options.get('_exclude', set())
+        serialized_fields = fields or (default_fields | include) - exclude
         for fname in serialized_fields:
 
             to_simple = getattr(self.scheme,
@@ -105,27 +105,29 @@ class BaseSerializer(object):
                 continue
 
             # Related serialization
-            if options.get(fname):
+            if related.get(fname):
                 target = getattr(value, fname)
                 if fname in m2m_fields + o2m_fields:
                     target = target.all()
                 result['fields'][fname] = self.to_simple(
-                    target, **self.init_options(**options.get(fname)))
+                    target, **self.init_options(**related.get(fname)))
                 continue
 
             if fname in default_fields:
                 field = value._meta.get_field(fname)
                 result['fields'][fname] = self.to_simple(
-                    field.value_from_object(value), **options)
+                    field.value_from_object(value), fields=fields,
+                    include=include, exclude=exclude, related=related)
                 continue
 
             result['fields'][fname] = self.to_simple(
-                getattr(value, fname, None), **options)
+                getattr(value, fname, None), fields=fields, include=include,
+                exclude=exclude, related=related)
 
         return result
 
     def serialize(self, value):
-        simple = self.to_simple(value, **self.options)
+        simple = self.to_simple(value, **self.model_options)
         if self.scheme:
             to_simple = getattr(self.scheme, 'to_simple', lambda s: s)
             simple = to_simple(value, simple, serializer=self)
@@ -137,7 +139,7 @@ class JSONSerializer(BaseSerializer):
 
     def serialize(self, value):
         simple = super(JSONSerializer, self).serialize(value)
-        return simplejson.dumps(simple)
+        return simplejson.dumps(simple, **self.serializer_options)
 
 
 class XMLSerializer(BaseSerializer):

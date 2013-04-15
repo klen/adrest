@@ -4,5 +4,5 @@
     <price>{{ content.price }}</price>
     <status>{{ content.status }}</status>
     {% adrest_include content.author price=content.price %}
-    <json>{% adrest_jsonify content _fields='status' %}</json>
+    <json>{% adrest_jsonify content fields='status' %}</json>
 </book>

@@ -75,11 +75,12 @@ class JSONEmitter(BaseEmitter):
 
     def serialize(self, content):
         worker = JSONSerializer(
-            _scheme=self.resource,
-            _fields=self.resource.emit_fields,
-            _include=self.resource.emit_include,
-            _exclude=self.resource.emit_exclude,
-            **self.resource.emit_related or dict()
+            scheme=self.resource,
+            fields=self.resource.emit_fields,
+            include=self.resource.emit_include,
+            exclude=self.resource.emit_exclude,
+            related=self.resource.emit_related,
+            options=self.resource.emit_options,
         )
         return worker.serialize(content)
 
@@ -99,11 +100,12 @@ class XMLEmitter(BaseEmitter):
 
     def serialize(self, content):
         worker = XMLSerializer(
-            _scheme=self.resource,
-            _fields=self.resource.emit_fields,
-            _include=self.resource.emit_include,
-            _exclude=self.resource.emit_exclude,
-            **self.resource.emit_related or dict()
+            scheme=self.resource,
+            fields=self.resource.emit_fields,
+            include=self.resource.emit_include,
+            exclude=self.resource.emit_exclude,
+            related=self.resource.emit_exclude,
+            options=self.resource.emit_options,
         )
         return self.xmldoc_tpl % (
             'true' if not self.response.error else 'false',

@@ -1,3 +1,10 @@
+2013-04-15  klen
+
+	* Added field `emit_options` to resource class.
+	  Ex. emit_options = dict(ensure_ascii=False)
+	* [WARNING] Changed format of serializer's options
+	  _fields -> fields, _include -> include and etc.
+
 2013-04-12  klen
 
 	* Added num_pages property in paginator serialize result;
@@ -26,6 +33,10 @@
 	* Pagination can be disabled by set `limit_per_page=0` in resource
 	class. Also you can send max=0 for disable it dinamicly;
 	* You can proxy a request to rpc methods (use @get_request);
+
+2013-xx-xx  denya 2.0.7
+
+	* Add ensure_ascii=False by default in json.dumps
 
 2012-11-19  klen  2.0.6
 
