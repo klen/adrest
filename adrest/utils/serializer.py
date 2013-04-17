@@ -82,8 +82,8 @@ class BaseSerializer(object):
     def to_simple_model(self, value, **options): # nolint
         """ Convert model to simple python structure.
         """
-        options = options or self.init_options()
-        fields, include, exclude, related = options['fields'], options['include'], options['exclude'], options['related']
+        options = self.init_options(**options)
+        fields, include, exclude, related = options['fields'], options['include'], options['exclude'], options['related'] # nolint
 
         result = dict(
             model=smart_unicode(value._meta),
