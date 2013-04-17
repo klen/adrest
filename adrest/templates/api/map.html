@@ -79,14 +79,18 @@
                     </dl>
 
                 {% if info.fields %}
-                <span class="uri_link-active" href="#">Form data</span>
-                <table class="uri_info info">
-                    {% for f, v in info.fields %}
-                        <tr>
-                            <td {% if v.required %} class="uri_info_required" {% endif %}> {{ f }} </td>
-                            <td> {{ v.label }}. {{ v.help }} </td>
-                    {% endfor %}
-                </table>{% endif %}
+                    <div>
+                        <span class="uri_link-active" href="#">Form data</span>
+                        <table class="uri_info info">
+                            {% for f, v in info.fields %}
+                            <tr>
+                                <td {% if v.required %} class="uri_info_required" {% endif %}> {{ f }} </td>
+                                <td> {{ v.label }}. {{ v.help }} </td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                {% endif %}
                 {% if info.methods %}
                 <span class="uri_link-active" href="#">RPC methods</span>
                 <table class="uri_info info">
