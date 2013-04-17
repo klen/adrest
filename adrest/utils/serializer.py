@@ -31,8 +31,6 @@ class BaseSerializer(object):
     def to_simple(self, value, **options):  # nolint
         " Simplify object. "
 
-        options = options or self.model_options
-
         # (string, unicode)
         if isinstance(value, basestring):
             return smart_unicode(value)
@@ -81,9 +79,12 @@ class BaseSerializer(object):
             result = result[:12]
         return result
 
-    def to_simple_model(self, value, fields=None, include=None, exclude=None, related=None): # nolint
+    def to_simple_model(self, value, **options): # nolint
         """ Convert model to simple python structure.
         """
+        options = options or self.init_options()
+        fields, include, exclude, related = options['fields'], options['include'], options['exclude'], options['related']
+
         result = dict(
             model=smart_unicode(value._meta),
             pk=smart_unicode(
