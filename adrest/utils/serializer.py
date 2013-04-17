@@ -31,6 +31,8 @@ class BaseSerializer(object):
     def to_simple(self, value, **options):  # nolint
         " Simplify object. "
 
+        options = options or self.model_options
+
         # (string, unicode)
         if isinstance(value, basestring):
             return smart_unicode(value)

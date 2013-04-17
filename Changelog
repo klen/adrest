@@ -1,4 +1,4 @@
-2013-04-17  klen 2.1.7
+2013-04-17  klen 2.1.8
 
 	* Added field `emit_options` to resource class.
 	  Ex. emit_options = dict(ensure_ascii=False)

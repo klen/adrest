@@ -10,6 +10,7 @@ branches:
         - develop
 
 install:
+    - "if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install ordereddict; fi"
     - pip install -IM pylama
 
 script:
