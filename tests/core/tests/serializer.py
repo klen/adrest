@@ -70,12 +70,15 @@ class SerializerTest(TestCase):
                     fields=[])
             ),
         )
-        out = serializer.to_simple(user)
+        out = serializer.to_simple(user, **serializer.model_options)
 
         self.assertEquals(len(out['fields']['task_set']), 2)
         for task in out['fields']['task_set']:
             self.assertEquals(task['fields']['user'], user.pk)
             self.assertTrue('title' in task['fields'].keys())
+
+        out = serializer.to_simple(user)
+        self.assertTrue('model' in out)
 
     def test_xml(self):
         from adrest.utils.serializer import XMLSerializer
