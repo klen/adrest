@@ -8,3 +8,4 @@ class AuthorResource(ResourceView):
 class BookResource(ResourceView):
     parent = AuthorResource
     model = 'main.book'
+    allowed_methods = 'get', 'post', 'put'
