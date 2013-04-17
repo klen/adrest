@@ -80,6 +80,9 @@ class SerializerTest(TestCase):
         out = serializer.to_simple(user)
         self.assertTrue('model' in out)
 
+        out = serializer.to_simple(user, include=['task_set'])
+        self.assertTrue('task_set' in out)
+
     def test_xml(self):
         from adrest.utils.serializer import XMLSerializer
         from ...main.models import Book
