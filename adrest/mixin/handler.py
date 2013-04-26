@@ -39,7 +39,7 @@ class HandlerMeta(type):
             assert issubclass(
                 cls.model, Model), \
                 "'model' attribute must be subclass of Model "
-            cls.meta.name = cls.model._meta.module_name
+            cls.meta.name = params.get('name') or cls.model._meta.module_name
             cls.meta.model_fields = set(f.name for f in cls.model._meta.fields)
             if cls.queryset is None:
                 cls.queryset = cls.model.objects.all()

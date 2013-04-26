@@ -80,10 +80,7 @@ class Api(object):
         # Fabric of resources
         params = dict(self.params, **params)
         if params:
-            params['name'] = resource.name \
-                or params.get('name') \
-                or ''.join(bit for bit in resource.__name__.split(
-                           'Resource') if bit).lower()
+            params['name'] = resource.meta.name
 
             params['__module__'] = '%s.%s' % (
                 self.prefix, self.str_version.replace('.', '_'))
