@@ -1,4 +1,4 @@
-version_info = (2, 1, 11)
+version_info = (2, 1, 12)
 
 __version__ = version = '.'.join(map(str, version_info))
 __project__ = PROJECT = __name__
@@ -7,7 +7,8 @@ __license__ = LICENSE = "GNU LGPL"
 
 try:
     from django.conf import settings as django_settings # nolint
-    if not 'adrest' in django_settings.INSTALLED_APPS:
+    if django_settings.configured \
+       and not 'adrest' in django_settings.INSTALLED_APPS:
         import logging
         logging.warn('You should add "adrest" to INSTALLED_APPS.')
 except ImportError:

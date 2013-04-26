@@ -2,7 +2,7 @@ from django.test import TestCase
 from milkman.dairy import milkman
 
 
-class SerializerTest(TestCase):
+class CoreSerializerTest(TestCase):
 
     def setUp(self):
         for _ in range(1, 10):
