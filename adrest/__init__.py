@@ -7,7 +7,8 @@ __license__ = LICENSE = "GNU LGPL"
 
 try:
     from django.conf import settings as django_settings # nolint
-    if not 'adrest' in django_settings.INSTALLED_APPS:
+    if django_settings.configured \
+       and not 'adrest' in django_settings.INSTALLED_APPS:
         import logging
         logging.warn('You should add "adrest" to INSTALLED_APPS.')
 except ImportError:
