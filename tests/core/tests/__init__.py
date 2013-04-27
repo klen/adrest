@@ -1,8 +1,12 @@
-from ...simple.tests import * # nolint
-from ...rpc.tests import * # nolint
-from ...main.tests import * # nolint
+from ...main.tests import *
+from ...rpc.tests import *
+from ...simple.tests import *
 
-from .serializer import * # nolint
-from .handler import * # nolint
-from .resource import * # nolint
-from .api import * # nolint
+from .api import *
+from .handler import *
+from .resource import *
+from .serializer import *
+from .utils import *
+
+
+# lint_ignore=W404
