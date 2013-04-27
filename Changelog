@@ -1,6 +1,11 @@
+2013-04-27  horneds
+
+	* Update default form initialization (one instance in arguments);
+
 2013-04-26  horneds 2.1.12
 
 	* Respect resource name;
+	* Improvement folding (thanks @alvinfrancis);
 
 2013-04-17  klen 2.1.11
 
