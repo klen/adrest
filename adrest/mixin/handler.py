@@ -108,10 +108,10 @@ class HandlerMixin(object):
     def put(self, request, **resources):
         " Default PUT method. Uses self form. Allow bulk update. "
 
-        resource = resources.get(self.meta.name)
-        if not resource:
+        if not self.meta.name in resources or not resources[self.meta.name]:
             raise HttpError(
                 "Resource not found.", status=status.HTTP_404_NOT_FOUND)
+        resource = resources.pop(self.meta.name)
 
         updated = UpdatedList()
         for o in as_tuple(resource):
