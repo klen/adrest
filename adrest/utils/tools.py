@@ -10,7 +10,7 @@ def as_tuple(obj):
     if isinstance(obj, (tuple, set, list)):
         return tuple(obj)
 
-    if hasattr(obj, '__iter__'):
+    if hasattr(obj, '__iter__') and not isinstance(obj, dict):
         return obj
 
     return obj,
@@ -53,7 +53,8 @@ def gen_url_regex(resource):
 def fix_request(request):
     methods = "PUT", "PATCH"
 
-    if request.method in methods and not getattr(request, request.method, None):
+    if request.method in methods\
+            and not getattr(request, request.method, None):
 
         if hasattr(request, '_post'):
             del(request._post)
@@ -69,7 +70,7 @@ def fix_request(request):
     return request
 
 
-class FrozenDict(collections.Mapping):
+class FrozenDict(collections.Mapping): # nolint
     """ Immutable dict. """
 
     def __init__(self, *args, **kwargs):
