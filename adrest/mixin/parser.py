@@ -29,7 +29,7 @@ class ParserMixin(object):
 
     def parse(self, request):
         " Parse request content "
-        if request.method in ('POST', 'PUT', 'PATH'):
+        if request.method in ('POST', 'PUT', 'PATCH'):
             content_type = self.determine_content(request)
             if content_type:
                 split = content_type.split(';', 1)

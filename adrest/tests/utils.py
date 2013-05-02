@@ -3,43 +3,68 @@ from urlparse import urlparse
 
 from django.core.urlresolvers import reverse
 from django.db.models import Model
-from django.test import TestCase, Client
+from django.test import TestCase, client
 from django.utils import simplejson
+from django.utils.http import urlencode
 from django.utils.functional import curry
 
 
-MULTIPART_CONTENT = 'multipart/form-data; boundary=BoUnDaRyStRiNg'
+__all__ = 'AdrestRequestFactory', 'AdrestClient', 'AdrestTestCase'
 
 
-class AdrestClient(Client):
+def generic_method(rf, path, data=None, content_type=client.MULTIPART_CONTENT,
+                   follow=False, method='PUT', **extra):
 
-    def patch(self, path, data=None, content_type=MULTIPART_CONTENT, follow=False, **extra):  # nolint
-        " Send a resource to the server using PATCH. "
+    data = rf._encode_data(data, content_type)
+    parsed = urlparse(path)
+    r = {
+        'CONTENT_LENGTH': len(data),
+        'CONTENT_TYPE': content_type,
+        'PATH_INFO': rf._get_path(parsed),
+        'QUERY_STRING': parsed[4],
+        'REQUEST_METHOD': method,
+        'wsgi.input': FakePayload(data),
+    }
+    r.update(extra)
+    return rf.request(**r)
+
+
+class AdrestRequestFactory(client.RequestFactory):
+
+    put = curry(generic_method, method="PUT")
+    patch = curry(generic_method, method="PATCH")
+
+
+class AdrestClient(client.Client):
+
+    def put(self, path, data=None, content_type=client.MULTIPART_CONTENT,
+            follow=False, method='PUT', **extra):
 
         data = data or dict()
-        patch_data = self._encode_data(data, content_type)
-        parsed = urlparse(path)
-        r = {
-            'CONTENT_LENGTH': len(patch_data),
-            'CONTENT_TYPE': content_type,
-            'PATH_INFO': self._get_path(parsed),
-            'QUERY_STRING': parsed[4],
-            'REQUEST_METHOD': 'PATCH',
-            'wsgi.input': FakePayload(patch_data),
-        }
-        r.update(extra)
-        response = self.request(**r)
+        response = generic_method(
+            self, path, data=data, follow=follow, method=method, **extra)
         if follow:
             response = self._handle_redirects(response, **extra)
         return response
 
+    patch = curry(put, method='PATCH')
+
+    def delete(self, path, data={}, **extra):
+        "Construct a DELETE request."
+
+        parsed = urlparse(path)
+        r = {
+            'PATH_INFO':       self._get_path(parsed),
+            'QUERY_STRING':    urlencode(data, doseq=True) or parsed[4],
+            'REQUEST_METHOD': 'DELETE',
+        }
+        r.update(extra)
+        return self.request(**r)
+
 
 class AdrestTestCase(TestCase):
     api = None
-
-    def setUp(self):
-        assert self.api, "AdrestTestCase must have the api attribute."
-        self.client = AdrestClient()
+    client_class = AdrestClient
 
     def reverse(self, resource, **kwargs):
         """ Reverse resource by ResourceClass or name.
@@ -47,6 +72,8 @@ class AdrestTestCase(TestCase):
             :param resource: Resource Class or String name.
             :param **kwargs: Uri params
         """
+        assert self.api, "AdrestTestCase must have the api attribute."
+
         if isinstance(resource, basestring):
             url_name = resource
             assert self.api.resources.get(
@@ -88,7 +115,8 @@ class AdrestTestCase(TestCase):
             headers['content_type'] = 'application/json'
             data = simplejson.dumps(data)
 
-        return method(resource, data=data, **headers)
+        response = method(resource, data=data, **headers)
+        return self._jsonify(response)
 
     def rpc(self, resource, rpc=None, headers=None, callback=None, **kwargs):
         """ Emulate RPC call.
@@ -113,8 +141,18 @@ class AdrestTestCase(TestCase):
             method = self.client.post
             data = simplejson.dumps(data)
 
-        return method(
+        response = method(
             resource, data=data, content_type='application/json', **headers)
+        return self._jsonify(response)
+
+    @staticmethod
+    def _jsonify(response):
+        if response.get('Content-type') == 'application/json':
+            try:
+                response.json = simplejson.loads(response.content)
+            except ValueError:
+                return response
+        return response
 
     put_resource = curry(get_resource, method='put')
     post_resource = curry(get_resource, method='post')
@@ -140,3 +178,5 @@ class FakePayload(object):
         content = self.__content.read(num_bytes)
         self.__len -= num_bytes
         return content
+
+# lint_ignore=W0212,F0401

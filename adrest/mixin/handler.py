@@ -138,9 +138,8 @@ class HandlerMixin(object):
         return HttpResponse("")
 
     def patch(self, request, **resources):
-        " Default PATCH method. Do nothing. "
-
-        pass
+        " Default PATCH method."
+        return self.put(request, **resources)
 
     @staticmethod
     def options(request, **resources):
