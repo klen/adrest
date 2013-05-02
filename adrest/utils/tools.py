@@ -67,6 +67,8 @@ def fix_request(request):
         setattr(request, method, request.POST)
         request.method = method
 
+    request.adrest_fixed = True
+
     return request
 
 
