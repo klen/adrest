@@ -1,3 +1,7 @@
+2013-05-03  horneds 2.2.0
+
+	* Support Django 1.5
+
 2013-04-27  horneds 2.1.14
 
 	* Update default form initialization (one instance in arguments);

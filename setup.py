@@ -37,4 +37,14 @@ setup(
     test_suite='tests.run_tests',
     url=' http://github.com/klen/{0}'.format(PROJECT),
     version=version,
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Environment :: Web Environment',
+        'Framework :: Django',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)', # nolint
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Topic :: Utilities'
+    ],
 )
