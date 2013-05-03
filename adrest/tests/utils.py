@@ -2,11 +2,13 @@ from StringIO import StringIO
 from urlparse import urlparse
 
 from django.core.urlresolvers import reverse
+from django.conf import settings
 from django.db.models import Model
 from django.test import TestCase, client
 from django.utils import simplejson
 from django.utils.http import urlencode
 from django.utils.functional import curry
+from django.utils.encoding import smart_str
 
 
 __all__ = 'AdrestRequestFactory', 'AdrestClient', 'AdrestTestCase'
@@ -15,7 +17,11 @@ __all__ = 'AdrestRequestFactory', 'AdrestClient', 'AdrestTestCase'
 def generic_method(rf, path, data=None, content_type=client.MULTIPART_CONTENT,
                    follow=False, method='PUT', **extra):
 
-    data = rf._encode_data(data, content_type)
+    if content_type is client.MULTIPART_CONTENT:
+        data = rf._encode_data(data, content_type)
+    else:
+        data = smart_str(data, encoding=settings.DEFAULT_CHARSET)
+
     parsed = urlparse(path)
     r = {
         'CONTENT_LENGTH': len(data),
@@ -42,15 +48,18 @@ class AdrestClient(client.Client):
 
         data = data or dict()
         response = generic_method(
-            self, path, data=data, follow=follow, method=method, **extra)
+            self, path, data=data, content_type=content_type, follow=follow,
+            method=method, **extra)
         if follow:
             response = self._handle_redirects(response, **extra)
         return response
 
     patch = curry(put, method='PATCH')
 
-    def delete(self, path, data={}, **extra):
+    def delete(self, path, data=None, **extra):
         "Construct a DELETE request."
+
+        data = data or dict()
 
         parsed = urlparse(path)
         r = {
