@@ -7,6 +7,7 @@ from .handler import *
 from .resource import *
 from .serializer import *
 from .utils import *
+from .test import *
 
 
 # lint_ignore=W404
