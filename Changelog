@@ -1,3 +1,7 @@
+2013-05-07  horneds 2.2.2
+
+	* Fix bugs in serializer
+
 2013-05-03  horneds 2.2.1
 
 	* Support Django 1.5
