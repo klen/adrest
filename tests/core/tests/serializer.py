@@ -44,48 +44,53 @@ class CoreSerializerTest(TestCase):
 
     def test_django_model(self):
         from adrest.utils.serializer import BaseSerializer
-        user = milkman.deliver('auth.User', username="testusername")
+
+        pirate = milkman.deliver('core.pirate', name='Billy')
         data = [
-            milkman.deliver('simple.task', user=user),
-            milkman.deliver('simple.task', user=user),
+            milkman.deliver('core.boat', pirate=pirate),
+            milkman.deliver('core.boat', pirate=pirate),
             28, 'string']
 
         serializer = BaseSerializer(
             exclude='fake',
-            include='username',
+            include='pk',
             related=dict(
-                user=dict(fields='email')
+                pirate=dict(fields='character')
             ),
         )
         self.assertEqual(serializer.model_options['exclude'], set(['fake']))
 
         out = serializer.to_simple(data, **serializer.model_options)
-        self.assertEqual(out[0]['fields']['username'], data[0].user.username)
+        self.assertTrue(out[0]['fields']['pk'])
+        self.assertEqual(out[0]['fields']['pirate']['fields']['character'],
+                         data[0].pirate.character)
 
         # Test m2o serialization
         serializer = BaseSerializer(
-            include="task_set",
+            include="boat_set",
             related=dict(
-                task_set=dict(
+                boat_set=dict(
                     fields=[])
             ),
         )
-        out = serializer.to_simple(user, **serializer.model_options)
+        out = serializer.to_simple(pirate, **serializer.model_options)
 
-        self.assertEquals(len(out['fields']['task_set']), 2)
-        for task in out['fields']['task_set']:
-            self.assertEquals(task['fields']['user'], user.pk)
-            self.assertTrue('title' in task['fields'].keys())
+        self.assertEquals(len(out['fields']['boat_set']), 2)
+        for boat in out['fields']['boat_set']:
+            self.assertEquals(boat['fields']['pirate'], pirate.pk)
+            self.assertTrue('title' in boat['fields'].keys())
 
-        out = serializer.to_simple(user)
+        out = serializer.to_simple(pirate)
         self.assertTrue('model' in out)
 
-        out = serializer.to_simple(user, include=['task_set'])
-        self.assertTrue(out['fields']['task_set'])
+        out = serializer.to_simple(pirate, include=['boat_set'])
+        self.assertTrue(out['fields']['boat_set'])
+        self.assertEqual(len(list(out['fields']['boat_set'])), 2)
 
     def test_xml(self):
         from adrest.utils.serializer import XMLSerializer
         from ...main.models import Book
+
         for _ in range(1, 10):
             milkman.deliver(Book)
         worker = XMLSerializer()
@@ -95,6 +100,7 @@ class CoreSerializerTest(TestCase):
     def test_json(self):
         from ...main.models import Author
         from adrest.utils.serializer import JSONSerializer
+
         authors = Author.objects.all()
         worker = JSONSerializer(options=dict(
             separators=(',', ':')

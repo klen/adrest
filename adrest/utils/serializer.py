@@ -4,7 +4,8 @@ from numbers import Number
 from datetime import datetime, date, time
 from decimal import Decimal
 
-from django.db.models import Model
+from django.db.models import Model, Manager
+from django.db.models.fields import FieldDoesNotExist
 from django.utils import simplejson
 from django.utils.encoding import smart_unicode
 
@@ -79,53 +80,72 @@ class BaseSerializer(object):
             result = result[:12]
         return result
 
-    def to_simple_model(self, value, **options): # nolint
+    def to_simple_model(self, instance, **options): # nolint
         """ Convert model to simple python structure.
         """
         options = self.init_options(**options)
         fields, include, exclude, related = options['fields'], options['include'], options['exclude'], options['related'] # nolint
 
         result = dict(
-            model=smart_unicode(value._meta),
+            model=smart_unicode(instance._meta),
             pk=smart_unicode(
-                value._get_pk_val(), strings_only=True),
+                instance._get_pk_val(), strings_only=True),
             fields=dict(),
         )
 
-        m2m_fields = [f.name for f in value._meta.many_to_many]
+        m2m_fields = [f.name for f in instance._meta.many_to_many]
         o2m_fields = [f.get_accessor_name()
-                      for f in value._meta.get_all_related_objects()]
-        default_fields = set([field.name for field in value._meta.fields
+                      for f in instance._meta.get_all_related_objects()]
+        default_fields = set([field.name for field in instance._meta.fields
                               if field.serialize])
         serialized_fields = fields or (default_fields | include) - exclude
+
         for fname in serialized_fields:
 
-            to_simple = getattr(self.scheme,
-                                'to_simple__{0}'.format(fname),
-                                None)
+            # Respect `to_simple__<fname>`
+            to_simple = getattr(
+                self.scheme, 'to_simple__{0}'.format(fname), None)
+
             if to_simple:
-                result['fields'][fname] = to_simple(value, serializer=self)
+                result['fields'][fname] = to_simple(instance, serializer=self)
                 continue
 
-            # Related serialization
-            if related.get(fname):
-                target = getattr(value, fname)
-                if fname in m2m_fields + o2m_fields:
-                    target = target.all()
-                result['fields'][fname] = self.to_simple(
-                    target, **self.init_options(**related.get(fname)))
-                continue
+            related_options = related.get(fname, dict())
+            if related_options:
+                related_options = self.init_options(**related_options)
 
-            if fname in default_fields:
-                field = value._meta.get_field(fname)
-                result['fields'][fname] = self.to_simple(
-                    field.value_from_object(value), fields=fields,
-                    include=include, exclude=exclude, related=related)
-                continue
+            if fname in default_fields and not related_options:
+                field = instance._meta.get_field(fname)
+                value = field.value_from_object(instance)
+
+            else:
+                value = getattr(instance, fname, None)
+                if isinstance(value, Manager):
+                    value = value.all()
 
             result['fields'][fname] = self.to_simple(
-                getattr(value, fname, None), fields=fields, include=include,
-                exclude=exclude, related=related)
+                value, **related_options)
+
+
+            # Related serialization
+            # if related.get(fname):
+                # target = getattr(instance, fname)
+                # if fname in m2m_fields + o2m_fields:
+                    # target = target.all()
+                # result['fields'][fname] = self.to_simple(
+                    # target, **self.init_options(**related.get(fname)))
+                # continue
+
+            # if fname in default_fields:
+                # field = instance._meta.get_field(fname)
+                # result['fields'][fname] = self.to_simple(
+                    # field.value_from_object(instance), fields=fields,
+                    # include=include, exclude=exclude, related=related)
+                # continue
+
+            # result['fields'][fname] = self.to_simple(
+                # getattr(instance, fname, None), fields=fields, include=include,
+                # exclude=exclude, related=related)
 
         return result
 

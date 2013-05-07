@@ -3,6 +3,11 @@ from django.db import models
 
 class Pirate(models.Model):
     name = models.CharField(max_length=50)
+    character = models.CharField(max_length=10, choices=(
+        ('good', 'good'),
+        ('evil', 'evil'),
+        ('sorrow', 'sorrow'),
+    ))
 
 
 class Island(models.Model):
