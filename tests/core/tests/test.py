@@ -8,7 +8,7 @@ class CoreAdrestTests(AdrestTestCase):
     api = API
 
     def test_json(self):
-        pirate = milkman.deliver('core.pirate')
+        pirate = milkman.deliver('core.pirate', character='good')
 
         response = self.put_resource(
             'pirate', pirate=pirate, json=True, data=dict(name='John'))

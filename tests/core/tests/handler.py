@@ -40,13 +40,14 @@ class CoreHandlerTest(AdrestTestCase):
     def test_methods(self):
 
         for _ in xrange(3):
-            pirate = milkman.deliver('core.pirate')
+            pirate = milkman.deliver('core.pirate', character='good')
 
         response = self.get_resource('pirate')
         self.assertContains(response, '"count": 3')
 
         response = self.post_resource('pirate', data=dict(
-            name='John'
+            name='John',
+            character='evil',
         ))
         self.assertContains(response, '"name": "John"')
 
