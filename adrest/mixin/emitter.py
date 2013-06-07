@@ -1,7 +1,7 @@
 import mimeparse
 from django.http import HttpResponse
 
-from ..utils import MetaOptions
+from ..utils.meta import MetaBase
 from ..utils.emitter import JSONEmitter, BaseEmitter
 from ..utils.paginator import Paginator
 from ..utils.tools import as_tuple
@@ -10,16 +10,15 @@ from ..utils.tools import as_tuple
 __all__ = 'EmitterMixin',
 
 
-class EmitterMeta(type):
+class EmitterMeta(MetaBase):
     """ Prepare resource's emiters.
     """
     def __new__(mcs, name, bases, params):
-        params['meta'] = params.get('meta', MetaOptions())
         cls = super(EmitterMeta, mcs).__new__(mcs, name, bases, params)
 
         cls.emitters = as_tuple(cls.emitters)
         assert cls.emitters, "Resource should have emitters."
-        cls.meta.emitters_dict = dict(
+        cls._meta.emitters_dict = dict(
             (e.media_type, e) for e in cls.emitters
         )
 
@@ -109,8 +108,8 @@ class EmitterMixin(object):
         if accept == '*/*':
             return default_emitter
 
-        base_format = mimeparse.best_match(cls.meta.emitters_dict.keys(),
+        base_format = mimeparse.best_match(cls._meta.emitters_dict.keys(),
                                            accept)
-        return cls.meta.emitters_dict.get(
+        return cls._meta.emitters_dict.get(
             base_format,
             default_emitter)

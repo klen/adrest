@@ -20,7 +20,7 @@ def gen_url_name(resource):
     " URL name for resource class generator. "
 
     if resource.parent:
-        yield resource.parent.meta.url_name
+        yield resource.parent._meta.url_name
 
     if resource.prefix:
         yield resource.prefix
@@ -28,18 +28,18 @@ def gen_url_name(resource):
     for p in resource.url_params:
         yield p
 
-    yield resource.meta.name
+    yield resource._meta.name
 
 
 def gen_url_regex(resource):
     " URL regex for resource class generator. "
 
-    for r in resource.meta.parents:
+    for r in resource._meta.parents:
         if r.url_regex:
             yield r.url_regex.rstrip('/$').lstrip('^')
         else:
             yield '%(name)s/(?P<%(name)s>[^/]+)' % dict(
-                name=r.meta.name)
+                name=r._meta.name)
 
     for p in resource.url_params:
         yield '%(name)s/(?P<%(name)s>[^/]+)' % dict(name=p)
@@ -47,7 +47,7 @@ def gen_url_regex(resource):
     if resource.prefix:
         yield resource.prefix
 
-    yield '%(name)s/(?:(?P<%(name)s>[^/]+)/)?' % dict(name=resource.meta.name)
+    yield '%(name)s/(?:(?P<%(name)s>[^/]+)/)?' % dict(name=resource._meta.name)
 
 
 def fix_request(request):

@@ -23,19 +23,19 @@ class CoreHandlerTest(AdrestTestCase):
         class Resource(View, HandlerMixin):
             model = 'core.pirate'
 
-        self.assertEqual(Resource.meta.name, 'pirate')
+        self.assertEqual(Resource._meta.name, 'pirate')
 
         class IslandResource(View, HandlerMixin):
             model = 'core.island'
             name = 'map'
 
-        self.assertEqual(IslandResource.meta.name, 'map')
+        self.assertEqual(IslandResource._meta.name, 'map')
 
         class TreasureResource(View, HandlerMixin):
             parent = Resource
             model = 'core.treasure'
 
-        self.assertEqual(TreasureResource.meta.name, 'treasure')
+        self.assertEqual(TreasureResource._meta.name, 'treasure')
 
     def test_methods(self):
 

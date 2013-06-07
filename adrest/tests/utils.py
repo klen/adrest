@@ -1,5 +1,6 @@
 from StringIO import StringIO
 from urlparse import urlparse
+from collections import defaultdict
 
 from django.core.urlresolvers import reverse
 from django.conf import settings
@@ -75,11 +76,11 @@ class AdrestTestCase(TestCase):
     api = None
     client_class = AdrestClient
 
-    def reverse(self, resource, **kwargs):
+    def reverse(self, resource, **resources):
         """ Reverse resource by ResourceClass or name.
 
             :param resource: Resource Class or String name.
-            :param **kwargs: Uri params
+            :param **resources: Uri params
         """
         assert self.api, "AdrestTestCase must have the api attribute."
 
@@ -91,10 +92,32 @@ class AdrestTestCase(TestCase):
         else:
             url_name = resource.meta.url_name
 
-        kwargs = dict((k, getattr(v, "pk", v)) for k, v in kwargs.iteritems())
+        params = dict()
+        query = defaultdict(list)
+
+        for name, resource in resources.items():
+
+            if isinstance(resource, Model):
+                resource = resource.pk
+
+            if name in params:
+                query[name].append(params[name])
+                query[name].append(resource)
+                del params[name]
+                continue
+
+            params[name] = resource
+
         name_ver = '' if not str(self.api) else '%s-' % str(self.api)
-        return reverse(
-            '%s-%s%s' % (self.api.prefix, name_ver, url_name), kwargs=kwargs)
+        uri = reverse(
+            '%s-%s%s' % (self.api.prefix, name_ver, url_name), kwargs=params)
+
+        if query:
+            uri += '?'
+            for name, values in query:
+                uri += '&'.join('%s=%s' % (name, value) for value in values)
+
+        return uri
 
     def get_params(self, resource, headers=None, data=None, key=None, **kwargs):  # nolint
         headers = headers or dict()

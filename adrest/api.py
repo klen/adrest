@@ -1,3 +1,4 @@
+""" Implement API. """
 import logging
 
 from django.conf.urls.defaults import patterns
@@ -18,20 +19,19 @@ logger = logging.getLogger('adrest')
 
 class Api(object):
 
-    """ Implements a registry to tie together the various resources that make
-        up an API.
+    """ Implements a registry to tie together resources that make up an API.
 
-        Especially useful for navigation, providing multiple versions of your
-        API.
+    Especially useful for navigation, providing multiple versions of your
+    API.
 
-        :param version: Version info as string or iterable.
-        :param api_map: Enable API map (true by default)
-        :param api_prefix: API Url prefix ('api' by default)
-        :param api_rpc: Enable automatic Json RPC (default false)
-
-        Additional params will be putted in self resources.
+    :param version: Version info as string or iterable.
+    :param api_map: Enable :ref:`apimap`
+    :param api_prefix: Prefix for URL and URL-name
+    :param api_rpc: Enable :ref:`jsonrpc`
+    :param **params: Params for resource generation
 
     """
+
     def __init__(self, version=None, api_map=True, api_prefix='api',
                  api_rpc=False, **params):
         self.version = self.str_version = version
@@ -42,11 +42,10 @@ class Api(object):
         self.request_finished = Signal()
 
         if api_map:
-            self.resources[MapResource.meta.url_name] = MapResource
+            self.resources[MapResource._meta.url_name] = MapResource
 
-        # Enable Auto JSON RPC resource
         if api_rpc:
-            self.resources[AutoJSONRPC.meta.url_name] = AutoJSONRPC
+            self.resources[AutoJSONRPC._meta.url_name] = AutoJSONRPC
             self.params['emitters'] = tools.as_tuple(
                 params.get('emitters', [])) + (
                     emitter.JSONPEmitter, emitter.JSONEmitter
@@ -62,11 +61,11 @@ class Api(object):
         return self.str_version
 
     def register(self, resource, **params):
-        """ Registers resource for the API.
+        """ Add resource to the API.
 
-            :param resource: Resource class for registration
+        :param resource: Resource class for registration
+        :param **params: Replace the resource's params
 
-            Additional params will be putted in the resource.
         """
 
         # Must be instance of ResourceView
@@ -80,7 +79,7 @@ class Api(object):
         # Fabric of resources
         params = dict(self.params, **params)
         if params:
-            params['name'] = resource.meta.name
+            params['name'] = resource._meta.name
 
             params['__module__'] = '%s.%s' % (
                 self.prefix, self.str_version.replace('.', '_'))
@@ -90,17 +89,21 @@ class Api(object):
             resource = type('%s%s' % (
                 resource.__name__, len(self.resources)), (resource,), params)
 
-        if self.resources.get(resource.meta.url_name):
+        if self.resources.get(resource._meta.url_name):
             logger.warning(
                 "A resource '%r' is replacing the existing record for '%s'",
-                resource, self.resources.get(resource.meta.url_name))
+                resource, self.resources.get(resource._meta.url_name))
 
-        self.resources[resource.meta.url_name] = resource
+        self.resources[resource._meta.url_name] = resource
 
     @property
     def urls(self):
-        """ Provides URLconf details for the ``Api`` and all registered
-            ``Resources`` beneath it.
+        """ Provide URLconf details for the ``Api``.
+
+        And all registered ``Resources`` beneath it.
+
+            :return list: URL's patterns
+
         """
         urls = []
 
@@ -118,6 +121,13 @@ class Api(object):
 
     def call(self, name, request=None, **params):
         """ Call resource by ``Api`` name.
+
+        :param name: The resource's name (short form)
+        :param request: django.http.Request instance
+        :param **params: Params for a resource's call
+
+        :return object: Result of resource's execution
+
         """
         if not name in self.resources:
             raise exceptions.HttpError('Unknown method \'%s\'' % name,

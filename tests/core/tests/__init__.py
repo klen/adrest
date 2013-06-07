@@ -6,6 +6,7 @@ from ...simple.tests import *
 
 from .admin import *
 from .api import *
+from .emitter import *
 from .handler import *
 from .resource import *
 from .serializer import *

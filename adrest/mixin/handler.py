@@ -6,7 +6,8 @@ from django.http import HttpResponse
 
 from ..forms import PartitialForm
 from ..settings import LIMIT_PER_PAGE
-from ..utils import status, MetaOptions, UpdatedList
+from ..utils import status, UpdatedList
+from ..utils.meta import MetaBase
 from ..utils.exceptions import HttpError, FormError
 from ..utils.paginator import Paginator
 from ..utils.tools import as_tuple
@@ -20,11 +21,10 @@ LOOKUP_SEP = '__'
 logger = getLogger('django.request')
 
 
-class HandlerMeta(type):
+class HandlerMeta(MetaBase):
 
     def __new__(mcs, name, bases, params):
 
-        params['meta'] = params.get('meta', MetaOptions())
         cls = super(HandlerMeta, mcs).__new__(mcs, name, bases, params)
 
         # Create model from string
@@ -39,8 +39,8 @@ class HandlerMeta(type):
             assert issubclass(
                 cls.model, Model), \
                 "'model' attribute must be subclass of Model "
-            cls.meta.name = params.get('name') or cls.model._meta.module_name
-            cls.meta.model_fields = set(f.name for f in cls.model._meta.fields)
+            cls._meta.name = params.get('name') or cls.model._meta.module_name
+            cls._meta.model_fields = set(f.name for f in cls.model._meta.fields)
             if cls.queryset is None:
                 cls.queryset = cls.model.objects.all()
 
@@ -88,7 +88,7 @@ class HandlerMixin(object):
     def get(self, request, **resources):
         " Default GET method. Return instanse (collection) by model. "
 
-        instance = resources.get(self.meta.name)
+        instance = resources.get(self._meta.name)
         if not instance is None:
             return instance
 
@@ -108,10 +108,10 @@ class HandlerMixin(object):
     def put(self, request, **resources):
         " Default PUT method. Uses self form. Allow bulk update. "
 
-        if not self.meta.name in resources or not resources[self.meta.name]:
+        if not self._meta.name in resources or not resources[self._meta.name]:
             raise HttpError(
                 "Resource not found.", status=status.HTTP_404_NOT_FOUND)
-        resource = resources.pop(self.meta.name)
+        resource = resources.pop(self._meta.name)
 
         updated = UpdatedList()
         for o in as_tuple(resource):
@@ -128,7 +128,7 @@ class HandlerMixin(object):
     def delete(self, request, **resources):
         " Default DELETE method. Allow bulk delete. "
 
-        resource = resources.get(self.meta.name)
+        resource = resources.get(self._meta.name)
         if not resource:
             raise HttpError("Bad request", status=status.HTTP_404_NOT_FOUND)
 
@@ -176,7 +176,7 @@ class HandlerMixin(object):
         return dict(
             (k, (v, False))
             for k, v in resources.items()
-            if k in self.meta.model_fields)
+            if k in self._meta.model_fields)
 
     def get_filters(self, request, **resources):
         " Make filters from GET variables. "
@@ -191,7 +191,7 @@ class HandlerMixin(object):
                 exclude = True
                 tokens.pop()
 
-            if not field_name in self.meta.model_fields:
+            if not field_name in self._meta.model_fields:
                 continue
 
             converter = self.model._meta.get_field(

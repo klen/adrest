@@ -45,53 +45,53 @@ class MixinTest(TestCase):
 class MetaTest(TestCase):
 
     def test_meta(self):
-        self.assertTrue(AuthorResource.meta)
+        self.assertTrue(AuthorResource._meta)
         self.assertEqual(AuthorResource.allowed_methods, (
             'GET', 'POST', 'PATCH', 'OPTIONS', 'HEAD'
         ))
-        self.assertEqual(AuthorResource.meta.name, 'author')
-        self.assertEqual(AuthorResource.meta.url_name, 'author')
-        self.assertEqual(AuthorResource.meta.url_regex, '^owner/$')
-        self.assertEqual(AuthorResource.meta.parents, [])
-        self.assertEqual(AuthorResource.meta.emitters_dict, {
+        self.assertEqual(AuthorResource._meta.name, 'author')
+        self.assertEqual(AuthorResource._meta.url_name, 'author')
+        self.assertEqual(AuthorResource._meta.url_regex, '^owner/$')
+        self.assertEqual(AuthorResource._meta.parents, [])
+        self.assertEqual(AuthorResource._meta.emitters_dict, {
             emitter.JSONEmitter.media_type: emitter.JSONEmitter,
         })
-        self.assertEqual(AuthorResource.meta.parsers_dict, {
+        self.assertEqual(AuthorResource._meta.parsers_dict, {
             parser.FormParser.media_type: parser.FormParser,
             parser.XMLParser.media_type: parser.XMLParser,
             parser.JSONParser.media_type: parser.JSONParser,
         })
-        self.assertEqual(AuthorResource.meta.default_parser, parser.FormParser)
+        self.assertEqual(AuthorResource._meta.default_parser, parser.FormParser)
 
     def test_meta_parents(self):
-        self.assertEqual(AuthorResource.meta.parents, [])
-        self.assertEqual(BookPrefixResource.meta.parents, [AuthorResource])
-        self.assertEqual(ArticleResource.meta.parents, [
+        self.assertEqual(AuthorResource._meta.parents, [])
+        self.assertEqual(BookPrefixResource._meta.parents, [AuthorResource])
+        self.assertEqual(ArticleResource._meta.parents, [
                          AuthorResource, BookPrefixResource])
 
     def test_meta_name(self):
-        self.assertEqual(AuthorResource.meta.name, 'author')
-        self.assertEqual(BookPrefixResource.meta.name, 'book')
-        self.assertEqual(SomeOtherResource.meta.name, 'someother')
+        self.assertEqual(AuthorResource._meta.name, 'author')
+        self.assertEqual(BookPrefixResource._meta.name, 'book')
+        self.assertEqual(SomeOtherResource._meta.name, 'someother')
 
     def test_meta_url_name(self):
-        self.assertEqual(AuthorResource.meta.url_name, 'author')
-        self.assertEqual(BookResource.meta.url_name, 'author-book')
-        self.assertEqual(BookPrefixResource.meta.url_name, 'author-test-book')
+        self.assertEqual(AuthorResource._meta.url_name, 'author')
+        self.assertEqual(BookResource._meta.url_name, 'author-book')
+        self.assertEqual(BookPrefixResource._meta.url_name, 'author-test-book')
         self.assertEqual(
-            ArticleResource.meta.url_name, 'author-test-book-article')
+            ArticleResource._meta.url_name, 'author-test-book-article')
         self.assertEqual(
-            SomeOtherResource.meta.url_name, 'author-device-someother')
+            SomeOtherResource._meta.url_name, 'author-device-someother')
 
     def test_meta_url_regex(self):
-        self.assertEqual(AuthorResource.meta.url_regex, '^owner/$')
-        self.assertEqual(BookPrefixResource.meta.url_regex,
+        self.assertEqual(AuthorResource._meta.url_regex, '^owner/$')
+        self.assertEqual(BookPrefixResource._meta.url_regex,
                          'owner/test/book/(?:(?P<book>[^/]+)/)?')
         self.assertEqual(
-            ArticleResource.meta.url_regex,
+            ArticleResource._meta.url_regex,
             'owner/book/(?P<book>[^/]+)/article/(?:(?P<article>[^/]+)/)?')
         self.assertEqual(
-            SomeOtherResource.meta.url_regex,
+            SomeOtherResource._meta.url_regex,
             'owner/device/(?P<device>[^/]+)/someother/(?:(?P<someother>[^/]+)/)?')  # nolint
 
 

@@ -15,7 +15,7 @@ from django.views.generic import View
 from .mixin import auth, emitter, handler, parser, throttle
 from .settings import ALLOW_OPTIONS, DEBUG, MAIL_ERRORS
 from .signals import api_request_started, api_request_finished
-from .utils import status, MetaOptions
+from .utils import status
 from .utils.exceptions import HttpError, FormError
 from .utils.response import SerializedHttpResponse
 from .utils.tools import as_tuple, gen_url_name, gen_url_regex, fix_request
@@ -37,7 +37,6 @@ class ResourceMetaClass(
     def __new__(mcs, name, bases, params):
 
         # Create meta if not exists
-        params['meta'] = params.get('meta', MetaOptions())
         params['abstract'] = params.get('abstract', False)
 
         # Run other meta classes
@@ -52,19 +51,19 @@ class ResourceMetaClass(
         # Check parent
         if cls.parent:
             try:
-                cls.meta.parents += cls.parent.meta.parents + [cls.parent]
+                cls._meta.parents += cls.parent._meta.parents + [cls.parent]
             except AttributeError:
                 raise TypeError("%s.parent must be instance of %s" %
                                 (name, "ResourceView"))
 
         # Meta name (maybe precalculate in handler)
-        cls.meta.name = cls.meta.name or cls.name or ''.join(
+        cls._meta.name = cls._meta.name or cls.name or ''.join(
             bit for bit in name.split('Resource') if bit).lower()
 
         # Prepare urls
         cls.url_params = list(as_tuple(cls.url_params))
-        cls.meta.url_name = cls.url_name or '-'.join(gen_url_name(cls))
-        cls.meta.url_regex = cls.url_regex or '/'.join(gen_url_regex(cls))
+        cls._meta.url_name = cls.url_name or '-'.join(gen_url_name(cls))
+        cls._meta.url_regex = cls.url_regex or '/'.join(gen_url_regex(cls))
 
         return cls
 
@@ -223,7 +222,7 @@ class ResourceView(handler.HandlerMixin,
                 request, resource=resource, **resources)
 
         pks = resources.get(
-            cls.meta.name) or request.REQUEST.getlist(cls.meta.name)
+            cls._meta.name) or request.REQUEST.getlist(cls._meta.name)
 
         if not pks or cls.queryset is None:
             return resources
@@ -232,10 +231,10 @@ class ResourceView(handler.HandlerMixin,
 
         try:
             if len(pks) == 1:
-                resources[cls.meta.name] = cls.queryset.get(pk=pks[0])
+                resources[cls._meta.name] = cls.queryset.get(pk=pks[0])
 
             else:
-                resources[cls.meta.name] = cls.queryset.filter(pk__in=pks)
+                resources[cls._meta.name] = cls.queryset.filter(pk__in=pks)
 
         except (ObjectDoesNotExist, ValueError, AssertionError):
             raise HttpError("Resource not found.",
@@ -264,13 +263,13 @@ class ResourceView(handler.HandlerMixin,
 
         cls.parent.check_owners(**resources)
 
-        objects = resources.get(cls.meta.name)
+        objects = resources.get(cls._meta.name)
         if cls.model and cls.parent.model and objects:
             try:
-                pr = resources.get(cls.parent.meta.name)
+                pr = resources.get(cls.parent._meta.name)
                 assert pr and all(
                     pr.pk == getattr(
-                        o, "%s_id" % cls.parent.meta.name, None)
+                        o, "%s_id" % cls.parent._meta.name, None)
                     for o in as_tuple(objects))
             except AssertionError:
                 # 403 Error if there is error in parent-children relationship
@@ -317,14 +316,14 @@ class ResourceView(handler.HandlerMixin,
         name_prefix = name_prefix and "%s-" % name_prefix
 
         url_regex = '^%s%s/?$' % (
-            url_prefix, cls.meta.url_regex.lstrip('^').rstrip('/$'))
+            url_prefix, cls._meta.url_regex.lstrip('^').rstrip('/$'))
         url_regex = url_regex.replace('//', '/')
-        url_name = '%s%s' % (name_prefix, cls.meta.url_name)
+        url_name = '%s%s' % (name_prefix, cls._meta.url_name)
 
         return url(url_regex, cls.as_view(api=api), name=url_name)
 
     def get_name(self):
-        return self.meta.name
+        return self._meta.name
 
 
 def errors_mail(response, request):

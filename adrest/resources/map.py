@@ -42,7 +42,7 @@ class MapResource(ResourceView):
                     fields=resource.model._meta.fields # nolint
                 )
 
-            models = [p.model for p in resource.meta.parents if p.model]
+            models = [p.model for p in resource._meta.parents if p.model]
 
             if resource.form and (
                 'POST' in resource.allowed_methods
@@ -64,7 +64,7 @@ class MapResource(ResourceView):
             info['auth'] = set(
                 a.__doc__ or 'Custom' for a in resource.authenticators)
 
-            key = resource.meta.url_regex\
+            key = resource._meta.url_regex\
                 .replace("(?P", "")\
                 .replace("[^/]+)", "")\
                 .replace("?:", "")\

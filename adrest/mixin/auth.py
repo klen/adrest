@@ -1,3 +1,5 @@
+""" ADRest authentication support.
+"""
 from ..settings import ALLOW_OPTIONS
 from ..utils import status
 from ..utils.auth import AnonimousAuthenticator, AbstractAuthenticator
@@ -27,6 +29,9 @@ class AuthMixin(object):
     __metaclass__ = AuthMeta
 
     authenticators = AnonimousAuthenticator
+
+    class Meta:
+        authenticators = AnonimousAuthenticator
 
     def __init__(self, *args, **kwargs):
         super(AuthMixin, self).__init__(*args, **kwargs)
