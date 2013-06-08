@@ -8,7 +8,7 @@ from django.http import HttpRequest
 from .resources.map import MapResource
 from .resources.rpc import AutoJSONRPC
 from .views import ResourceView
-from .utils import exceptions, status, tools, emitter
+from .utils import exceptions, status, emitter
 
 
 __all__ = 'Api',
@@ -28,28 +28,17 @@ class Api(object):
     :param api_map: Enable :ref:`apimap`
     :param api_prefix: Prefix for URL and URL-name
     :param api_rpc: Enable :ref:`jsonrpc`
-    :param **params: Params for resource generation
+    :param **meta: Redefine Meta options for resource classes
 
     """
 
     def __init__(self, version=None, api_map=True, api_prefix='api',
-                 api_rpc=False, **params):
+                 api_rpc=False, **meta):
         self.version = self.str_version = version
         self.prefix = api_prefix
-        self.params = params
         self.resources = dict()
         self.request_started = Signal()
         self.request_finished = Signal()
-
-        if api_map:
-            self.resources[MapResource._meta.url_name] = MapResource
-
-        if api_rpc:
-            self.resources[AutoJSONRPC._meta.url_name] = AutoJSONRPC
-            self.params['emitters'] = tools.as_tuple(
-                params.get('emitters', [])) + (
-                    emitter.JSONPEmitter, emitter.JSONEmitter
-                )
 
         if not isinstance(self.str_version, basestring):
             try:
@@ -57,14 +46,28 @@ class Api(object):
             except TypeError:
                 self.str_version = str(version)
 
+        self.meta = dict()
+
+        if api_map:
+            self.register(MapResource)
+
+        if api_rpc:
+            self.register(AutoJSONRPC, emitters=[
+                emitter.JSONPEmitter, emitter.JSONEmitter
+            ])
+
+        self.meta = meta
+
     def __str__(self):
         return self.str_version
 
-    def register(self, resource, **params):
+    def register(self, resource, **meta):
         """ Add resource to the API.
 
         :param resource: Resource class for registration
-        :param **params: Replace the resource's params
+        :param **meta: Redefine Meta options for the resource
+
+        :return adrest.views.Resource: Generated resource.
 
         """
 
@@ -73,21 +76,23 @@ class Api(object):
             "{0} not subclass of ResourceView".format(resource)
 
         # Cannot be abstract
-        assert not resource.abstract, \
+        assert not resource._meta.abstract, \
             "Attempt register of abstract resource: {0}.".format(resource)
 
         # Fabric of resources
-        params = dict(self.params, **params)
-        if params:
-            params['name'] = resource._meta.name
+        meta = dict(self.meta, **meta)
+        meta['name'] = meta.get('name', resource._meta.name)
+        options = type('Meta', tuple(), meta)
 
-            params['__module__'] = '%s.%s' % (
-                self.prefix, self.str_version.replace('.', '_'))
+        params = dict(api=self, Meta=options, **meta)
 
-            params['__doc__'] = resource.__doc__
+        params['__module__'] = '%s.%s' % (
+            self.prefix, self.str_version.replace('.', '_'))
 
-            resource = type('%s%s' % (
-                resource.__name__, len(self.resources)), (resource,), params)
+        params['__doc__'] = resource.__doc__
+
+        resource = type('%s%s' % (
+            resource.__name__, len(self.resources)), (resource,), params)
 
         if self.resources.get(resource._meta.url_name):
             logger.warning(
@@ -95,6 +100,7 @@ class Api(object):
                 resource, self.resources.get(resource._meta.url_name))
 
         self.resources[resource._meta.url_name] = resource
+        return resource
 
     @property
     def urls(self):
@@ -136,3 +142,5 @@ class Api(object):
         resource = self.resources[name]
         view = resource.as_view(api=self)
         return view(request, **params)
+
+# lint_ignore=W0212

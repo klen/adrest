@@ -1,3 +1,5 @@
+""" ADRest serializers. """
+
 from datetime import datetime
 from os import path as op
 from time import mktime
@@ -13,7 +15,8 @@ from .status import HTTP_200_OK
 
 
 class EmitterMeta(type):
-    " Preload format attribute. "
+
+    """ Preload format attribute. """
 
     def __new__(mcs, name, bases, params):
         cls = super(EmitterMeta, mcs).__new__(mcs, name, bases, params)
@@ -23,9 +26,14 @@ class EmitterMeta(type):
 
 
 class BaseEmitter(object):
-    """ All emitters must extend this class, set the media_type attribute, and
-        override the serialize() function.
+
+    """ Base class for emitters.
+
+    All emitters must extend this class, set the media_type attribute, and
+    override the serialize() function.
+
     """
+
     __metaclass__ = EmitterMeta
 
     media_type = None
@@ -76,11 +84,11 @@ class JSONEmitter(BaseEmitter):
     def serialize(self, content):
         worker = JSONSerializer(
             scheme=self.resource,
-            fields=self.resource.emit_fields,
-            include=self.resource.emit_include,
-            exclude=self.resource.emit_exclude,
-            related=self.resource.emit_related,
-            options=self.resource.emit_options,
+            fields=self.resource._meta.emit_fields,
+            include=self.resource._meta.emit_include,
+            exclude=self.resource._meta.emit_exclude,
+            related=self.resource._meta.emit_related,
+            options=self.resource._meta.emit_options,
         )
         return worker.serialize(content)
 
@@ -101,11 +109,11 @@ class XMLEmitter(BaseEmitter):
     def serialize(self, content):
         worker = XMLSerializer(
             scheme=self.resource,
-            fields=self.resource.emit_fields,
-            include=self.resource.emit_include,
-            exclude=self.resource.emit_exclude,
-            related=self.resource.emit_exclude,
-            options=self.resource.emit_options,
+            fields=self.resource._meta.emit_fields,
+            include=self.resource._meta.emit_include,
+            exclude=self.resource._meta.emit_exclude,
+            related=self.resource._meta.emit_related,
+            options=self.resource._meta.emit_options,
         )
         return self.xmldoc_tpl % (
             'true' if not self.response.error else 'false',
@@ -122,10 +130,11 @@ class TemplateEmitter(BaseEmitter):
         if self.response.error:
             template_name = op.join('api', 'error.%s' % self.format)
         else:
-            template_name = (self.resource.emit_template
+            template_name = (self.resource._meta.emit_template
                              or self.get_template_path(content))
 
         template = loader.get_template(template_name)
+
         return template.render(RequestContext(self.request, dict(
             content=content,
             emitter=self,
@@ -140,22 +149,21 @@ class TemplateEmitter(BaseEmitter):
             return op.join('api', 'updated.%s' % self.format)
 
         app = ''
-        name = self.resource.get_name()
+        name = self.resource._meta.name
 
         if not content:
-            content = self.resource.model
+            content = self.resource._meta.model
 
         if isinstance(content, (Model, ModelBase)):
             app = content._meta.app_label # nolint
             name = content._meta.module_name # nolint
 
-        basedir = self.resource.api.prefix \
-            if getattr(self.resource, 'api', None) else 'api'
+        basedir = 'api'
+        if getattr(self.resource, 'api', None):
+            basedir = self.resource.api.prefix
+
         return op.join(
-            basedir,
-            self.resource.version,
-            app,
-            "%s.%s" % (name, self.format)
+            basedir, self.resource.version, app, "%s.%s" % (name, self.format)
         )
 
 

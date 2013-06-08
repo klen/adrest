@@ -1,3 +1,4 @@
+""" Implement REST functionality. """
 from logging import getLogger
 
 from django.core.exceptions import FieldError
@@ -23,90 +24,140 @@ logger = getLogger('django.request')
 
 class HandlerMeta(MetaBase):
 
+    """ Prepare handler class. """
+
     def __new__(mcs, name, bases, params):
 
         cls = super(HandlerMeta, mcs).__new__(mcs, name, bases, params)
 
+        if not cls._meta.model:
+            return cls
+
         # Create model from string
-        if isinstance(cls.model, basestring):
-            assert '.' in cls.model, ("'model_class' must be either a model"
-                                      " or a model name in the format"
-                                      " app_label.model_name")
-            cls.model = get_model(*cls.model.split("."))
+        if isinstance(cls._meta.model, basestring):
+            assert '.' in cls._meta.model, (
+                "'model_class' must be either a model"
+                " or a model name in the format"
+                " app_label.model_name")
+            cls._meta.model = get_model(*cls._meta.model.split("."))
 
         # Check meta.name and queryset
-        if cls.model:
-            assert issubclass(
-                cls.model, Model), \
-                "'model' attribute must be subclass of Model "
-            cls._meta.name = params.get('name') or cls.model._meta.module_name
-            cls._meta.model_fields = set(f.name for f in cls.model._meta.fields)
-            if cls.queryset is None:
-                cls.queryset = cls.model.objects.all()
+        assert issubclass(
+            cls._meta.model, Model), \
+            "'model' attribute must be subclass of Model "
+
+        cls._meta.name = cls._meta.name or cls._meta.model._meta.module_name
+
+        cls._meta.model_fields = set(
+            f.name for f in cls._meta.model._meta.fields)
+        if cls._meta.queryset is None:
+            cls._meta.queryset = cls._meta.model.objects.all()
 
         # Create form if not exist
-        if cls.model and not cls.form:
+        if not cls._meta.form:
+
             class DynForm(PartitialForm):
-                class Meta():
-                    model = cls.model
-                    fields = cls.form_fields
-                    exclude = cls.form_exclude
-            cls.form = DynForm
+
+                class Meta:
+                    model = cls._meta.model
+                    fields = cls._meta.form_fields
+                    exclude = cls._meta.form_exclude
+
+            cls._meta.form = DynForm
 
         return cls
 
 
 class HandlerMixin(object):
 
+    """ REST handler. """
+
     __metaclass__ = HandlerMeta
 
-    limit_per_page = LIMIT_PER_PAGE
-    model = None
-    queryset = None
-    form = None
-    form_fields = None
-    form_exclude = None
-    callmap = {'GET': 'get', 'POST': 'post',
-               'PUT': 'put', 'DELETE': 'delete',
-               'PATCH': 'patch', 'OPTIONS': 'options',
-               'HEAD': 'head'}
+    class Meta:
+        callmap = dict(
+            (m.upper(), m) for m in (
+                'get', 'post', 'put', 'delete', 'patch', 'options', 'head')
+        )
+        limit_per_page = LIMIT_PER_PAGE
+        model = None
+        queryset = None
+        form = None
+        form_fields = None
+        form_exclude = None
 
     def __init__(self, *args, **kwargs):
-        " Copy self queryset for prevent query caching. "
+        """ Copy self queryset for prevent query caching. """
 
         super(HandlerMixin, self).__init__(*args, **kwargs)
 
-        if not self.queryset is None:
-            self.queryset = self.queryset.all()
+        if not self._meta.queryset is None:
+            self._meta.queryset = self._meta.queryset.all()
+
+    def handle_request(self, request, **resources):
+        """ Get a method for request and execute.
+
+        :return object: method result
+
+        """
+        if not request.method in self._meta.callmap.keys():
+            raise HttpError(
+                'Unknown or unsupported method \'%s\'' % request.method,
+                status=status.HTTP_501_NOT_IMPLEMENTED)
+
+        # Get the appropriate create/read/update/delete function
+        view = getattr(self, self._meta.callmap[request.method])
+
+        # Get function data
+        return view(request, **resources)
 
     @staticmethod
     def head(*args, **kwargs):
-        " Default HEAD method. "
+        """ Just return empty response.
+
+        :return django.http.Response: empty response.
+
+        """
 
         return HttpResponse()
 
     def get(self, request, **resources):
-        " Default GET method. Return instanse (collection) by model. "
+        """ Default GET method. Return instance (collection) by model.
+
+        :return object: instance or collection from self model
+
+        """
 
         instance = resources.get(self._meta.name)
         if not instance is None:
             return instance
 
         return self.paginate(
-            request,
-            self.get_collection(request, **resources))
+            request, self.get_collection(request, **resources))
 
     def post(self, request, **resources):
-        " Default POST method. Uses self form. "
+        """ Default POST method. Uses the handler's form.
 
-        form = self.form(request.data, **resources)
+        :return object: saved instance or raise form's error
+
+        """
+        if not self._meta.form:
+            return None
+
+        form = self._meta.form(request.data, **resources)
         if form.is_valid():
             return form.save()
 
         raise FormError(form)
 
     def put(self, request, **resources):
-        " Default PUT method. Uses self form. Allow bulk update. "
+        """ Default PUT method. Uses self form. Allow bulk update.
+
+        :return object: changed instance or raise form's error
+
+        """
+        if not self._meta.form:
+            return None
 
         if not self._meta.name in resources or not resources[self._meta.name]:
             raise HttpError(
@@ -115,8 +166,7 @@ class HandlerMixin(object):
 
         updated = UpdatedList()
         for o in as_tuple(resource):
-            form = self.form(
-                data=request.data, instance=o, **resources)
+            form = self._meta.form(data=request.data, instance=o, **resources)
 
             if not form.is_valid():
                 raise FormError(form)
@@ -126,7 +176,11 @@ class HandlerMixin(object):
         return updated if len(updated) > 1 else updated[-1]
 
     def delete(self, request, **resources):
-        " Default DELETE method. Allow bulk delete. "
+        """ Default DELETE method. Allow bulk delete.
+
+        :return django.http.response: empty response
+
+        """
 
         resource = resources.get(self._meta.name)
         if not resource:
@@ -138,20 +192,32 @@ class HandlerMixin(object):
         return HttpResponse("")
 
     def patch(self, request, **resources):
-        " Default PATCH method."
+        """ Default PATCH method.
+
+        :return object: changed instance or raise form's error
+
+        """
         return self.put(request, **resources)
 
     @staticmethod
     def options(request, **resources):
-        " Default OPTIONS method. Always response OK. "
+        """ Default OPTIONS method.
+
+        :return django.http.response: 'OK' response
+
+        """
 
         return HttpResponse("OK")
 
     def get_collection(self, request, **resources):
-        " Get filters and return filtered result. "
+        """ Get filters and return filtered result.
 
-        if self.queryset is None:
-            return None
+        :return collection: collection of related resources.
+
+        """
+
+        if self._meta.queryset is None:
+            return []
 
         # Make filters from URL variables or resources
         default_filters = self.get_default_filters(**resources)
@@ -159,7 +225,7 @@ class HandlerMixin(object):
         filters.update(default_filters)
 
         # Get collection by queryset
-        qs = self.queryset
+        qs = self._meta.queryset
         for key, (value, exclude) in filters.items():
             try:
                 if exclude:
@@ -173,13 +239,22 @@ class HandlerMixin(object):
         return qs
 
     def get_default_filters(self, **resources):
+        """ Return default filters by a model fields.
+
+        :return dict: name, field
+
+        """
         return dict(
             (k, (v, False))
             for k, v in resources.items()
             if k in self._meta.model_fields)
 
     def get_filters(self, request, **resources):
-        " Make filters from GET variables. "
+        """ Make filters from GET variables.
+
+        :return dict: filters
+
+        """
 
         filters = dict()
         for field in request.GET.iterkeys():
@@ -194,7 +269,7 @@ class HandlerMixin(object):
             if not field_name in self._meta.model_fields:
                 continue
 
-            converter = self.model._meta.get_field(
+            converter = self._meta.model._meta.get_field(
                 field_name).to_python if len(tokens) == 1 else lambda v: v
             value = map(converter, request.GET.getlist(field))
 
@@ -209,8 +284,11 @@ class HandlerMixin(object):
 
     def paginate(self, request, collection):
         """ Paginate collection.
+
+        :return object: Collection or paginator
+
         """
-        p = Paginator(request, collection, self.limit_per_page)
+        p = Paginator(request, collection, self._meta.limit_per_page)
         return p.paginator and p or UpdatedList(collection)
 
 

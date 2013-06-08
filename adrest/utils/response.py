@@ -31,6 +31,8 @@ class SerializedHttpResponse(HttpResponse): # nolint
         """
         self.response = content
         self._error = error
+        self._content_type = content_type
+
         super(SerializedHttpResponse, self).__init__(
             content,
             mimetype=mimetype,

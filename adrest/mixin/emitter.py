@@ -1,3 +1,4 @@
+""" ADRest serialization support. """
 import mimeparse
 from django.http import HttpResponse
 
@@ -11,18 +12,21 @@ __all__ = 'EmitterMixin',
 
 
 class EmitterMeta(MetaBase):
-    """ Prepare resource's emiters.
-    """
+
+    """ Prepare resource's emiters. """
+
     def __new__(mcs, name, bases, params):
         cls = super(EmitterMeta, mcs).__new__(mcs, name, bases, params)
 
-        cls.emitters = as_tuple(cls.emitters)
-        assert cls.emitters, "Resource should have emitters."
+        cls._meta.emitters = as_tuple(cls._meta.emitters)
+        assert cls._meta.emitters, "Resource should have emitters."
         cls._meta.emitters_dict = dict(
-            (e.media_type, e) for e in cls.emitters
+            (e.media_type, e) for e in cls._meta.emitters
         )
 
-        for e in cls.emitters:
+        assert cls._meta.emitters, "Should be defined at least one emitter."
+
+        for e in cls._meta.emitters:
             assert issubclass(e, BaseEmitter), \
                 "Emitter should be subclass of `adrest.utils.emitter.BaseEmitter`" # nolint
 
@@ -30,18 +34,20 @@ class EmitterMeta(MetaBase):
 
 
 class EmitterMixin(object):
+
     """ Serialize response.
 
-        :param emitters: Emitter's choosen by http header
-        :param emit_template: Force template name for template based emitters
-        :param emit_fields: Manualy defined set of model fields for serializers
-        :param emit_include: Additionaly fields for model serialization
-        :param emit_exclude: Exclude fields from model serialization
-        :param emit_related: Dict with field serialization options
+    :param emitters: Emitter's choosen by http header
+    :param emit_template: Force template name for template based emitters
+    :param emit_fields: Manualy defined set of model fields for serializers
+    :param emit_include: Additionaly fields for model serialization
+    :param emit_exclude: Exclude fields from model serialization
+    :param emit_related: Dict with field serialization options
 
-        Example: ::
+    Example: ::
 
-            class SomeResource():
+        class SomeResource():
+            class Meta:
                 emit_fields = ['pk', 'user', 'customfield']
                 emit_related = {
                     'user': {
@@ -49,22 +55,27 @@ class EmitterMixin(object):
                     }
                 }
 
-                def to_simple__customfield(self, user):
-                    return "I'm hero! " + user.username
+            def to_simple__customfield(self, user):
+                return "I'm hero! " + user.username
 
     """
+
     __metaclass__ = EmitterMeta
 
-    emitters = JSONEmitter
-    emit_exclude = None
-    emit_fields = None
-    emit_include = None
-    emit_options = None
-    emit_related = None
-    emit_template = None
+    class Meta:
+        emitters = JSONEmitter
+        emit_exclude = None
+        emit_fields = None
+        emit_include = None
+        emit_options = None
+        emit_related = None
+        emit_template = None
 
     def emit(self, content, request=None, emitter=None):
         """ Serialize response.
+
+        :return response: Instance of django.http.Response
+
         """
         # Get emitter for request
         emitter = emitter or self.determine_emitter(request)
@@ -90,14 +101,21 @@ class EmitterMixin(object):
 
     @staticmethod
     def to_simple(content, simple, serializer=None):
-        """ Modify simple structure before response.
+        """ Abstract method for modification a structure before serialization.
+
+        :return simple: object
+
         """
         return simple
 
     @classmethod
     def determine_emitter(cls, request):
-        " Return must fine emitter for request "
-        default_emitter = cls.emitters[0]
+        """ Get emitter for request.
+
+        :return emitter: Instance of adrest.utils.emitters.BaseEmitter
+
+        """
+        default_emitter = cls._meta.emitters[0]
         if not request:
             return default_emitter
 

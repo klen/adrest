@@ -29,6 +29,7 @@ class MixinTest(TestCase):
         request = self.rf.get("/")
 
         class Test(View, EmitterMixin):
+
             def get(self, request):
                 content = self.emit('test')
                 response = HttpResponse(content)
@@ -46,7 +47,7 @@ class MetaTest(TestCase):
 
     def test_meta(self):
         self.assertTrue(AuthorResource._meta)
-        self.assertEqual(AuthorResource.allowed_methods, (
+        self.assertEqual(AuthorResource._meta.allowed_methods, (
             'GET', 'POST', 'PATCH', 'OPTIONS', 'HEAD'
         ))
         self.assertEqual(AuthorResource._meta.name, 'author')
@@ -61,7 +62,8 @@ class MetaTest(TestCase):
             parser.XMLParser.media_type: parser.XMLParser,
             parser.JSONParser.media_type: parser.JSONParser,
         })
-        self.assertEqual(AuthorResource._meta.default_parser, parser.FormParser)
+        self.assertEqual(
+            AuthorResource._meta.default_parser, parser.FormParser)
 
     def test_meta_parents(self):
         self.assertEqual(AuthorResource._meta.parents, [])
@@ -86,13 +88,15 @@ class MetaTest(TestCase):
     def test_meta_url_regex(self):
         self.assertEqual(AuthorResource._meta.url_regex, '^owner/$')
         self.assertEqual(BookPrefixResource._meta.url_regex,
-                         'owner/test/book/(?:(?P<book>[^/]+)/)?')
+                         'owner/test/book/(?P<book>[^/]+)?')
+
         self.assertEqual(
             ArticleResource._meta.url_regex,
-            'owner/book/(?P<book>[^/]+)/article/(?:(?P<article>[^/]+)/)?')
+            'owner/test/book/(?P<book>[^/]+)?/article/(?P<article>[^/]+)?')
+
         self.assertEqual(
             SomeOtherResource._meta.url_regex,
-            'owner/device/(?P<device>[^/]+)/someother/(?:(?P<someother>[^/]+)/)?')  # nolint
+            'owner/device/(?P<device>[^/]+)/someother/(?P<someother>[^/]+)?')
 
 
 class ApiTest(AdrestTestCase):
@@ -167,7 +171,7 @@ class AdrestTest(AdrestTestCase):
             access.get().response, "Invalid response content encoding")
 
     def test_options(self):
-        self.assertTrue('OPTIONS' in ArticleResource.allowed_methods)
+        self.assertTrue('OPTIONS' in ArticleResource._meta.allowed_methods)
         uri = self.reverse('author-test-book-article', book=self.book.pk)
         response = self.client.options(uri, data=dict(author=self.author.pk))
         self.assertContains(response, 'OK')
@@ -346,7 +350,7 @@ class ResourceTest(AdrestTestCase):
         # self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(
             mail.outbox[
-            -1].subject, '[Django] ADREST API Error (500): /1.0.0/owner/book/%s/article/' % Book.objects.all().count())  # nolint
+                -1].subject, '[Django] ADREST API Error (500): /1.0.0/owner/test/book/%s/article/' % Book.objects.all().count())  # nolint
 
         response = self.client.put(
             uri, HTTP_AUTHORIZATION=self.author.user.accesskey_set.get().key)
@@ -354,7 +358,7 @@ class ResourceTest(AdrestTestCase):
         # self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(
             mail.outbox[
-            -1].subject, '[Django] ADREST API Error (400): /1.0.0/owner/book/%s/article/' % Book.objects.all().count())  # nolint
+                -1].subject, '[Django] ADREST API Error (400): /1.0.0/owner/test/book/%s/article/' % Book.objects.all().count())  # nolint
 
         response = self.post_resource('book')
         self.assertContains(response, '{"error": "\'Frozen', status_code=400)
@@ -377,7 +381,7 @@ class ResourceTest(AdrestTestCase):
         self.assertTrue(response.has_header("Link"))
         self.assertEquals(
             response[
-            "Link"], '<%s?page=2&author=5>; rel="next"' % self.reverse('author-test-book'))  # nolint
+                "Link"], '<%s?page=2&author=5>; rel="next"' % self.reverse('author-test-book'))  # nolint
         # Get objects by links on Link header
         response = self.client.get(link_re.findall(response['Link'])[0][0])
 
@@ -434,4 +438,4 @@ class AdrestMapTest(TestCase):
         self.assertContains(response, '"price", {"required": false')
 
 
-# lint_ignore=F0401
+# lint_ignore=F0401,C0110

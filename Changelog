@@ -1,3 +1,8 @@
+2013-06-08  horneds
+
+	* WARNING! Changed mixin and resources API.
+	  All service attributes moved to Meta classes
+
 2013-05-07  horneds 2.2.2
 
 	* Fix bugs in serializer

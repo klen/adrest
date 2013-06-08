@@ -1,3 +1,4 @@
+""" ADRest parse data. """
 from ..utils.meta import MetaBase
 from ..utils.parser import FormParser, XMLParser, JSONParser, AbstractParser
 from ..utils.tools import as_tuple
@@ -7,14 +8,20 @@ __all__ = 'ParserMixin',
 
 class ParserMeta(MetaBase):
 
+    """ Prepare resource's parsers. """
+
     def __new__(mcs, name, bases, params):
         cls = super(ParserMeta, mcs).__new__(mcs, name, bases, params)
-        cls.parsers = as_tuple(cls.parsers)
-        cls._meta.default_parser = cls.parsers[0] if cls.parsers else None
 
-        for p in cls.parsers:
+        cls._meta.parsers = as_tuple(cls._meta.parsers)
+        assert cls._meta.parsers, "Should be defined at least one parser."
+
+        cls._meta.default_parser = cls._meta.parsers[0]
+        cls._meta.parsers_dict = dict()
+
+        for p in cls._meta.parsers:
             assert issubclass(p, AbstractParser), \
-                "Parser must be subclass of AbstractParser"
+                "Parser must be subclass of AbstractParser."
             cls._meta.parsers_dict[p.media_type] = p
 
         return cls
@@ -22,12 +29,19 @@ class ParserMeta(MetaBase):
 
 class ParserMixin(object):
 
+    """ Parse user data. """
+
     __metaclass__ = ParserMeta
 
-    parsers = FormParser, XMLParser, JSONParser
+    class Meta:
+        parsers = FormParser, XMLParser, JSONParser
 
     def parse(self, request):
-        " Parse request content "
+        """ Parse request content.
+
+        :return dict: parsed data.
+
+        """
         if request.method in ('POST', 'PUT', 'PATCH'):
             content_type = self.determine_content(request)
             if content_type:
@@ -44,7 +58,11 @@ class ParserMixin(object):
 
     @staticmethod
     def determine_content(request):
-        " Determine request content "
+        """ Determine request content.
+
+        :return str: request content type
+
+        """
 
         if not request.META.get('CONTENT_LENGTH', None) \
            and not request.META.get('TRANSFER_ENCODING', None):

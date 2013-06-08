@@ -1,3 +1,4 @@
+""" ASRest related models. """
 from django.db import models
 from django.utils.encoding import smart_unicode
 
@@ -50,7 +51,7 @@ if settings.ACCESS_LOG:
 
         resource = sender
 
-        if not resource.log:
+        if not resource._meta.log:
             return
 
         try:

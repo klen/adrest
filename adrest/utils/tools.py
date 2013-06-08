@@ -19,13 +19,13 @@ def as_tuple(obj):
 def gen_url_name(resource):
     " URL name for resource class generator. "
 
-    if resource.parent:
-        yield resource.parent._meta.url_name
+    if resource._meta.parent:
+        yield resource._meta.parent._meta.url_name
 
-    if resource.prefix:
-        yield resource.prefix
+    if resource._meta.prefix:
+        yield resource._meta.prefix
 
-    for p in resource.url_params:
+    for p in resource._meta.url_params:
         yield p
 
     yield resource._meta.name
@@ -34,20 +34,16 @@ def gen_url_name(resource):
 def gen_url_regex(resource):
     " URL regex for resource class generator. "
 
-    for r in resource._meta.parents:
-        if r.url_regex:
-            yield r.url_regex.rstrip('/$').lstrip('^')
-        else:
-            yield '%(name)s/(?P<%(name)s>[^/]+)' % dict(
-                name=r._meta.name)
+    if resource._meta.parent:
+        yield resource._meta.parent._meta.url_regex.rstrip('/$').lstrip('^')
 
-    for p in resource.url_params:
+    for p in resource._meta.url_params:
         yield '%(name)s/(?P<%(name)s>[^/]+)' % dict(name=p)
 
-    if resource.prefix:
-        yield resource.prefix
+    if resource._meta.prefix:
+        yield resource._meta.prefix
 
-    yield '%(name)s/(?:(?P<%(name)s>[^/]+)/)?' % dict(name=resource._meta.name)
+    yield '%(name)s/(?P<%(name)s>[^/]+)?' % dict(name=resource._meta.name)
 
 
 def fix_request(request):

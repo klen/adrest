@@ -1,3 +1,4 @@
+""" ADRest test's helpers. """
 from StringIO import StringIO
 from urlparse import urlparse
 from collections import defaultdict
@@ -15,8 +16,14 @@ from django.utils.encoding import smart_str
 __all__ = 'AdrestRequestFactory', 'AdrestClient', 'AdrestTestCase'
 
 
-def generic_method(rf, path, data=None, content_type=client.MULTIPART_CONTENT,
-                   follow=False, method='PUT', **extra):
+def generic_method(
+    rf, path, data=None, content_type=client.MULTIPART_CONTENT, follow=False,
+        method='PUT', **extra):
+    """ Fix django.
+
+    :return request: request
+
+    """
 
     if content_type is client.MULTIPART_CONTENT:
         data = rf._encode_data(data, content_type)
@@ -38,14 +45,23 @@ def generic_method(rf, path, data=None, content_type=client.MULTIPART_CONTENT,
 
 class AdrestRequestFactory(client.RequestFactory):
 
+    """ Path methods. """
+
     put = curry(generic_method, method="PUT")
     patch = curry(generic_method, method="PATCH")
 
 
 class AdrestClient(client.Client):
 
+    """ Patch client. """
+
     def put(self, path, data=None, content_type=client.MULTIPART_CONTENT,
             follow=False, method='PUT', **extra):
+        """ Implement PUT.
+
+        :return response: A result.
+
+        """
 
         data = data or dict()
         response = generic_method(
@@ -58,7 +74,11 @@ class AdrestClient(client.Client):
     patch = curry(put, method='PATCH')
 
     def delete(self, path, data=None, **extra):
-        "Construct a DELETE request."
+        """ Implement DELETE.
+
+        :return response: A result.
+
+        """
 
         data = data or dict()
 
@@ -73,14 +93,20 @@ class AdrestClient(client.Client):
 
 
 class AdrestTestCase(TestCase):
+
+    """ TestCase for ADRest related tests. """
+
     api = None
     client_class = AdrestClient
 
     def reverse(self, resource, **resources):
         """ Reverse resource by ResourceClass or name.
 
-            :param resource: Resource Class or String name.
-            :param **resources: Uri params
+        :param resource: Resource Class or String name.
+        :param **resources: Uri params
+
+        :return str: URI string
+
         """
         assert self.api, "AdrestTestCase must have the api attribute."
 
@@ -90,7 +116,7 @@ class AdrestTestCase(TestCase):
                 url_name), "Invalid resource name: %s" % url_name
 
         else:
-            url_name = resource.meta.url_name
+            url_name = resource._meta.url_name
 
         params = dict()
         query = defaultdict(list)
@@ -132,11 +158,14 @@ class AdrestTestCase(TestCase):
     def get_resource(self, resource, method='get', data=None, headers=None, json=False, **kwargs):  # nolint
         """ Simply run resource method.
 
-            :param resource: Resource Class or String name.
-            :param data: Request data
-            :param json: Make JSON request
-            :param headers: Request headers
-            :param key: HTTP_AUTHORIZATION token
+        :param resource: Resource Class or String name.
+        :param data: Request data
+        :param json: Make JSON request
+        :param headers: Request headers
+        :param key: HTTP_AUTHORIZATION token
+
+        :return object: result
+
         """
         method = getattr(self.client, method)
         resource, headers, data = self.get_params(
@@ -153,10 +182,13 @@ class AdrestTestCase(TestCase):
     def rpc(self, resource, rpc=None, headers=None, callback=None, **kwargs):
         """ Emulate RPC call.
 
-            :param resource: Resource Class or String name.
-            :param rpc: RPC params.
-            :param headers: Send headers
-            :param callback: JSONP callback
+        :param resource: Resource Class or String name.
+        :param rpc: RPC params.
+        :param headers: Send headers
+        :param callback: JSONP callback
+
+        :return object: result
+
         """
         resource, headers, data = self.get_params(
             resource, headers, data=rpc, **kwargs)
@@ -193,17 +225,26 @@ class AdrestTestCase(TestCase):
 
 
 class FakePayload(object):
-    """
+
+    """ Fake payload.
+
     A wrapper around StringIO that restricts what can be read since data from
     the network can't be seeked and cannot be read outside of its content
     length. This makes sure that views can't do anything under the test client
     that wouldn't work in Real Life.
+
     """
+
     def __init__(self, content):
         self.__content = StringIO(content)
         self.__len = len(content)
 
     def read(self, num_bytes=None):
+        """ READ.
+
+        :return str: content
+
+        """
         if num_bytes is None:
             num_bytes = self.__len or 0
         assert self.__len >= num_bytes, "Cannot read more than the available bytes from the HTTP incoming data."  # nolint

@@ -1,3 +1,4 @@
+""" Generate a resource's map. """
 from django.forms.models import ModelChoiceField
 from django.utils.encoding import smart_unicode
 
@@ -11,58 +12,66 @@ __all__ = 'MapResource',
 
 
 class MapResource(ResourceView):
-    " Simple Api Map. "
 
-    authenticators = AnonimousAuthenticator
-    emit_template = MAP_TEMPLATE
-    emitters = HTMLTemplateEmitter, JSONEmitter
-    log = False
+    """ Simple Api Map. """
 
-    url_regex = r'^map$'
+    class Meta:
+        authenticators = AnonimousAuthenticator
+        emit_template = MAP_TEMPLATE
+        emitters = HTMLTemplateEmitter, JSONEmitter
+        log = False
+        url_regex = r'^map$'
 
     def get(self, *args, **Kwargs):
-        return list(self.gen_apimap())
+        """ Render map.
 
-    def gen_apimap(self):
+        :return list: list of resources.
+
+        """
+        return list(self.__gen_apimap())
+
+    def __gen_apimap(self):
         for url_name in sorted(self.api.resources.iterkeys()):
             resource = self.api.resources[url_name]
             info = dict(
                 resource=resource,
                 doc=resource.__doc__,
-                emitters=', '.join([e.media_type for e in resource.emitters]),
+                emitters=', '.join(
+                    [e.media_type for e in resource._meta.emitters]),
                 fields=[],
                 model=None,
             )
-            if resource.model:
+            if resource._meta.model:
                 info['model'] = dict(
                     name="{0}.{1}".format(
-                        resource.model._meta.module_name, # nolint
-                        resource.model._meta.object_name, # nolint
+                        resource._meta.model._meta.module_name, # nolint
+                        resource._meta.model._meta.object_name, # nolint
                     ),
-                    fields=resource.model._meta.fields # nolint
+                    fields=resource._meta.model._meta.fields # nolint
                 )
 
-            models = [p.model for p in resource._meta.parents if p.model]
+            models = [
+                p._meta.model for p in resource._meta.parents if p._meta.model]
 
-            if resource.form and (
-                'POST' in resource.allowed_methods
-                    or 'PUT' in resource.allowed_methods):
+            if resource._meta.form and (
+                'POST' in resource._meta.allowed_methods
+                    or 'PUT' in resource._meta.allowed_methods):
                 info['fields'] += [
                     (name, dict(
                         required=f.required and f.initial is None,
                         label=f.label,
                         help=smart_unicode(f.help_text + ''))
                      )
-                    for name, f in resource.form.base_fields.iteritems()
+                    for name, f in resource._meta.form.base_fields.iteritems()
                     if not (isinstance(f, ModelChoiceField)
                             and f.choices.queryset.model in models)
                 ]
 
-            for a in resource.authenticators:
+            for a in resource._meta.authenticators:
                 info['fields'] += a.get_fields()
 
             info['auth'] = set(
-                a.__doc__ or 'Custom' for a in resource.authenticators)
+                a.__doc__ or 'Custom' for a in resource._meta.authenticators)
 
             key = resource._meta.url_regex\
                 .replace("(?P", "")\

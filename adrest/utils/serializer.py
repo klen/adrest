@@ -1,3 +1,4 @@
+""" ADRest serializers. """
 import collections
 import inspect
 from numbers import Number
@@ -5,7 +6,6 @@ from datetime import datetime, date, time
 from decimal import Decimal
 
 from django.db.models import Model, Manager
-from django.db.models.fields import FieldDoesNotExist
 from django.utils import simplejson
 from django.utils.encoding import smart_unicode
 
@@ -13,6 +13,8 @@ from .tools import as_tuple
 
 
 class BaseSerializer(object):
+
+    """ Abstract class for serializers. """
 
     def __init__(self, scheme=None, options=None, **model_options):
         self.scheme = scheme

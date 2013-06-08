@@ -14,4 +14,4 @@ class CoreAdrestTests(AdrestTestCase):
             'pirate', pirate=pirate, json=True, data=dict(name='John'))
         self.assertContains(response, '"name": "John"')
 
-# lint_ignore=F0401
+# lint_ignore=F0401,C

@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
+""" Base request resource. """
 import sys
 import traceback
 from logging import getLogger
@@ -30,46 +29,48 @@ __all__ = 'ResourceView',
 class ResourceMetaClass(
     handler.HandlerMeta, throttle.ThrottleMeta, emitter.EmitterMeta,
         parser.ParserMeta, auth.AuthMeta):
-    """ MetaClass for ResourceView.
-        Create meta options.
-    """
+
+    """ MetaClass for ResourceView. Create meta options. """
 
     def __new__(mcs, name, bases, params):
-
-        # Create meta if not exists
-        params['abstract'] = params.get('abstract', False)
 
         # Run other meta classes
         cls = super(ResourceMetaClass, mcs).__new__(mcs, name, bases, params)
 
-        if cls.abstract:
+        meta = params.get('Meta')
+
+        cls._meta.abstract = meta and getattr(meta, 'abstract', False)
+        if cls._meta.abstract:
             return cls
 
         # Prepare allowed methods
-        cls.allowed_methods = mcs.prepare_methods(cls.allowed_methods)
+        cls._meta.allowed_methods = mcs.__prepare_methods(
+            cls._meta.allowed_methods)
 
         # Check parent
-        if cls.parent:
+        cls._meta.parents = cls._meta.parents or []
+        if cls._meta.parent:
             try:
-                cls._meta.parents += cls.parent._meta.parents + [cls.parent]
+                cls._meta.parents += cls._meta.parent._meta.parents + [
+                    cls._meta.parent]
             except AttributeError:
-                raise TypeError("%s.parent must be instance of %s" %
+                raise TypeError("%s.Meta.parent must be instance of %s" %
                                 (name, "ResourceView"))
 
         # Meta name (maybe precalculate in handler)
-        cls._meta.name = cls._meta.name or cls.name or ''.join(
+        cls._meta.name = cls._meta.name or ''.join(
             bit for bit in name.split('Resource') if bit).lower()
 
         # Prepare urls
-        cls.url_params = list(as_tuple(cls.url_params))
-        cls._meta.url_name = cls.url_name or '-'.join(gen_url_name(cls))
-        cls._meta.url_regex = cls.url_regex or '/'.join(gen_url_regex(cls))
+        cls._meta.url_params = list(as_tuple(cls._meta.url_params))
+        cls._meta.url_name = cls._meta.url_name or '-'.join(gen_url_name(cls))
+        cls._meta.url_regex = cls._meta.url_regex or '/'.join(
+            gen_url_regex(cls))
 
         return cls
 
     @staticmethod
-    def prepare_methods(methods):
-        " Prepare allowed methods. "
+    def __prepare_methods(methods):
 
         methods = tuple([str(m).upper() for m in as_tuple(methods)])
 
@@ -89,43 +90,53 @@ class ResourceView(handler.HandlerMixin,
                    auth.AuthMixin,
                    View):
 
+    """ REST Resource. """
+
     # Create meta options
     __metaclass__ = ResourceMetaClass
-
-    # This abstract class
-    abstract = True
-
-    identifier = None
-
-    # Allowed methods
-    allowed_methods = 'GET',
-
-    # Name (By default this set from model or class name)
-    name = None
 
     # Link to api if connected
     api = None
 
-    # Saves access log if enabled
-    log = True
+    # Instance's identifier
+    identifier = None
 
-    # Link to parent resource
-    parent = None
+    class Meta:
 
-    # Custom prefix for url name and regex
-    prefix = ''
+        # This abstract class
+        abstract = True
 
-    # Some custom URI params here
-    url_params = None
-    url_regex = None
-    url_name = None
+        # Allowed methods
+        allowed_methods = 'GET',
 
-    # If children object in hierarchy has FK=Null to parent, allow to get this
-    # object (default: True)
-    allow_public_access = False
+        # Name (By default this set from model or class name)
+        name = None
+
+        # Save access log if ADRest logging is enabled
+        log = True
+
+        # Link to parent resource
+        parent = None
+
+        # Some custom URI params here
+        url_params = None
+        url_regex = None
+        url_name = None
+
+        # Custom prefix for url name and regex
+        prefix = ''
+
+        # If children object in hierarchy has FK=Null to parent,
+        # allow to get this object (default: True)
+        allow_public_access = False
 
     @csrf_exempt
     def dispatch(self, request, **resources):
+        """ Try to dispatch the request.
+
+        :return object: result
+
+        """
 
         # Fix PUT and PATH methods in Django request
         request = fix_request(request)
@@ -171,10 +182,10 @@ class ResourceView(handler.HandlerMixin,
             # Serialize response
             response = self.emit(response, request=request)
 
-        except Exception, e:
+        except Exception as e:
             response = self.handle_exception(e, request=request)
 
-        response["Allow"] = ', '.join(self.allowed_methods)
+        response["Allow"] = ', '.join(self._meta.allowed_methods)
         response["Vary"] = 'Authenticate, Accept'
 
         # Send errors on mail
@@ -191,50 +202,45 @@ class ResourceView(handler.HandlerMixin,
 
         return response
 
-    def handle_request(self, request, **resources):
-
-        # Get the appropriate create/read/update/delete function
-        view = getattr(self, self.callmap[request.method])
-
-        # Get function data
-        return view(request, **resources)
-
     @classmethod
     def check_method_allowed(cls, method):
-        """ Ensure the request HTTP method is permitted for this resource,
-            raising a ResourceException if it is not.
-        """
-        if not method in cls.callmap.keys():
-            raise HttpError('Unknown or unsupported method \'%s\'' % method,
-                            status=status.HTTP_501_NOT_IMPLEMENTED)
+        """ Ensure the request HTTP method is permitted for this resource.
 
-        if not method in cls.allowed_methods:
+        Raising a ResourceException if it is not.
+
+        """
+        if not method in cls._meta.allowed_methods:
             raise HttpError(
                 'Method \'%s\' not allowed on this resource.' % method,
                 status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @classmethod
     def get_resources(cls, request, resource=None, **resources):
-        " Parse resource objects from URL and GET. "
+        """ Parse resource objects from URL.
 
-        if cls.parent:
-            resources = cls.parent.get_resources(
+        :return dict: Resources.
+
+        """
+
+        if cls._meta.parent:
+            resources = cls._meta.parent.get_resources(
                 request, resource=resource, **resources)
 
         pks = resources.get(
             cls._meta.name) or request.REQUEST.getlist(cls._meta.name)
 
-        if not pks or cls.queryset is None:
+        if not pks or cls._meta.queryset is None:
             return resources
 
         pks = as_tuple(pks)
 
         try:
             if len(pks) == 1:
-                resources[cls._meta.name] = cls.queryset.get(pk=pks[0])
+                resources[cls._meta.name] = cls._meta.queryset.get(pk=pks[0])
 
             else:
-                resources[cls._meta.name] = cls.queryset.filter(pk__in=pks)
+                resources[cls._meta.name] = cls._meta.queryset.filter(
+                    pk__in=pks)
 
         except (ObjectDoesNotExist, ValueError, AssertionError):
             raise HttpError("Resource not found.",
@@ -248,28 +254,33 @@ class ResourceView(handler.HandlerMixin,
 
     @classmethod
     def check_owners(cls, **resources):
-        """ Recursive scanning of the fact that the child has FK
-            to the parent and in resources we have right objects.
+        """ Check parents of current resource.
 
-            We check that in request like /author/1/book/2/page/3
+        Recursive scanning of the fact that the child has FK
+        to the parent and in resources we have right objects.
 
-            Page object with pk=3 has ForeignKey field linked to Book object
-            with pk=2 and Book with pk=2 has ForeignKey field linked to Author
-            object with pk=1.
+        We check that in request like /author/1/book/2/page/3
+
+        Page object with pk=3 has ForeignKey field linked to Book object
+        with pk=2 and Book with pk=2 has ForeignKey field linked to Author
+        object with pk=1.
+
+        :return bool: If success else raise Exception
+
         """
 
-        if cls.allow_public_access or not cls.parent:
+        if cls._meta.allow_public_access or not cls._meta.parent:
             return True
 
-        cls.parent.check_owners(**resources)
+        cls._meta.parent.check_owners(**resources)
 
         objects = resources.get(cls._meta.name)
-        if cls.model and cls.parent.model and objects:
+        if cls._meta.model and cls._meta.parent._meta.model and objects:
             try:
-                pr = resources.get(cls.parent._meta.name)
+                pr = resources.get(cls._meta.parent._meta.name)
                 assert pr and all(
                     pr.pk == getattr(
-                        o, "%s_id" % cls.parent._meta.name, None)
+                        o, "%s_id" % cls._meta.parent._meta.name, None)
                     for o in as_tuple(objects))
             except AssertionError:
                 # 403 Error if there is error in parent-children relationship
@@ -311,7 +322,11 @@ class ResourceView(handler.HandlerMixin,
 
     @classmethod
     def as_url(cls, api=None, name_prefix='', url_prefix=''):
-        " Generate url for resource. "
+        """ Generate url for resource.
+
+        :return RegexURLPattern: Django URL
+
+        """
         url_prefix = url_prefix and "%s/" % url_prefix
         name_prefix = name_prefix and "%s-" % name_prefix
 
@@ -321,9 +336,6 @@ class ResourceView(handler.HandlerMixin,
         url_name = '%s%s' % (name_prefix, cls._meta.url_name)
 
         return url(url_regex, cls.as_view(api=api), name=url_name)
-
-    def get_name(self):
-        return self._meta.name
 
 
 def errors_mail(response, request):

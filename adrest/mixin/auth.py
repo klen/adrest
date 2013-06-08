@@ -2,6 +2,7 @@
 """
 from ..settings import ALLOW_OPTIONS
 from ..utils import status
+from ..utils.meta import MetaBase
 from ..utils.auth import AnonimousAuthenticator, AbstractAuthenticator
 from ..utils.exceptions import HttpError
 from ..utils.tools import as_tuple
@@ -10,41 +11,47 @@ from ..utils.tools import as_tuple
 __all__ = 'AuthMixin',
 
 
-class AuthMeta(type):
-    """ Prepare and checks resource.authenticators.
-    """
+class AuthMeta(MetaBase):
+
+    """ Convert cls.meta.authenticators to tuple and check them. """
+
     def __new__(mcs, name, bases, params):
         cls = super(AuthMeta, mcs).__new__(mcs, name, bases, params)
-        cls.authenticators = as_tuple(cls.authenticators)
-        for a in cls.authenticators:
+
+        cls._meta.authenticators = as_tuple(cls._meta.authenticators)
+
+        assert cls._meta.authenticators, \
+            "Should be defined at least one authenticator."
+
+        for a in cls._meta.authenticators:
             assert issubclass(a, AbstractAuthenticator), \
                 "{0}.authenticators should be subclasses \
                     of `adrest.utils.auth.AbstractAuthenticator`"
+
         return cls
 
 
 class AuthMixin(object):
-    " Adds pluggable authentication behaviour "
+
+    """ Adds pluggable authentication behaviour. """
 
     __metaclass__ = AuthMeta
-
-    authenticators = AnonimousAuthenticator
 
     class Meta:
         authenticators = AnonimousAuthenticator
 
     def __init__(self, *args, **kwargs):
-        super(AuthMixin, self).__init__(*args, **kwargs)
         self.auth = None
 
     def authenticate(self, request):
-        """ Attempt to authenticate the request, returning an authentication
-            context or None.
+        """ Attempt to authenticate the request.
 
-            An authentication context may be any object, although in many cases
-            it will simply be a :class:`User` instance.
+        :param request: django.http.Request instance
+
+        :return bool: True if success else raises HTTP_401
+
         """
-        authenticators = self.authenticators
+        authenticators = self._meta.authenticators
 
         if request.method == 'OPTIONS' and ALLOW_OPTIONS:
             self.auth = AnonimousAuthenticator(self)
@@ -64,7 +71,11 @@ class AuthMixin(object):
         raise HttpError(error_message, status=status.HTTP_401_UNAUTHORIZED)
 
     def check_rights(self, resources, request=None):
-        " Check rights of client for queried resources "
+        """ Check rights for resources.
+
+        :return bool: True if operation is success else HTTP_403_FORBIDDEN
+
+        """
         if not self.auth:
             return True
 

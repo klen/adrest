@@ -14,26 +14,34 @@ class CoreHandlerTest(AdrestTestCase):
     def test_meta_model(self):
 
         class Resource(View, HandlerMixin):
-            model = 'core.pirate'
 
-        self.assertTrue(issubclass(Resource.model, models.Model))
+            class Meta:
+                model = 'core.pirate'
+
+        self.assertTrue(issubclass(Resource._meta.model, models.Model))
 
     def test_meta_name(self):
 
         class Resource(View, HandlerMixin):
-            model = 'core.pirate'
+
+            class Meta:
+                model = 'core.pirate'
 
         self.assertEqual(Resource._meta.name, 'pirate')
 
         class IslandResource(View, HandlerMixin):
-            model = 'core.island'
-            name = 'map'
+
+            class Meta:
+                name = 'map'
+                model = 'core.island'
 
         self.assertEqual(IslandResource._meta.name, 'map')
 
         class TreasureResource(View, HandlerMixin):
-            parent = Resource
-            model = 'core.treasure'
+
+            class Meta:
+                parent = Resource
+                model = 'core.treasure'
 
         self.assertEqual(TreasureResource._meta.name, 'treasure')
 
@@ -74,4 +82,4 @@ class CoreHandlerTest(AdrestTestCase):
             self.assertTrue(pirate.pk in [1, 2])
 
 
-# lint_ignore=F0401
+# lint_ignore=F0401,C

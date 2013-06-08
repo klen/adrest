@@ -110,7 +110,7 @@ class RPCTestCase(AdrestTestCase):
             'autojsonrpc',
             rpc=dict(
             method='test.bla'))
-        self.assertContains(response, 'unsupported method')
+        self.assertContains(response, 'not allowed')
 
         response = self.rpc(
             'autojsonrpc',
@@ -231,3 +231,5 @@ class RPCTestCase(AdrestTestCase):
                 method='__private_method',
             ))
         self.assertContains(response, 'error')
+
+# lint_ignore=C

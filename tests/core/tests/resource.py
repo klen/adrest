@@ -16,13 +16,14 @@ class CoreResourceTest(AdrestTestCase):
         self.assertEqual(AlphaResource._meta.name, 'alpha')
 
         class BetaResource(ResourceView):
-            name = 'beta'
+            pass
         self.assertEqual(BetaResource._meta.name, 'beta')
         self.assertEqual(BetaResource._meta.url_name, 'beta')
 
         class GammaResource(ResourceView):
-            name = 'gamma'
-            parent = BetaResource
+
+            class Meta:
+                parent = BetaResource
 
         self.assertEqual(GammaResource._meta.parents, [BetaResource])
         self.assertEqual(GammaResource._meta.name, 'gamma')
@@ -41,4 +42,35 @@ class CoreResourceTest(AdrestTestCase):
         ))
         self.assertEqual(pirate.boat_set.count(), 1)
 
-# lint_ignore=F0401
+    def test_urls(self):
+        class AlphaResource(ResourceView):
+            pass
+
+        self.assertEqual(
+            AlphaResource._meta.url_regex, 'alpha/(?P<alpha>[^/]+)?')
+
+        class BetaResource(ResourceView):
+            class Meta:
+                parent = AlphaResource
+
+        self.assertEqual(
+            BetaResource._meta.url_regex,
+            'alpha/(?P<alpha>[^/]+)?/beta/(?P<beta>[^/]+)?')
+
+        class GammaResource(BetaResource):
+            class Meta:
+                prefix = 'gamma-prefix'
+
+        self.assertEqual(
+            GammaResource._meta.url_regex,
+            'alpha/(?P<alpha>[^/]+)?/gamma-prefix/gamma/(?P<gamma>[^/]+)?')
+
+        class ZetaResource(ResourceView):
+            class Meta:
+                parent = GammaResource
+
+        self.assertEqual(
+            ZetaResource._meta.url_regex,
+            'alpha/(?P<alpha>[^/]+)?/gamma-prefix/gamma/(?P<gamma>[^/]+)?/zeta/(?P<zeta>[^/]+)?') # nolint
+
+# lint_ignore=F0401,C0110
