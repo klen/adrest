@@ -2,10 +2,14 @@ from adrest.views import ResourceView
 
 
 class AuthorResource(ResourceView):
-    model = 'main.author'
+    class Meta:
+        model = 'main.author'
 
 
 class BookResource(ResourceView):
-    parent = AuthorResource
-    model = 'main.book'
-    allowed_methods = 'get', 'post', 'put'
+    class Meta:
+        allowed_methods = 'get', 'post', 'put'
+        model = 'main.book'
+        parent = AuthorResource
+
+# lint_ignore=C0110

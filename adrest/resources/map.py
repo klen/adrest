@@ -35,6 +35,8 @@ class MapResource(ResourceView):
             resource = self.api.resources[url_name]
             info = dict(
                 resource=resource,
+                url_name=resource._meta.url_name,
+                allowed_methods=resource._meta.allowed_methods,
                 doc=resource.__doc__,
                 emitters=', '.join(
                     [e.media_type for e in resource._meta.emitters]),
@@ -86,3 +88,5 @@ class MapResource(ResourceView):
                 for name, method in resource.methods.items():
                     info['methods'][name] = inspect.getargspec(method)
             yield key, info
+
+# lint_ignore=W0212
