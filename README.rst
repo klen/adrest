@@ -5,41 +5,66 @@ Adrest is Another Django REST. Django application for simple make HTTP REST API.
 
 Documentation in construction.
 
+.. _badges:
+
 .. image:: https://secure.travis-ci.org/klen/adrest.png?branch=develop
     :target: http://travis-ci.org/klen/adrest
     :alt: Build Status
 
-Examples: ::
+.. image:: https://coveralls.io/repos/klen/adrest/badge.png?branch=develop
+    :target: https://coveralls.io/r/klen/adrest
+    :alt: Coverals
 
-    from adrest.api import Api
-    from adrest.views import ResourceView
+.. image:: https://pypip.in/v/adrest/badge.png
+    :target: https://crate.io/packages/adrest
+    :alt: Version
 
-    class BookResource(ResourceView):
-        allowed_methods = 'get', 'post'
-        model = 'books.book'
+.. image:: https://pypip.in/d/adrest/badge.png
+    :target: https://crate.io/packages/adrest
+    :alt: Downloads
 
-    api = Api(version(1, 0, 0))
-    api.register(BookResource)
+.. image:: https://dl.dropboxusercontent.com/u/487440/reformal/donate.png
+    :target: https://www.gittip.com/klen/
+    :alt: Donate
 
-    urlpatterns = api.urls
-
+.. _requirements:
     
-
-
 Requirements
 =============
 
-- python >= 2.6
-- django >= 1.4.0
+- Python (2.6, 2.7)
+- Django (1.3, 1.4, 1.5, 1.6)
 
+.. _installation:
 
 Installation
 =============
 
-**Adrest** should be installed using pip: ::
+**ADRest** should be installed using pip: ::
 
     pip install adrest
 
+.. _quickstart:
+
+Quick start
+===========
+::
+
+    from adrest.api import Api
+    from adrest.views import ResourceView
+
+    api = Api('1.0.0')
+
+    @api.register
+    class BookResource(ResourceView):
+        class Meta:
+            allowed_methods = 'get', 'post'
+            model = 'app.book'
+
+    urlpatterns = api.urls
+
+
+.. _setup:
 
 Setup
 =====
@@ -75,6 +100,8 @@ Use adrest
 See test/examples in ADREST sources.
 
 
+.. _bagtracker:
+
 Bug tracker
 ===========
 
@@ -83,11 +110,15 @@ annoyances please report them to the issue tracker
 at https://github.com/klen/adrest/issues
 
 
+.. _contributing:
+
 Contributing
 ============
 
 Development of adrest happens at github: https://github.com/klen/adrest
 
+
+.. _contributors:
 
 Contributors
 =============
@@ -95,13 +126,19 @@ Contributors
 * klen_ (Kirill Klenov)
 
 
+.. _license:
+
 License
 =======
 
 Licensed under a `GNU lesser general public license`_.
 
 
+.. _links:
+
 .. _GNU lesser general public license: http://www.gnu.org/copyleft/lesser.html
 .. _klen: http://klen.github.com/
+.. _REST: http://en.wikipedia.org/wiki/Representational_state_transfer
+.. _RPC: http://en.wikipedia.org/wiki/JSON-RPC
 .. |logo| image:: https://raw.github.com/klen/adrest/develop/docs/_static/logo.png
                   :width: 100

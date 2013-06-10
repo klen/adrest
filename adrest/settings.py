@@ -1,4 +1,10 @@
-" Adrest API settings. "
+""" .. configuration::
+
+    Configuration
+    =============
+
+
+"""
 try:
     from django.conf import settings
 
@@ -11,12 +17,16 @@ except ImportError:
 from .utils.tools import as_tuple
 
 
-# Enable Adrest API logs
+#: Enable ADRest API logs. Information about requests and responses will be
+#: saved in database.
 ACCESS_LOG = getattr(settings, 'ADREST_ACCESS_LOG', False)
 
+ACCESSKEY = getattr(settings, 'ADREST_ACCESSKEY',
+                    'django.contrib.auth' in settings.INSTALLED_APPS)
+
 # Auto create adrest access-key for created user
-ACCESSKEY = getattr(settings, 'ADREST_ACCESSKEY', 'django.contrib.auth' in settings.INSTALLED_APPS)
-AUTO_CREATE_ACCESSKEY = getattr(settings, 'ADREST_AUTO_CREATE_ACCESSKEY', False)
+AUTO_CREATE_ACCESSKEY = getattr(
+    settings, 'ADREST_AUTO_CREATE_ACCESSKEY', False)
 
 # Max resources per page in list views
 LIMIT_PER_PAGE = int(getattr(settings, 'ADREST_LIMIT_PER_PAGE', 50))

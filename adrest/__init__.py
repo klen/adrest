@@ -1,3 +1,10 @@
+"""
+    **ADRest** is an API framework for Django. It supports REST_ and RPC_
+    paradigms.
+
+    :copyright: 2013 by Kirill Klenov.
+    :license: BSD, see LICENSE for more details.
+"""
 version_info = (2, 2, 2)
 
 __version__ = version = '.'.join(map(str, version_info))
