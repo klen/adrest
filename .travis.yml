@@ -8,6 +8,7 @@ env:
   - TOXENV=py26-15
   - TOXENV=py27-14
   - TOXENV=py27-15
+  - TOXENV=cov
 
 
 branches:
