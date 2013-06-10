@@ -1,4 +1,4 @@
-from milkman.dairy import milkman
+from mixer.backend.django import mixer
 
 from ..api import api as API
 from adrest.tests import AdrestTestCase
@@ -31,9 +31,9 @@ class CoreResourceTest(AdrestTestCase):
 
     def test_resources(self):
 
-        pirate = milkman.deliver('core.pirate')
+        pirate = mixer.blend('core.pirate')
         for _ in xrange(3):
-            milkman.deliver('core.boat', pirate=pirate)
+            mixer.blend('core.boat', pirate=pirate)
 
         self.assertEqual(pirate.boat_set.count(), 3)
 

@@ -1,4 +1,4 @@
-from milkman.dairy import milkman # nolint
+from mixer.backend.django import mixer # nolint
 
 from .api import API
 from .models import Task
@@ -22,9 +22,11 @@ class SimpleTestCase(AdrestTestCase):
             response.content,
             '{"api": "1.0b", "user": ["This field is required."]}')
 
-        task = milkman.deliver(Task)
+        task = mixer.blend(Task)
         response = self.get_resource('task2')
         self.assertContains(response, 'num_pages')
         self.assertContains(
             response,
             "{0} -- {1}".format(task.title, task.user.username))
+
+# lint_ignore=C0110

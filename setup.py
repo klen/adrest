@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+""" Setup ADRest. """
 import os
 
 from setuptools import setup, find_packages
@@ -14,27 +14,28 @@ for folder in ['templates']:
             PACKAGE_DATA.append("%s/%s" % (root[len(PROJECT) + 1:], filename))
 
 
-def read(fname):
+def __read(fname):
     try:
         return open(os.path.join(os.path.dirname(__file__), fname)).read()
     except IOError:
         return ''
 
-install_requires = read('requirements.txt').split()
+install_requires = __read('requirements.txt').split()
 
 setup(
     author_email='horneds@gmail.com',
     author='Kirill Klenov',
-    description=read('DESCRIPTION'),
+    description=__read('DESCRIPTION'),
     install_requires=install_requires,
     license=LICENSE,
-    long_description=read('README.rst'),
+    long_description=__read('README.rst'),
     name=PROJECT,
     package_data={'': PACKAGE_DATA},
     packages=find_packages(),
     platforms=('Any'),
-    tests_require=['pymongo', 'milkman'],
-    test_suite='tests.run_tests',
+    keywords='rest rpc api django',
+    tests_require=['pymongo', 'mixer'],
+    test_suite='tests.test_adrest',
     url=' http://github.com/klen/{0}'.format(PROJECT),
     version=version,
     classifiers=[

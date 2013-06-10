@@ -1,6 +1,6 @@
 from adrest.tests.utils import AdrestTestCase
 from django.utils import simplejson
-from milkman.dairy import milkman # nolint
+from mixer.backend.django import mixer
 
 from .api import API
 from .models import Root, Child
@@ -207,7 +207,7 @@ class RPCTestCase(AdrestTestCase):
         self.assertContains(response, 'test1234')
 
     def test_custom(self):
-        milkman.deliver('rpc.custom')
+        mixer.blend('rpc.custom')
         response = self.rpc(
             'autojsonrpc',
             rpc=dict(method='custom.get'))
@@ -232,4 +232,4 @@ class RPCTestCase(AdrestTestCase):
             ))
         self.assertContains(response, 'error')
 
-# lint_ignore=C
+# lint_ignore=C,F0401

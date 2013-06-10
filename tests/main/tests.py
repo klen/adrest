@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.test import TestCase, Client, RequestFactory
 from django.views.generic import View
-from milkman.dairy import milkman
+from mixer.backend.django import mixer
 
 from .api import API as api
 from .models import Author, Book
@@ -123,8 +123,8 @@ class AdrestTest(AdrestTestCase):
     api = api
 
     def setUp(self):
-        self.author = milkman.deliver('main.author')
-        self.book = milkman.deliver('main.book', author=self.author)
+        self.author = mixer.blend('main.author')
+        self.book = mixer.blend('main.book', author=self.author)
 
     def test_urls(self):
         uri = reverse('iamdummy')
@@ -176,7 +176,7 @@ class AdrestTest(AdrestTestCase):
         response = self.client.options(uri, data=dict(author=self.author.pk))
         self.assertContains(response, 'OK')
 
-        author = milkman.deliver('main.author')
+        author = mixer.blend('main.author')
         response = self.client.options(uri, data=dict(author=author.pk))
         self.assertContains(response, 'OK')
 
@@ -348,6 +348,7 @@ class ResourceTest(AdrestTestCase):
             HTTP_AUTHORIZATION=self.author.user.accesskey_set.get().key)
         self.assertContains(response, 'Some error', status_code=500)
         # self.assertEqual(len(mail.outbox), 1)
+
         self.assertEqual(
             mail.outbox[
                 -1].subject, '[Django] ADREST API Error (500): /1.0.0/owner/test/book/%s/article/' % Book.objects.all().count())  # nolint

@@ -1,12 +1,12 @@
 from django.test import TestCase
-from milkman.dairy import milkman
+from mixer.backend.django import mixer
 
 
 class CoreSerializerTest(TestCase):
 
     def setUp(self):
         for _ in range(1, 10):
-            milkman.deliver('main.book')
+            mixer.blend('main.book')
 
     def test_base_types(self):
         """ Testing serialization of base types.
@@ -45,10 +45,10 @@ class CoreSerializerTest(TestCase):
     def test_django_model(self):
         from adrest.utils.serializer import BaseSerializer
 
-        pirate = milkman.deliver('core.pirate', name='Billy')
+        pirate = mixer.blend('core.pirate', name='Billy')
         data = [
-            milkman.deliver('core.boat', pirate=pirate),
-            milkman.deliver('core.boat', pirate=pirate),
+            mixer.blend('core.boat', pirate=pirate),
+            mixer.blend('core.boat', pirate=pirate),
             28, 'string']
 
         serializer = BaseSerializer(
@@ -92,7 +92,7 @@ class CoreSerializerTest(TestCase):
         from ...main.models import Book
 
         for _ in range(1, 10):
-            milkman.deliver(Book)
+            mixer.blend(Book)
         worker = XMLSerializer()
         test = worker.serialize(Book.objects.all())
         self.assertTrue("author" in test)
@@ -108,3 +108,5 @@ class CoreSerializerTest(TestCase):
         test = worker.serialize(authors)
         self.assertTrue("main.author" in test)
         self.assertTrue('"fields":{"active":true,"name"' in test)
+
+# lint_ignore=C0110,F0401

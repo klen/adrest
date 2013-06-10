@@ -1,6 +1,7 @@
-from adrest.tests import AdrestTestCase
+from mixer.backend.django import mixer
+
 from ..api import api as API
-from milkman.dairy import milkman
+from adrest.tests import AdrestTestCase
 
 
 class CoreAdrestTests(AdrestTestCase):
@@ -8,7 +9,7 @@ class CoreAdrestTests(AdrestTestCase):
     api = API
 
     def test_json(self):
-        pirate = milkman.deliver('core.pirate', character='good')
+        pirate = mixer.blend('core.pirate', character='good')
 
         response = self.put_resource(
             'pirate', pirate=pirate, json=True, data=dict(name='John'))

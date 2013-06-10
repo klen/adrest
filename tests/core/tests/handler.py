@@ -1,6 +1,6 @@
 from django.db import models
 from django.views.generic import View
-from milkman.dairy import milkman
+from mixer.backend.django import mixer
 
 from adrest.mixin import HandlerMixin
 from adrest.tests import AdrestTestCase
@@ -48,7 +48,7 @@ class CoreHandlerTest(AdrestTestCase):
     def test_methods(self):
 
         for _ in xrange(3):
-            pirate = milkman.deliver('core.pirate', character='good')
+            pirate = mixer.blend('core.pirate', character='good')
 
         response = self.get_resource('pirate')
         self.assertContains(response, '"count": 3')
