@@ -93,5 +93,16 @@ class CoreApiTest(TestCase):
         self.assertFalse('test5' in api.resources)
         self.assertTrue('test6' in api.resources)
 
+    def test_version(self):
+        """ Test version. """
+        from ..api import api2
+
+        resource = api2.resources.get('pirate')
+        self.assertEqual(resource.api, api2)
+
+        uri = api2.testCase.reverse('pirate')
+        self.assertEqual(uri, '/pirates2/1.0.0/pirate/')
+
+
 
 # lint_ignore=E0102,W0404

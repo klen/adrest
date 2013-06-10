@@ -5,6 +5,9 @@ from adrest.views import ResourceView
 from adrest.resources.rpc import RPCResource, JSONEmitter, JSONPEmitter
 
 
+API = Api('1.0.0', api_rpc=True, emitters=XMLEmitter)
+
+
 class TestAuth(AnonimousAuthenticator):
 
     def authenticate(self, request):
@@ -32,6 +35,7 @@ class RootResource(ResourceView):
         model = 'rpc.root'
 
 
+@API.register
 class ChildResource(ResourceView):
 
     class Meta:
@@ -46,7 +50,6 @@ class CustomResource(ResourceView):
         model = 'rpc.custom'
 
 
-API = Api(api_rpc=True, emitters=XMLEmitter)
 API.register(ChildResource)
 API.register(CustomResource, emitters=JSONTemplateEmitter)
 API.register(RootResource, authenticators=TestAuth)

@@ -19,7 +19,7 @@ except ImportError:
 
 # Access log
 # -----------
-if settings.ACCESS_LOG:
+if settings.ADREST_ACCESS_LOG:
 
     class Access(models.Model):
         """ Log api queries.
@@ -80,7 +80,7 @@ if settings.ACCESS_LOG:
 
 # Access keys
 # -----------
-if settings.ACCESSKEY:
+if settings.ADREST_ACCESSKEY:
 
     import uuid
     from django.contrib.auth.models import User
@@ -109,7 +109,7 @@ if settings.ACCESSKEY:
             AccessKey.objects.create(user=instance)
 
     # Connect create handler to user save event
-    if settings.AUTO_CREATE_ACCESSKEY:
+    if settings.ADREST_AUTO_CREATE_ACCESSKEY:
         models.signals.post_save.connect(create_api_key, sender=User)
 
 

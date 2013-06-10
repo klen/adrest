@@ -1,7 +1,10 @@
-""" .. configuration::
-
+"""
     Configuration
     =============
+
+    You should add ``adrest`` to your ``INSTALLED_APPS`` in Django settings.
+
+    Also you can redefine default **ADRest** settings writen bellow.
 
 
 """
@@ -19,27 +22,36 @@ from .utils.tools import as_tuple
 
 #: Enable ADRest API logs. Information about requests and responses will be
 #: saved in database.
-ACCESS_LOG = getattr(settings, 'ADREST_ACCESS_LOG', False)
+ADREST_ACCESS_LOG = getattr(settings, 'ADREST_ACCESS_LOG', False)
 
-ACCESSKEY = getattr(settings, 'ADREST_ACCESSKEY',
-                    'django.contrib.auth' in settings.INSTALLED_APPS)
+#: Create `adrest.models.AccessKey` models for authorisation by keys
+ADREST_ACCESSKEY = getattr(
+    settings, 'ADREST_ACCESSKEY',
+    'django.contrib.auth' in settings.INSTALLED_APPS)
 
-# Auto create adrest access-key for created user
-AUTO_CREATE_ACCESSKEY = getattr(
+#: Create AccessKey for Users automaticly
+ADREST_AUTO_CREATE_ACCESSKEY = getattr(
     settings, 'ADREST_AUTO_CREATE_ACCESSKEY', False)
 
-# Max resources per page in list views
-LIMIT_PER_PAGE = int(getattr(settings, 'ADREST_LIMIT_PER_PAGE', 50))
+#: Set default number resources per page for pagination
+#: ADREST_LIMIT_PER_PAGE = 0 -- Disabled pagination by default
+ADREST_LIMIT_PER_PAGE = int(getattr(settings, 'ADREST_LIMIT_PER_PAGE', 50))
 
-# Display django standart technical 500 page
-DEBUG = getattr(settings, 'ADREST_DEBUG', False)
-MAIL_ERRORS = as_tuple(getattr(settings, 'ADREST_MAIL_ERRORS', 500))
+#: Dont parse a exceptions. Show standart Django 500 page.
+ADREST_DEBUG = getattr(settings, 'ADREST_DEBUG', False)
 
-# Limit request number per second from same identifier, null is not limited
-THROTTLE_AT = getattr(settings, 'ADREST_THROTTLE_AT', 120)
-THROTTLE_TIMEFRAME = getattr(settings, 'ADREST_THROTTLE_TIMEFRAME', 60)
+#: List of errors for ADRest's errors mails.
+#: Set ADREST_MAIL_ERRORS = None for disable this functionality
+ADREST_MAIL_ERRORS = as_tuple(getattr(settings, 'ADREST_MAIL_ERRORS', 500))
 
-# We do not restrict access for OPTIONS request.
-ALLOW_OPTIONS = getattr(settings, 'ADREST_ALLOW_OPTIONS', False)
+#: Set maximum requests per timeframe
+ADREST_THROTTLE_AT = getattr(settings, 'ADREST_THROTTLE_AT', 120)
 
-MAP_TEMPLATE = getattr(settings, 'ADREST_MAP_TEMPLATE', 'api/map.html')
+#: Set timeframe length
+ADREST_THROTTLE_TIMEFRAME = getattr(settings, 'ADREST_THROTTLE_TIMEFRAME', 60)
+
+#: We do not restrict access for OPTIONS request.
+ADREST_ALLOW_OPTIONS = getattr(settings, 'ADREST_ALLOW_OPTIONS', False)
+
+#: Template path for ADRest map
+ADREST_MAP_TEMPLATE = getattr(settings, 'ADREST_MAP_TEMPLATE', 'api/map.html')

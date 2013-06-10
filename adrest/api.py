@@ -147,4 +147,16 @@ class Api(object):
         view = resource.as_view(api=self)
         return view(request, **params)
 
+    @property
+    def testCase(self):
+        """ Generate class for testing this API.
+
+        :return TestCase: A testing class
+
+        """
+        from adrest.tests import AdrestTestCase
+
+        return type('TestCase', (AdrestTestCase, ), dict(api=self))
+
+
 # lint_ignore=W0212

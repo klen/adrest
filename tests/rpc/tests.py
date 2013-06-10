@@ -79,14 +79,14 @@ class RPCTestCase(AdrestTestCase):
 
     def test_base(self):
         uri = self.reverse('test')
-        self.assertEqual(uri, '/rpc/test/')
+        self.assertEqual(uri, '/rpc/1.0.0/test/')
 
         response = self.get_resource('test')
         self.assertContains(response, 'true')
 
     def test_autojsonrpc(self):
         uri = self.reverse('autojsonrpc')
-        self.assertEqual(uri, '/rpc/rpc')
+        self.assertEqual(uri, '/rpc/1.0.0/rpc')
 
         response = self.get_resource('autojsonrpc')
         self.assertContains(response, 'Invalid RPC Call.')

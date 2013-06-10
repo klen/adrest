@@ -1,6 +1,6 @@
 """ ADRest authentication support.
 """
-from ..settings import ALLOW_OPTIONS
+from ..settings import ADREST_ALLOW_OPTIONS
 from ..utils import status
 from ..utils.meta import MetaBase
 from ..utils.auth import AnonimousAuthenticator, AbstractAuthenticator
@@ -53,7 +53,7 @@ class AuthMixin(object):
         """
         authenticators = self._meta.authenticators
 
-        if request.method == 'OPTIONS' and ALLOW_OPTIONS:
+        if request.method == 'OPTIONS' and ADREST_ALLOW_OPTIONS:
             self.auth = AnonimousAuthenticator(self)
             return True
 

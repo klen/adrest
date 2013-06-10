@@ -99,7 +99,8 @@ class AdrestTestCase(TestCase):
     api = None
     client_class = AdrestClient
 
-    def reverse(self, resource, **resources):
+    @classmethod
+    def reverse(cls, resource, **resources):
         """ Reverse resource by ResourceClass or name.
 
         :param resource: Resource Class or String name.
@@ -108,11 +109,11 @@ class AdrestTestCase(TestCase):
         :return str: URI string
 
         """
-        assert self.api, "AdrestTestCase must have the api attribute."
+        assert cls.api, "AdrestTestCase must have the api attribute."
 
         if isinstance(resource, basestring):
             url_name = resource
-            assert self.api.resources.get(
+            assert cls.api.resources.get(
                 url_name), "Invalid resource name: %s" % url_name
 
         else:
@@ -134,9 +135,9 @@ class AdrestTestCase(TestCase):
 
             params[name] = resource
 
-        name_ver = '' if not str(self.api) else '%s-' % str(self.api)
+        name_ver = '' if not str(cls.api) else '%s-' % str(cls.api)
         uri = reverse(
-            '%s-%s%s' % (self.api.prefix, name_ver, url_name), kwargs=params)
+            '%s-%s%s' % (cls.api.prefix, name_ver, url_name), kwargs=params)
 
         if query:
             uri += '?'

@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
 from .mixin import auth, emitter, handler, parser, throttle
-from .settings import ALLOW_OPTIONS, DEBUG, MAIL_ERRORS
+from .settings import ADREST_ALLOW_OPTIONS, ADREST_DEBUG, ADREST_MAIL_ERRORS
 from .signals import api_request_started, api_request_finished
 from .utils import status
 from .utils.exceptions import HttpError, FormError
@@ -43,10 +43,6 @@ class ResourceMetaClass(
         if cls._meta.abstract:
             return cls
 
-        # Prepare allowed methods
-        cls._meta.allowed_methods = mcs.__prepare_methods(
-            cls._meta.allowed_methods)
-
         # Check parent
         cls._meta.parents = cls._meta.parents or []
         if cls._meta.parent:
@@ -69,18 +65,6 @@ class ResourceMetaClass(
 
         return cls
 
-    @staticmethod
-    def __prepare_methods(methods):
-
-        methods = tuple([str(m).upper() for m in as_tuple(methods)])
-
-        if not 'OPTIONS' in methods and ALLOW_OPTIONS:
-            methods += 'OPTIONS',
-
-        if not 'HEAD' in methods and 'GET' in methods:
-            methods += 'HEAD',
-
-        return methods
 
 
 class ResourceView(handler.HandlerMixin,
@@ -105,9 +89,6 @@ class ResourceView(handler.HandlerMixin,
 
         # This abstract class
         abstract = True
-
-        # Allowed methods
-        allowed_methods = 'GET',
 
         # Name (By default this set from model or class name)
         name = None
@@ -162,7 +143,7 @@ class ResourceView(handler.HandlerMixin,
             # Throttle check
             self.throttle_check()
 
-            if request.method != 'OPTIONS' or not ALLOW_OPTIONS:
+            if request.method != 'OPTIONS' or not ADREST_ALLOW_OPTIONS:
 
                 # Get required resources
                 resources = self.get_resources(
@@ -201,18 +182,6 @@ class ResourceView(handler.HandlerMixin,
                 self, request=request, response=response, **resources)
 
         return response
-
-    @classmethod
-    def check_method_allowed(cls, method):
-        """ Ensure the request HTTP method is permitted for this resource.
-
-        Raising a ResourceException if it is not.
-
-        """
-        if not method in cls._meta.allowed_methods:
-            raise HttpError(
-                'Method \'%s\' not allowed on this resource.' % method,
-                status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @classmethod
     def get_resources(cls, request, resource=None, **resources):
@@ -309,7 +278,7 @@ class ResourceView(handler.HandlerMixin,
 
             return self.emit(response, request=request)
 
-        if DEBUG:
+        if ADREST_DEBUG:
             raise
 
         logger.exception('\nADREST API Error: %s', request.path)
@@ -340,7 +309,7 @@ class ResourceView(handler.HandlerMixin,
 
 def errors_mail(response, request):
 
-    if not response.status_code in MAIL_ERRORS:
+    if not response.status_code in ADREST_MAIL_ERRORS:
         return False
 
     subject = 'ADREST API Error (%s): %s' % (

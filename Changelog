@@ -1,7 +1,8 @@
 2013-06-08  horneds
 
 	* WARNING! Changed mixin and resources API.
-	  All service attributes moved to Meta classes
+	  All service attributes moved to Meta classes;
+	* ``api.register`` method could be used as decorator;
 
 2013-05-07  horneds 2.2.2
 

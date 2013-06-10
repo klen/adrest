@@ -3,9 +3,10 @@ from adrest.views import ResourceView
 from adrest.api import Api
 
 
-api = Api()
+api = Api(api_rpc=True)
 
 
+@api.register
 class PirateResource(ResourceView):
 
     """ Part of simple API for tests. """
@@ -26,4 +27,5 @@ class BoatResource(ResourceView):
         parent = PirateResource
 
 
-api.register(PirateResource)
+api2 = Api('1.0.0')
+api2.register(PirateResource)

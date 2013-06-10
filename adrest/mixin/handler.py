@@ -6,7 +6,7 @@ from django.db.models import get_model, Model
 from django.http import HttpResponse
 
 from ..forms import PartitialForm
-from ..settings import LIMIT_PER_PAGE
+from ..settings import ADREST_LIMIT_PER_PAGE, ADREST_ALLOW_OPTIONS
 from ..utils import status, UpdatedList
 from ..utils.meta import MetaBase
 from ..utils.exceptions import HttpError, FormError
@@ -30,6 +30,10 @@ class HandlerMeta(MetaBase):
 
         cls = super(HandlerMeta, mcs).__new__(mcs, name, bases, params)
 
+        # Prepare allowed methods
+        cls._meta.allowed_methods = mcs.__prepare_methods(
+            cls._meta.allowed_methods)
+
         if not cls._meta.model:
             return cls
 
@@ -50,6 +54,7 @@ class HandlerMeta(MetaBase):
 
         cls._meta.model_fields = set(
             f.name for f in cls._meta.model._meta.fields)
+
         if cls._meta.queryset is None:
             cls._meta.queryset = cls._meta.model.objects.all()
 
@@ -67,6 +72,19 @@ class HandlerMeta(MetaBase):
 
         return cls
 
+    @staticmethod
+    def __prepare_methods(methods):
+
+        methods = tuple([str(m).upper() for m in as_tuple(methods)])
+
+        if not 'OPTIONS' in methods and ADREST_ALLOW_OPTIONS:
+            methods += 'OPTIONS',
+
+        if not 'HEAD' in methods and 'GET' in methods:
+            methods += 'HEAD',
+
+        return methods
+
 
 class HandlerMixin(object):
 
@@ -75,11 +93,15 @@ class HandlerMixin(object):
     __metaclass__ = HandlerMeta
 
     class Meta:
+
+        # Allowed methods
+        allowed_methods = 'GET',
+
         callmap = dict(
             (m.upper(), m) for m in (
                 'get', 'post', 'put', 'delete', 'patch', 'options', 'head')
         )
-        limit_per_page = LIMIT_PER_PAGE
+        limit_per_page = ADREST_LIMIT_PER_PAGE
         model = None
         queryset = None
         form = None
@@ -290,6 +312,18 @@ class HandlerMixin(object):
         """
         p = Paginator(request, collection, self._meta.limit_per_page)
         return p.paginator and p or UpdatedList(collection)
+
+    @classmethod
+    def check_method_allowed(cls, method):
+        """ Ensure the request HTTP method is permitted for this resource.
+
+        Raising a ResourceException if it is not.
+
+        """
+        if not method in cls._meta.allowed_methods:
+            raise HttpError(
+                'Method \'%s\' not allowed on this resource.' % method,
+                status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 # pymode:lint_ignore=E1102,W0212,R0924

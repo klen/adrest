@@ -3,13 +3,10 @@ from django.views.generic import View
 from mixer.backend.django import mixer
 
 from adrest.mixin import HandlerMixin
-from adrest.tests import AdrestTestCase
 from ..api import api as API
 
 
-class CoreHandlerTest(AdrestTestCase):
-
-    api = API
+class CoreHandlerTest(API.testCase):
 
     def test_meta_model(self):
 
@@ -44,6 +41,13 @@ class CoreHandlerTest(AdrestTestCase):
                 model = 'core.treasure'
 
         self.assertEqual(TreasureResource._meta.name, 'treasure')
+
+    def test_allowed_methods(self):
+
+        resource = self.api.resources.get('pirate')
+        self.assertEqual(
+            resource._meta.allowed_methods,
+            ('GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'))
 
     def test_methods(self):
 

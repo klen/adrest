@@ -22,6 +22,11 @@ Welcome to ADRest documentation
     :end-before: .. _requirements:
 
 
+.. == contents ==
+.. _contents:
+.. contents::
+
+
 .. == requirements ==
 .. _requirements:
 .. include:: ../README.rst
@@ -42,12 +47,17 @@ Welcome to ADRest documentation
     :start-after: .. _quickstart:
     :end-before: .. _setup:
 
-.. toctree::
-   :maxdepth: 2
+.. == userguide ==
 
+User Guide
+==========
+
+.. toctree:: :maxdepth: 3
+
+    self
     configuration
+    mixins
     api
-    changes
 
 
 Documentation in construction.
