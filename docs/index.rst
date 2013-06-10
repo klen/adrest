@@ -9,16 +9,17 @@ Welcome to ADRest documentation
     :width: 100
 
 
+.. == description ==
+.. _description:
+.. automodule:: adrest
+
+.
+
 .. == badges ==
 .. _badges:
 .. include:: ../README.rst
     :start-after: .. _badges:
     :end-before: .. _requirements:
-
-
-.. == description ==
-.. _description:
-.. automodule:: adrest
 
 
 .. == requirements ==

@@ -18,10 +18,10 @@ class MetaBase(type):
             pmeta = getattr(parent, 'Meta', FakeMeta)
             meta.update(pmeta.__dict__)
 
-        cls._meta.update({
-            attr: meta[attr] for attr in meta
+        cls._meta.update(dict(
+            (attr, meta[attr]) for attr in meta
             if not attr.startswith('_')
-        })
+        ))
 
         return cls
 
