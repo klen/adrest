@@ -1,15 +1,24 @@
+""" Simple API for tests. """
 from adrest.views import ResourceView
 from adrest.api import Api
 
 
+api = Api()
+
+
 class PirateResource(ResourceView):
+
+    """ Part of simple API for tests. """
 
     class Meta:
         allowed_methods = 'get', 'POST', 'pUt', 'delete', 'Patch'
         model = 'core.pirate'
 
 
+@api.register
 class BoatResource(ResourceView):
+
+    """ Part of simple API for tests. """
 
     class Meta:
         allowed_methods = 'get', 'post', 'put', 'delete'
@@ -17,8 +26,4 @@ class BoatResource(ResourceView):
         parent = PirateResource
 
 
-api = Api()
 api.register(PirateResource)
-api.register(BoatResource)
-
-# lint_ignore=C

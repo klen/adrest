@@ -61,7 +61,7 @@ class Api(object):
     def __str__(self):
         return self.str_version
 
-    def register(self, resource, **meta):
+    def register(self, resource=None, **meta):
         """ Add resource to the API.
 
         :param resource: Resource class for registration
@@ -70,6 +70,10 @@ class Api(object):
         :return adrest.views.Resource: Generated resource.
 
         """
+        if resource is None:
+            def wrapper(resource):
+                return self.register(resource, **meta)
+            return wrapper
 
         # Must be instance of ResourceView
         assert issubclass(resource, ResourceView), \

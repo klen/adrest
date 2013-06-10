@@ -53,3 +53,45 @@ class CoreApiTest(TestCase):
         resource = api.register(Resource2, name='wow')
         self.assertEqual(resource._meta.emitters, (XMLEmitter,))
         self.assertEqual(resource._meta.name, 'wow')
+
+    def test_register(self):
+        """ Test register method. """
+        from adrest.api import Api
+
+        api = Api('1.0.0')
+
+        class TestResource(ResourceView):
+
+            class Meta:
+                name = 'test1'
+
+        resource = api.register(TestResource, name='test2')
+        self.assertEqual(resource._meta.name, 'test2')
+
+        @api.register
+        class TestResource(ResourceView):
+
+            class Meta:
+                name = 'test3'
+
+        self.assertTrue('test3' in api.resources)
+
+        @api.register()
+        class TestResource(ResourceView):
+
+            class Meta:
+                name = 'test4'
+
+        self.assertTrue('test4' in api.resources)
+
+        @api.register(name='test6')
+        class TestResource(ResourceView):
+
+            class Meta:
+                name = 'test5'
+
+        self.assertFalse('test5' in api.resources)
+        self.assertTrue('test6' in api.resources)
+
+
+# lint_ignore=E0102,W0404
