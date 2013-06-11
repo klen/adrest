@@ -1,21 +1,18 @@
 """ Base request resource. """
-import sys
-import traceback
-from logging import getLogger
-
 from django.conf.urls.defaults import url
 from django.core.exceptions import (
     ObjectDoesNotExist, MultipleObjectsReturned, ValidationError)
-from django.core.mail import mail_admins
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
+from logging import getLogger
 
 from .mixin import auth, emitter, handler, parser, throttle
-from .settings import ADREST_ALLOW_OPTIONS, ADREST_DEBUG, ADREST_MAIL_ERRORS
+from .settings import ADREST_ALLOW_OPTIONS, ADREST_DEBUG
 from .signals import api_request_started, api_request_finished
 from .utils import status
 from .utils.exceptions import HttpError, FormError
+from .utils.mail import adrest_errors_mail
 from .utils.response import SerializedHttpResponse
 from .utils.tools import as_tuple, gen_url_name, gen_url_regex, fix_request
 
@@ -66,7 +63,6 @@ class ResourceMetaClass(
         return cls
 
 
-
 class ResourceView(handler.HandlerMixin,
                    throttle.ThrottleMixin,
                    emitter.EmitterMixin,
@@ -84,6 +80,8 @@ class ResourceView(handler.HandlerMixin,
 
     # Instance's identifier
     identifier = None
+
+    __parent = None
 
     class Meta:
 
@@ -170,7 +168,7 @@ class ResourceView(handler.HandlerMixin,
         response["Vary"] = 'Authenticate, Accept'
 
         # Send errors on mail
-        errors_mail(response, request)
+        adrest_errors_mail(response, request)
 
         # Send finished signal
         api_request_finished.send(
@@ -183,32 +181,31 @@ class ResourceView(handler.HandlerMixin,
 
         return response
 
-    @classmethod
-    def get_resources(cls, request, resource=None, **resources):
+    def get_resources(self, request, resource=None, **resources):
         """ Parse resource objects from URL.
 
         :return dict: Resources.
 
         """
 
-        if cls._meta.parent:
-            resources = cls._meta.parent.get_resources(
+        if self.parent:
+            resources = self.parent.get_resources(
                 request, resource=resource, **resources)
 
         pks = resources.get(
-            cls._meta.name) or request.REQUEST.getlist(cls._meta.name)
+            self._meta.name) or request.REQUEST.getlist(self._meta.name)
 
-        if not pks or cls._meta.queryset is None:
+        if not pks or self._meta.queryset is None:
             return resources
 
         pks = as_tuple(pks)
 
         try:
             if len(pks) == 1:
-                resources[cls._meta.name] = cls._meta.queryset.get(pk=pks[0])
+                resources[self._meta.name] = self._meta.queryset.get(pk=pks[0])
 
             else:
-                resources[cls._meta.name] = cls._meta.queryset.filter(
+                resources[self._meta.name] = self._meta.queryset.filter(
                     pk__in=pks)
 
         except (ObjectDoesNotExist, ValueError, AssertionError):
@@ -221,8 +218,7 @@ class ResourceView(handler.HandlerMixin,
 
         return resources
 
-    @classmethod
-    def check_owners(cls, **resources):
+    def check_owners(self, **resources):
         """ Check parents of current resource.
 
         Recursive scanning of the fact that the child has FK
@@ -238,18 +234,18 @@ class ResourceView(handler.HandlerMixin,
 
         """
 
-        if cls._meta.allow_public_access or not cls._meta.parent:
+        if self._meta.allow_public_access or not self._meta.parent:
             return True
 
-        cls._meta.parent.check_owners(**resources)
+        self.parent.check_owners(**resources)
 
-        objects = resources.get(cls._meta.name)
-        if cls._meta.model and cls._meta.parent._meta.model and objects:
+        objects = resources.get(self._meta.name)
+        if self._meta.model and self._meta.parent._meta.model and objects:
             try:
-                pr = resources.get(cls._meta.parent._meta.name)
+                pr = resources.get(self._meta.parent._meta.name)
                 assert pr and all(
                     pr.pk == getattr(
-                        o, "%s_id" % cls._meta.parent._meta.name, None)
+                        o, "%s_id" % self._meta.parent._meta.name, None)
                     for o in as_tuple(objects))
             except AssertionError:
                 # 403 Error if there is error in parent-children relationship
@@ -260,6 +256,9 @@ class ResourceView(handler.HandlerMixin,
 
     def handle_exception(self, e, request=None):
         """ Handle code exception.
+
+        :return response: Http response
+
         """
         if isinstance(e, HttpError):
             response = SerializedHttpResponse(e.content, status=e.status)
@@ -286,8 +285,19 @@ class ResourceView(handler.HandlerMixin,
         return HttpResponse(str(e), status=500)
 
     @property
-    def version(self):
-        return str(self.api or '')
+    def parent(self):
+        """ Cache a instance of self parent class.
+
+        :return object: instance of self.Meta.parent class
+
+        """
+        if not self._meta.parent:
+            return None
+
+        if not self.__parent:
+            self.__parent = self._meta.parent()
+
+        return self.__parent
 
     @classmethod
     def as_url(cls, api=None, name_prefix='', url_prefix=''):
@@ -307,28 +317,5 @@ class ResourceView(handler.HandlerMixin,
         return url(url_regex, cls.as_view(api=api), name=url_name)
 
 
-def errors_mail(response, request):
-
-    if not response.status_code in ADREST_MAIL_ERRORS:
-        return False
-
-    subject = 'ADREST API Error (%s): %s' % (
-        response.status_code, request.path)
-    stack_trace = '\n'.join(traceback.format_exception(*sys.exc_info()))
-    message = """
-Stacktrace:
-===========
-%s
-
-Handler data:
-=============
-%s
-
-Request information:
-====================
-%s
-
-""" % (stack_trace, repr(getattr(request, 'data', None)), repr(request))
-    return mail_admins(subject, message, fail_silently=True)
 
 # pymode:lint_ignore=E1120,W0703

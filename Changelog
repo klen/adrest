@@ -1,8 +1,20 @@
 2013-06-08  horneds
 
+	* ``api.register`` method could be used as decorator;
+
 	* WARNING! Changed mixin and resources API.
 	  All service attributes moved to Meta classes;
-	* ``api.register`` method could be used as decorator;
+
+	* WARNING! Model's emit options moved to `emit_models` option.
+	  Before
+	    class Resouce
+		emit_include = ...
+		emit_exclude = ...
+		emit_related = ...
+	 After
+	    class Resource
+	      class Meta
+	        emit_models = dict(include=..., exclude=..., related=...)
 
 2013-05-07  horneds 2.2.2
 

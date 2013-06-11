@@ -67,7 +67,7 @@ if settings.ADREST_ACCESS_LOG:
         Access.objects.create(
             uri=request.path_info,
             method=request.method,
-            version=str(resource.api),
+            version=str(resource.api or ''),
             status_code=response.status_code,
             request='%s\n\n%s' % (str(request.META), str(
                 getattr(request, 'data', ''))),

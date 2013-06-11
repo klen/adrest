@@ -16,7 +16,7 @@ class Task2Resource(ResourceView):
     class Meta:
         allowed_methods = 'GET', 'POST'
         model = Task
-        emit_include = 'description'
+        emit_models = dict(include='description')
         emitters = emitter.JSONEmitter
 
     @staticmethod

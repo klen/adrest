@@ -16,8 +16,10 @@ class BaseSerializer(object):
 
     """ Abstract class for serializers. """
 
-    def __init__(self, scheme=None, options=None, **model_options):
+    def __init__(
+            self, scheme=None, options=None, format='django', **model_options):
         self.scheme = scheme
+        self.format = format
         self.serializer_options = options or dict()
         self.model_options = self.init_options(**model_options)
 
@@ -128,26 +130,10 @@ class BaseSerializer(object):
             result['fields'][fname] = self.to_simple(
                 value, **related_options)
 
-
-            # Related serialization
-            # if related.get(fname):
-                # target = getattr(instance, fname)
-                # if fname in m2m_fields + o2m_fields:
-                    # target = target.all()
-                # result['fields'][fname] = self.to_simple(
-                    # target, **self.init_options(**related.get(fname)))
-                # continue
-
-            # if fname in default_fields:
-                # field = instance._meta.get_field(fname)
-                # result['fields'][fname] = self.to_simple(
-                    # field.value_from_object(instance), fields=fields,
-                    # include=include, exclude=exclude, related=related)
-                # continue
-
-            # result['fields'][fname] = self.to_simple(
-                # getattr(instance, fname, None), fields=fields, include=include,
-                # exclude=exclude, related=related)
+        if self.format != 'django':
+            fields = result['fields']
+            fields['id'] = result['pk']
+            result = fields
 
         return result
 
@@ -209,4 +195,4 @@ class XMLSerializer(BaseSerializer):
             yield "</%s>" % tag
 
 
-# lint_ignore=W901,R0911,W0212
+# lint_ignore=W901,R0911,W0212,W0622
