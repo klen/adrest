@@ -18,7 +18,11 @@ class MetaOptions(dict):
 
 class Meta:
 
-    """ Base options for all ADRest mixins. """
+    """ Base options for all ADRest mixins.
+
+    With Meta options you can setup your resources.
+
+    """
 
     # Link to parent resource. Used for create a resource's hierarchy.
     parent = None

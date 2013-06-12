@@ -1,4 +1,4 @@
 API
 ===
 
-.. module:: adrest.api
+.. automodule:: adrest.api

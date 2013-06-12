@@ -1,4 +1,59 @@
-""" Implement API. """
+"""
+You can use :class:`adrest.Api` for bind multiple :class:`adrest.ResourceView`
+together with version prefix.
+
+Create API
+----------
+
+Default use: ::
+
+    from adrest.api import Api
+    from myresources import Resource1, Resource2
+
+    api = Api('0.1')
+
+
+Register a resource
+-------------------
+After creation you can register some resources with that Api. ::
+
+    api.register(Resource1)
+    api.register(Resource2)
+
+You can use `api.register` method as decorator: ::
+
+    @api.register
+    class SomeResource():
+        ...
+
+
+Enable API Map
+--------------
+
+You can enable API Map for quick reference on created resources. Use `api_map`
+param. ::
+
+    api = Api('1.0b', api_map=True)
+
+By default access to map is anonimous. If you want use a custom authenticator
+register map resource by manualy. ::
+
+    from adrest.resources.map import MapResource
+
+    api = Api('1.0')
+    api.register(MapResource, authenticators=UserLoggedInAuthenticator)
+
+
+Auto JSONRPC from REST
+----------------------
+
+If you are created some REST api with adrest, you already have JSON RPC too.
+Use `api_rpc` param. ::
+
+    api = Api('1.0', api_rpc=True)
+
+
+"""
 import logging
 
 from django.conf.urls.defaults import patterns

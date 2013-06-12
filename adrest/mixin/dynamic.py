@@ -16,7 +16,7 @@ LOOKUP_SEP = '__'
 
 class Meta:
 
-    """ Dynamic options.
+    """ Options for dynamic mixin.
 
     Setup parameters for filtering and sorting a resources.
 
@@ -60,7 +60,12 @@ class DynamicMixinMeta(MixinBaseMeta):
 
 class DynamicMixin(MixinBase):
 
-    """ Implement filters and sorting. """
+    """ Implement filters and sorting.
+
+    ADRest DynamicMixin supports filtering and sorting collection from query
+    params.
+
+    """
 
     __metaclass__ = DynamicMixinMeta
 
@@ -169,5 +174,5 @@ class DynamicMixin(MixinBase):
         :return object: Collection or paginator
 
         """
-        p = Paginator(request, collection, self._meta.limit_per_page)
+        p = Paginator(request, self, collection)
         return p.paginator and p or UpdatedList(collection)

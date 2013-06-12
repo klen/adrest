@@ -1,3 +1,5 @@
+""" Pagination support. """
+
 from urllib import urlencode
 
 from django.core.paginator import InvalidPage, Paginator as DjangoPaginator
@@ -7,21 +9,30 @@ from .status import HTTP_400_BAD_REQUEST
 
 
 class Paginator(object):
-    """ Paginate collections.
-    """
-    def __init__(self, request, qs, max_res):
+
+    """ Paginate collections. """
+
+    def __init__(self, request, resource, response):
         self.query_dict = dict(request.GET.items())
-        self._page = None
         self.path = request.path
 
         try:
+            per_page = resource._meta.dyn_prefix + 'max'
             self.paginator = DjangoPaginator(
-                qs, self.query_dict.get('max') or max_res)
+                response,
+                self.query_dict.get(per_page) or resource._meta.limit_per_page)
             assert self.paginator.per_page
         except (ValueError, AssertionError):
             self.paginator = None
 
+        self._page = None
+
     def to_simple(self, serializer=None):
+        """ Prepare to serialization.
+
+        :return dict: paginator params
+
+        """
         return dict(
             count=self.paginator.count,
             page=self.page,
@@ -33,6 +44,11 @@ class Paginator(object):
 
     @property
     def page(self):
+        """ Get current page.
+
+        :return int: page number
+
+        """
         if not self._page:
             try:
                 self._page = self.paginator.page(
@@ -43,14 +59,29 @@ class Paginator(object):
 
     @property
     def count(self):
+        """ Get resources count.
+
+        :return int: resources amount
+
+        """
         return self.paginator.count
 
     @property
     def resources(self):
+        """ Return list of current page resources.
+
+        :return list:
+
+        """
         return self.page.object_list
 
     @property
     def next_page(self):
+        """ Return URL for next page.
+
+        :return str:
+
+        """
         if self.page.has_next():
             self.query_dict['page'] = self.page.next_page_number()
             return "%s?%s" % (self.path, urlencode(self.query_dict))
@@ -58,6 +89,11 @@ class Paginator(object):
 
     @property
     def previous_page(self):
+        """ Return URL for previous page.
+
+        :return str:
+
+        """
         if self.page.has_previous():
             previous = self.page.previous_page_number()
             if previous == 1:

@@ -8,6 +8,13 @@ can use a ADRest's mixins separately.
 .. contents::
 
 
+Common Options
+==============
+
+.. autoclass:: adrest.utils.meta.Meta
+   :members:
+
+
 EmitterMixin
 ============
 
@@ -31,6 +38,12 @@ AuthMixin
 =========
 
 .. autoclass:: adrest.mixin.auth.AuthMixin
+
+
+DynamicMixin
+============
+
+.. autoclass:: adrest.mixin.handler.DynamicMixin
 
 
 HandlerMixin

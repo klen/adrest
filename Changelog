@@ -18,6 +18,9 @@
 	      class Meta
 	        emit_models = dict(include=..., exclude=..., related=...)
 
+	* WARNING! Pagination parameter `max` should be defined with prefix
+	`adr-max` by default. You can change prefix using Meta.dyn_prefix.
+
 2013-05-07  horneds 2.2.2
 
 	* Fix bugs in serializer
