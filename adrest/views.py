@@ -1,7 +1,7 @@
 """ Base request resource. """
+
 from django.conf.urls.defaults import url
-from django.core.exceptions import (
-    ObjectDoesNotExist, MultipleObjectsReturned, ValidationError)
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -40,16 +40,6 @@ class ResourceMetaClass(
         if cls._meta.abstract:
             return cls
 
-        # Check parent
-        cls._meta.parents = cls._meta.parents or []
-        if cls._meta.parent:
-            try:
-                cls._meta.parents += cls._meta.parent._meta.parents + [
-                    cls._meta.parent]
-            except AttributeError:
-                raise TypeError("%s.Meta.parent must be instance of %s" %
-                                (name, "ResourceView"))
-
         # Meta name (maybe precalculate in handler)
         cls._meta.name = cls._meta.name or ''.join(
             bit for bit in name.split('Resource') if bit).lower()
@@ -63,12 +53,9 @@ class ResourceMetaClass(
         return cls
 
 
-class ResourceView(handler.HandlerMixin,
-                   throttle.ThrottleMixin,
-                   emitter.EmitterMixin,
-                   parser.ParserMixin,
-                   auth.AuthMixin,
-                   View):
+class ResourceView(
+    handler.HandlerMixin, throttle.ThrottleMixin, emitter.EmitterMixin,
+        parser.ParserMixin, auth.AuthMixin, View):
 
     """ REST Resource. """
 
@@ -81,8 +68,6 @@ class ResourceView(handler.HandlerMixin,
     # Instance's identifier
     identifier = None
 
-    __parent = None
-
     class Meta:
 
         # This abstract class
@@ -93,9 +78,6 @@ class ResourceView(handler.HandlerMixin,
 
         # Save access log if ADRest logging is enabled
         log = True
-
-        # Link to parent resource
-        parent = None
 
         # Some custom URI params here
         url_params = None
@@ -133,7 +115,7 @@ class ResourceView(handler.HandlerMixin,
         try:
 
             # Check request method
-            self.check_method_allowed(request.method)
+            self.check_method_allowed(request)
 
             # Authentificate
             self.authenticate(request)
@@ -145,7 +127,7 @@ class ResourceView(handler.HandlerMixin,
 
                 # Get required resources
                 resources = self.get_resources(
-                    request, resource=self, **resources)
+                    request, **resources)
 
                 # Check owners
                 self.check_owners(**resources)
@@ -180,43 +162,6 @@ class ResourceView(handler.HandlerMixin,
                 self, request=request, response=response, **resources)
 
         return response
-
-    def get_resources(self, request, resource=None, **resources):
-        """ Parse resource objects from URL.
-
-        :return dict: Resources.
-
-        """
-
-        if self.parent:
-            resources = self.parent.get_resources(
-                request, resource=resource, **resources)
-
-        pks = resources.get(
-            self._meta.name) or request.REQUEST.getlist(self._meta.name)
-
-        if not pks or self._meta.queryset is None:
-            return resources
-
-        pks = as_tuple(pks)
-
-        try:
-            if len(pks) == 1:
-                resources[self._meta.name] = self._meta.queryset.get(pk=pks[0])
-
-            else:
-                resources[self._meta.name] = self._meta.queryset.filter(
-                    pk__in=pks)
-
-        except (ObjectDoesNotExist, ValueError, AssertionError):
-            raise HttpError("Resource not found.",
-                            status=status.HTTP_404_NOT_FOUND)
-
-        except MultipleObjectsReturned:
-            raise HttpError("Resources conflict.",
-                            status=status.HTTP_409_CONFLICT)
-
-        return resources
 
     def check_owners(self, **resources):
         """ Check parents of current resource.
@@ -283,21 +228,6 @@ class ResourceView(handler.HandlerMixin,
         logger.exception('\nADREST API Error: %s', request.path)
 
         return HttpResponse(str(e), status=500)
-
-    @property
-    def parent(self):
-        """ Cache a instance of self parent class.
-
-        :return object: instance of self.Meta.parent class
-
-        """
-        if not self._meta.parent:
-            return None
-
-        if not self.__parent:
-            self.__parent = self._meta.parent()
-
-        return self.__parent
 
     @classmethod
     def as_url(cls, api=None, name_prefix='', url_prefix=''):

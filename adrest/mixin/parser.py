@@ -1,12 +1,12 @@
 """ ADRest parse data. """
-from ..utils.meta import MetaBase
+from ..utils.meta import MixinBaseMeta
 from ..utils.parser import FormParser, XMLParser, JSONParser, AbstractParser
 from ..utils.tools import as_tuple
 
 __all__ = 'ParserMixin',
 
 
-class ParserMeta(MetaBase):
+class ParserMeta(MixinBaseMeta):
 
     """ Prepare resource's parsers. """
 

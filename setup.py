@@ -33,7 +33,7 @@ setup(
     package_data={'': PACKAGE_DATA},
     packages=find_packages(),
     platforms=('Any'),
-    keywords='rest rpc api django',
+    keywords='rest rpc api django'.split(),
     tests_require=['pymongo', 'mixer'],
     test_suite='tests.test_adrest',
     url=' http://github.com/klen/{0}'.format(PROJECT),

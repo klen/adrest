@@ -3,7 +3,7 @@ import mimeparse
 from django.http import HttpResponse
 
 from ..utils.emitter import JSONEmitter, BaseEmitter
-from ..utils.meta import MetaBase
+from ..utils.meta import MixinBaseMeta
 from ..utils.paginator import Paginator
 from ..utils.tools import as_tuple
 
@@ -98,7 +98,7 @@ class Meta:
     emit_format = 'django'
 
 
-class EmitterMeta(MetaBase):
+class EmitterMeta(MixinBaseMeta):
 
     """ Prepare resource's emiters. """
 

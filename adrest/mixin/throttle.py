@@ -1,13 +1,13 @@
 """ Safe API. """
 from ..utils import status
-from ..utils.meta import MetaBase
+from ..utils.meta import MixinBaseMeta
 from ..utils.exceptions import HttpError
 from ..utils.throttle import NullThrottle, AbstractThrottle
 
 __all__ = 'ThrottleMixin',
 
 
-class ThrottleMeta(MetaBase):
+class ThrottleMeta(MixinBaseMeta):
 
     """ Prepare throtles. """
 

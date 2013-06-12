@@ -5,6 +5,8 @@ ADRest Mixins
 :class:`adrest.views.ResourceView` as base for your REST_ controlers. Or you
 can use a ADRest's mixins separately.
 
+.. contents::
+
 
 EmitterMixin
 ============
@@ -19,9 +21,20 @@ ParserMixin
 .. autoclass:: adrest.mixin.parser.ParserMixin
 
 
+ThrottleMixin
+=============
+
 .. autoclass:: adrest.mixin.throttle.ThrottleMixin
 
+
+AuthMixin
+=========
+
 .. autoclass:: adrest.mixin.auth.AuthMixin
+
+
+HandlerMixin
+============
 
 .. autoclass:: adrest.mixin.handler.HandlerMixin
 

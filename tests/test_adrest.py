@@ -1,3 +1,4 @@
+""" Prepare a Django project for tests. """
 from django.conf import settings
 
 # Configure Django
@@ -22,7 +23,7 @@ settings.configure(
         'django.contrib.contenttypes',
         'django.contrib.auth',
         'adrest',
-        'tests.core', 'tests.main', 'tests.rpc', 'tests.simple'
+        'tests.core', 'tests.main', 'tests.rpc',
     ),
 
     TEMPLATE_DEBUG=True,
@@ -44,7 +45,8 @@ settings.configure(
 from django.core.management import call_command
 call_command('syncdb', interactive=False)
 
-from .core.tests import *
-from .main.tests import *
-from .rpc.tests import *
-from .simple.tests import *
+from .core.tests   import *
+# from .main.tests   import *
+# from .rpc.tests    import *
+
+# lint_ignore=W0614,W0401,E272

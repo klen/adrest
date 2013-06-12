@@ -1,5 +1,6 @@
 from django.db import models
 from django.views.generic import View
+from django.test import RequestFactory
 from mixer.backend.django import mixer
 
 from adrest.mixin import HandlerMixin
@@ -85,5 +86,29 @@ class CoreHandlerTest(API.testCase):
             self.assertEqual(pirate.name, 'Tom')
             self.assertTrue(pirate.pk in [1, 2])
 
+    def test_mixin(self):
 
-# lint_ignore=F0401,C
+        pirate = mixer.blend('core.pirate')
+
+        class SomeResource(HandlerMixin, View):
+
+            class Meta:
+                allowed_methods = 'get', 'post'
+                model = 'core.pirate'
+
+            def dispatch(self, request, **resources):
+
+                self.check_method_allowed(request)
+
+                resources = self.get_resources(request, **resources)
+
+                return self.handle_request(request, **resources)
+
+        rf = RequestFactory()
+        request = rf.get('/')
+        resource = SomeResource()
+        response = resource.dispatch(request)
+        self.assertTrue(pirate in response.resources)
+
+
+# lint_ignore=F0401,C,E1103

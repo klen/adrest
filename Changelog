@@ -1,6 +1,8 @@
-2013-06-08  horneds
+2013-06-08  horneds 3.0.0
 
 	* ``api.register`` method could be used as decorator;
+
+	* Added `emit_format` option;
 
 	* WARNING! Changed mixin and resources API.
 	  All service attributes moved to Meta classes;

@@ -1,28 +1,58 @@
 """ Implement REST functionality. """
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.http import HttpResponse
 from logging import getLogger
 
-from django.core.exceptions import FieldError
-from django.db.models import get_model, Model
-from django.http import HttpResponse
-
 from ..forms import PartitialForm
-from ..settings import ADREST_LIMIT_PER_PAGE, ADREST_ALLOW_OPTIONS
+from ..settings import ADREST_ALLOW_OPTIONS
 from ..utils import status, UpdatedList
-from ..utils.meta import MetaBase
 from ..utils.exceptions import HttpError, FormError
-from ..utils.paginator import Paginator
 from ..utils.tools import as_tuple
+from .dynamic import DynamicMixin, DynamicMixinMeta
 
 
 __all__ = 'HandlerMixin',
 
-# Separator used to split filter strings apart.
-LOOKUP_SEP = '__'
-
 logger = getLogger('django.request')
 
 
-class HandlerMeta(MetaBase):
+__all__ = 'HandlerMixin',
+
+
+class Meta:
+
+    """ Handler options. Setup parameters for REST implementation.
+
+    ::
+
+        class SomeResource(HandlerMixin, View):
+
+            class Meta:
+                allowed_methods = 'get', 'post'
+                model = 'app.model'
+
+    """
+
+    #: List of allowed methods (or simple one)
+    allowed_methods = 'GET',
+
+    #: Map HTTP methods to handler methods
+    callmap = dict(
+        (m.upper(), m) for m in (
+            'get', 'post', 'put', 'delete', 'patch', 'options', 'head')
+    )
+
+    #: Set form for resource by manual
+    form = None
+
+    #: Specify field's names for automatic a model form
+    form_fields = None
+
+    #: Exclude field's names for automatic a model form
+    form_exclude = None
+
+
+class HandlerMeta(DynamicMixinMeta):
 
     """ Prepare handler class. """
 
@@ -37,26 +67,7 @@ class HandlerMeta(MetaBase):
         if not cls._meta.model:
             return cls
 
-        # Create model from string
-        if isinstance(cls._meta.model, basestring):
-            assert '.' in cls._meta.model, (
-                "'model_class' must be either a model"
-                " or a model name in the format"
-                " app_label.model_name")
-            cls._meta.model = get_model(*cls._meta.model.split("."))
-
-        # Check meta.name and queryset
-        assert issubclass(
-            cls._meta.model, Model), \
-            "'model' attribute must be subclass of Model "
-
         cls._meta.name = cls._meta.name or cls._meta.model._meta.module_name
-
-        cls._meta.model_fields = set(
-            f.name for f in cls._meta.model._meta.fields)
-
-        if cls._meta.queryset is None:
-            cls._meta.queryset = cls._meta.model.objects.all()
 
         # Create form if not exist
         if not cls._meta.form:
@@ -86,35 +97,35 @@ class HandlerMeta(MetaBase):
         return methods
 
 
-class HandlerMixin(object):
+class HandlerMixin(DynamicMixin):
 
-    """ REST handler. """
+    """ Implement REST API.
+
+
+    .. autoclass:: adrest.mixin.handler.Meta
+       :members:
+
+    Example: ::
+
+        class SomeResource(HandlerMixin, View):
+
+            class Meta:
+                allowed_methods = 'get', 'post'
+                model = 'app.model'
+
+            def dispatch(self, request, **resources):
+
+                self.check_method_allowed(request)
+
+                resources = self.get_resources(request, **resources)
+
+                return self.handle_request(request, **resources)
+
+    """
 
     __metaclass__ = HandlerMeta
 
-    class Meta:
-
-        # Allowed methods
-        allowed_methods = 'GET',
-
-        callmap = dict(
-            (m.upper(), m) for m in (
-                'get', 'post', 'put', 'delete', 'patch', 'options', 'head')
-        )
-        limit_per_page = ADREST_LIMIT_PER_PAGE
-        model = None
-        queryset = None
-        form = None
-        form_fields = None
-        form_exclude = None
-
-    def __init__(self, *args, **kwargs):
-        """ Copy self queryset for prevent query caching. """
-
-        super(HandlerMixin, self).__init__(*args, **kwargs)
-
-        if not self._meta.queryset is None:
-            self._meta.queryset = self._meta.queryset.all()
+    Meta = Meta
 
     def handle_request(self, request, **resources):
         """ Get a method for request and execute.
@@ -231,99 +242,53 @@ class HandlerMixin(object):
 
         return HttpResponse("OK")
 
-    def get_collection(self, request, **resources):
-        """ Get filters and return filtered result.
-
-        :return collection: collection of related resources.
-
-        """
-
-        if self._meta.queryset is None:
-            return []
-
-        # Make filters from URL variables or resources
-        default_filters = self.get_default_filters(**resources)
-        filters = self.get_filters(request, **resources)
-        filters.update(default_filters)
-
-        # Get collection by queryset
-        qs = self._meta.queryset
-        for key, (value, exclude) in filters.items():
-            try:
-                if exclude:
-                    qs = qs.exclude(**{key: value})
-
-                else:
-                    qs = qs.filter(**{key: value})
-            except FieldError, e:
-                logger.warning(e)
-
-        return qs
-
-    def get_default_filters(self, **resources):
-        """ Return default filters by a model fields.
-
-        :return dict: name, field
-
-        """
-        return dict(
-            (k, (v, False))
-            for k, v in resources.items()
-            if k in self._meta.model_fields)
-
-    def get_filters(self, request, **resources):
-        """ Make filters from GET variables.
-
-        :return dict: filters
-
-        """
-
-        filters = dict()
-        for field in request.GET.iterkeys():
-            tokens = field.split(LOOKUP_SEP)
-            field_name = tokens[0]
-
-            exclude = False
-            if tokens[-1] == 'not':
-                exclude = True
-                tokens.pop()
-
-            if not field_name in self._meta.model_fields:
-                continue
-
-            converter = self._meta.model._meta.get_field(
-                field_name).to_python if len(tokens) == 1 else lambda v: v
-            value = map(converter, request.GET.getlist(field))
-
-            if len(value) > 1:
-                tokens.append('in')
-            else:
-                value = value.pop()
-
-            filters[LOOKUP_SEP.join(tokens)] = (value, exclude)
-
-        return filters
-
-    def paginate(self, request, collection):
-        """ Paginate collection.
-
-        :return object: Collection or paginator
-
-        """
-        p = Paginator(request, collection, self._meta.limit_per_page)
-        return p.paginator and p or UpdatedList(collection)
-
     @classmethod
-    def check_method_allowed(cls, method):
+    def check_method_allowed(cls, request):
         """ Ensure the request HTTP method is permitted for this resource.
 
         Raising a ResourceException if it is not.
 
         """
-        if not method in cls._meta.allowed_methods:
+        if not request.method in cls._meta.allowed_methods:
             raise HttpError(
-                'Method \'%s\' not allowed on this resource.' % method,
+                'Method \'%s\' not allowed on this resource.' % request.method,
                 status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def get_resources(self, request, **resources):
+        """ Parse resource objects from URL.
+
+        :return dict: Resources.
+
+        """
+
+        if self.parent:
+            resources = self.parent.get_resources(request, **resources)
+
+        pks = resources.get(
+            self._meta.name) or request.REQUEST.getlist(self._meta.name)
+
+        if not pks or self._meta.queryset is None:
+            return resources
+
+        pks = as_tuple(pks)
+
+        try:
+            if len(pks) == 1:
+                resources[self._meta.name] = self._meta.queryset.get(pk=pks[0])
+
+            else:
+                resources[self._meta.name] = self._meta.queryset.filter(
+                    pk__in=pks)
+
+        except (ObjectDoesNotExist, ValueError, AssertionError):
+            raise HttpError("Resource not found.",
+                            status=status.HTTP_404_NOT_FOUND)
+
+        except MultipleObjectsReturned:
+            raise HttpError("Resources conflict.",
+                            status=status.HTTP_409_CONFLICT)
+
+        return resources
 
 
 # pymode:lint_ignore=E1102,W0212,R0924

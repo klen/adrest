@@ -2,7 +2,7 @@
 """
 from ..settings import ADREST_ALLOW_OPTIONS
 from ..utils import status
-from ..utils.meta import MetaBase
+from ..utils.meta import MixinBaseMeta
 from ..utils.auth import AnonimousAuthenticator, AbstractAuthenticator
 from ..utils.exceptions import HttpError
 from ..utils.tools import as_tuple
@@ -11,7 +11,7 @@ from ..utils.tools import as_tuple
 __all__ = 'AuthMixin',
 
 
-class AuthMeta(MetaBase):
+class AuthMeta(MixinBaseMeta):
 
     """ Convert cls.meta.authenticators to tuple and check them. """
 
