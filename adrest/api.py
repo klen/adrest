@@ -150,15 +150,17 @@ class Api(object):
 
         params['__doc__'] = resource.__doc__
 
-        resource = type('%s%s' % (
-            resource.__name__, len(self.resources)), (resource,), params)
+        new_resource = type(
+            '%s%s' % (resource.__name__, len(self.resources)),
+            (resource,), params)
 
-        if self.resources.get(resource._meta.url_name):
+        if self.resources.get(new_resource._meta.url_name):
             logger.warning(
                 "A resource '%r' is replacing the existing record for '%s'",
-                resource, self.resources.get(resource._meta.url_name))
+                new_resource, self.resources.get(new_resource._meta.url_name))
 
-        self.resources[resource._meta.url_name] = resource
+        self.resources[new_resource._meta.url_name] = new_resource
+
         return resource
 
     @property
