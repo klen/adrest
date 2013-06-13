@@ -95,6 +95,20 @@ class CoreEmitterTest(AdrestTestCase):
         response = resource.emit(boat)
         self.assertTrue(boat.pirate.name in response.content)
 
+        class Resource(View, EmitterMixin):
+
+            class Meta:
+                model = 'core.boat'
+                emit_include = 'hooray'
+
+            @staticmethod
+            def to_simple__hooray(boat, serializer=None):
+                return 'hooray'
+
+        resource = Resource()
+        response = resource.emit(boats)
+        self.assertTrue('hooray' in response.content)
+
     def test_format(self):
         pirate = mixer.blend('core.pirate')
 

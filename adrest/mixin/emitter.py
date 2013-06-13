@@ -67,6 +67,20 @@ class Meta:
     #:                  )
     #:
     #:              )
+
+    #: You can use a shortcuts for `emit_models` option, as is `emit_fields` or
+    #: `emit_include`. That same as bellow::
+    #:
+    #:     class SomeResource(EmitterMixin, View):
+    #:         class Meta:
+    #:             model = Role
+    #:             emit_include = 'group_count'
+    #:             emit_exclude = 'password', 'service'
+    #:             emit_related = dict(
+    #:                 user = dict(
+    #:                         fields = 'username'
+    #:                 )
+    #:             )
     emit_models = None
 
     #: Define template for template-based emitters by manualy
@@ -117,6 +131,18 @@ class EmitterMeta(MixinBaseMeta):
 
         if cls._meta.emit_models is None:
             cls._meta.emit_models = dict()
+
+        if cls._meta.emit_include:
+            cls._meta.emit_models['include'] = cls._meta.emit_include
+
+        if cls._meta.emit_exclude:
+            cls._meta.emit_models['exclude'] = cls._meta.emit_exclude
+
+        if cls._meta.emit_fields:
+            cls._meta.emit_models['fields'] = cls._meta.emit_fields
+
+        if cls._meta.emit_related:
+            cls._meta.emit_models['related'] = cls._meta.emit_related
 
         return cls
 
