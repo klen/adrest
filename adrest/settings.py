@@ -10,15 +10,10 @@
 """
 try:
     from django.conf import settings
-    from django.core.exceptions import ImproperlyConfigured
 
     getattr(settings, 'DEBUG')
 
 except ImportError:
-
-    settings = object()
-
-except ImproperlyConfigured:
 
     settings.configure()
 
