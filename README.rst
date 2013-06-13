@@ -3,7 +3,7 @@
 
 Adrest is Another Django REST. Django application for simple make HTTP REST API.
 
-Documentation in construction.
+Documentation in `construction <http://adrest.readthedocs.org>`_.
 
 .. _badges:
 
