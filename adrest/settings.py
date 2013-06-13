@@ -10,10 +10,15 @@
 """
 try:
     from django.conf import settings
+    from django.core.exceptions import ImproperlyConfigured
 
     getattr(settings, 'DEBUG')
 
 except ImportError:
+
+    settings = object()
+
+except ImproperlyConfigured:
 
     settings.configure()
 
@@ -27,7 +32,7 @@ ADREST_ACCESS_LOG = getattr(settings, 'ADREST_ACCESS_LOG', False)
 #: Create `adrest.models.AccessKey` models for authorisation by keys
 ADREST_ACCESSKEY = getattr(
     settings, 'ADREST_ACCESSKEY',
-    'django.contrib.auth' in settings.INSTALLED_APPS)
+    'django.contrib.auth' in getattr(settings, 'INSTALLED_APPS', tuple()))
 
 #: Create AccessKey for Users automaticly
 ADREST_AUTO_CREATE_ACCESSKEY = getattr(

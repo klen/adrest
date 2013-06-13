@@ -130,7 +130,7 @@ class ResourceView(
                     request, **resources)
 
                 # Check owners
-                self.check_owners(**resources)
+                self.check_owners(request, **resources)
 
                 # Check rights for resources with this method
                 self.check_rights(resources, request=request)
@@ -163,7 +163,7 @@ class ResourceView(
 
         return response
 
-    def check_owners(self, **resources):
+    def check_owners(self, request, **resources):
         """ Check parents of current resource.
 
         Recursive scanning of the fact that the child has FK
@@ -182,7 +182,7 @@ class ResourceView(
         if self._meta.allow_public_access or not self._meta.parent:
             return True
 
-        self.parent.check_owners(**resources)
+        self.parent.check_owners(request, **resources)
 
         objects = resources.get(self._meta.name)
         if self._meta.model and self._meta.parent._meta.model and objects:
