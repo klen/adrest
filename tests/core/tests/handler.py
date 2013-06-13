@@ -1,46 +1,59 @@
 from django.db import models
 from django.views.generic import View
-from milkman.dairy import milkman
+from django.test import RequestFactory
+from mixer.backend.django import mixer
 
 from adrest.mixin import HandlerMixin
-from adrest.tests import AdrestTestCase
 from ..api import api as API
 
 
-class CoreHandlerTest(AdrestTestCase):
-
-    api = API
+class CoreHandlerTest(API.testCase):
 
     def test_meta_model(self):
 
         class Resource(View, HandlerMixin):
-            model = 'core.pirate'
 
-        self.assertTrue(issubclass(Resource.model, models.Model))
+            class Meta:
+                model = 'core.pirate'
+
+        self.assertTrue(issubclass(Resource._meta.model, models.Model))
 
     def test_meta_name(self):
 
         class Resource(View, HandlerMixin):
-            model = 'core.pirate'
 
-        self.assertEqual(Resource.meta.name, 'pirate')
+            class Meta:
+                model = 'core.pirate'
+
+        self.assertEqual(Resource._meta.name, 'pirate')
 
         class IslandResource(View, HandlerMixin):
-            model = 'core.island'
-            name = 'map'
 
-        self.assertEqual(IslandResource.meta.name, 'map')
+            class Meta:
+                name = 'map'
+                model = 'core.island'
+
+        self.assertEqual(IslandResource._meta.name, 'map')
 
         class TreasureResource(View, HandlerMixin):
-            parent = Resource
-            model = 'core.treasure'
 
-        self.assertEqual(TreasureResource.meta.name, 'treasure')
+            class Meta:
+                parent = Resource
+                model = 'core.treasure'
+
+        self.assertEqual(TreasureResource._meta.name, 'treasure')
+
+    def test_allowed_methods(self):
+
+        resource = self.api.resources.get('pirate')
+        self.assertEqual(
+            resource._meta.allowed_methods,
+            ('GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'))
 
     def test_methods(self):
 
         for _ in xrange(3):
-            pirate = milkman.deliver('core.pirate', character='good')
+            pirate = mixer.blend('core.pirate', character='good')
 
         response = self.get_resource('pirate')
         self.assertContains(response, '"count": 3')
@@ -73,5 +86,29 @@ class CoreHandlerTest(AdrestTestCase):
             self.assertEqual(pirate.name, 'Tom')
             self.assertTrue(pirate.pk in [1, 2])
 
+    def test_mixin(self):
 
-# lint_ignore=F0401
+        pirate = mixer.blend('core.pirate')
+
+        class SomeResource(HandlerMixin, View):
+
+            class Meta:
+                allowed_methods = 'get', 'post'
+                model = 'core.pirate'
+
+            def dispatch(self, request, **resources):
+
+                self.check_method_allowed(request)
+
+                resources = self.get_resources(request, **resources)
+
+                return self.handle_request(request, **resources)
+
+        rf = RequestFactory()
+        request = rf.get('/')
+        resource = SomeResource()
+        response = resource.dispatch(request)
+        self.assertTrue(pirate in response.resources)
+
+
+# lint_ignore=F0401,C,E1103

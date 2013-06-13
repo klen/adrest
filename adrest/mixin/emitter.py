@@ -1,8 +1,9 @@
+""" ADRest serialization support. """
 import mimeparse
 from django.http import HttpResponse
 
-from ..utils import MetaOptions
 from ..utils.emitter import JSONEmitter, BaseEmitter
+from ..utils.meta import MixinBaseMeta
 from ..utils.paginator import Paginator
 from ..utils.tools import as_tuple
 
@@ -10,39 +11,127 @@ from ..utils.tools import as_tuple
 __all__ = 'EmitterMixin',
 
 
-class EmitterMeta(type):
-    """ Prepare resource's emiters.
+class Meta:
+
+    """ Emitter options. Setup parameters for resource's serialization.
+
+    ::
+
+        class SomeResource(EmitterMixin, View):
+
+            class Meta:
+                emitters = JSONEmitter
+
     """
+
+    #: :class:`adrest.utils.Emitter` (or collection of them)
+    #: Defined available emitters for resource.
+    #: ::
+    #:
+    #:     class SomeResource(EmitterMixin, View):
+    #:         class Meta:
+    #:             emitters = JSONEmitter, XMLEmitter
+    #:
+    emitters = JSONEmitter
+
+    #: Options for low-level serialization
+    #: Example for JSON serialization
+    #:
+    #: ::
+    #:
+    #:     class SomeResource(EmitterMixin, View):
+    #:         class Meta:
+    #:             emit_options = dict(indent=2, sort_keys=True)
+    #:
+    emit_options = None
+
+    #: Dictionary with emitter's options for relations
+    #:
+    #: * emit_models['fields'] -- Set serialized fields by manual
+    #: * emit_models['exclude'] -- Exclude some fields
+    #: * emit_models['include'] -- Include some fields
+    #: * emit_models['related'] -- Options for relations.
+    #:
+    #: Example: ::
+    #:
+    #:     class SomeResource(EmitterMixin, View):
+    #:         class Meta:
+    #:             model = Role
+    #:             emit_models = dict(
+    #:                  include = 'group_count',
+    #:                  exclude = ['password', 'service'],
+    #:                  related = dict(
+    #:                      user = dict(
+    #:                          fields = 'username'
+    #:                      )
+    #:                  )
+    #:
+    #:              )
+    emit_models = None
+
+    #: Define template for template-based emitters by manualy
+    #: Otherwise template name will be generated from resource name
+    #: (or resource.Meta.model)
+    emit_template = None
+
+    #: Serialization format. Set 'django' for django like view:
+
+    #: ::
+    #:
+    #:     {
+    #:         'pk': ...,
+    #:         'model': ...,
+    #:         'fields': {
+    #:             'name': ...,
+    #:             ...
+    #:         }
+    #:     }
+    #:
+    #: Or set 'simple' for simpliest serialization:
+    #: ::
+    #:
+    #:     {
+    #:         'id': ...,
+    #:         'name': ...,
+    #:     }
+    #:
+    emit_format = 'django'
+
+
+class EmitterMeta(MixinBaseMeta):
+
+    """ Prepare resource's emiters. """
+
     def __new__(mcs, name, bases, params):
-        params['meta'] = params.get('meta', MetaOptions())
         cls = super(EmitterMeta, mcs).__new__(mcs, name, bases, params)
 
-        cls.emitters = as_tuple(cls.emitters)
-        assert cls.emitters, "Resource should have emitters."
-        cls.meta.emitters_dict = dict(
-            (e.media_type, e) for e in cls.emitters
+        cls._meta.emitters = as_tuple(cls._meta.emitters)
+        cls._meta.emitters_dict = dict(
+            (e.media_type, e) for e in cls._meta.emitters
         )
+        assert cls._meta.emitters, "Should be defined at least one emitter."
 
-        for e in cls.emitters:
+        for e in cls._meta.emitters:
             assert issubclass(e, BaseEmitter), \
                 "Emitter should be subclass of `adrest.utils.emitter.BaseEmitter`" # nolint
+
+        if cls._meta.emit_models is None:
+            cls._meta.emit_models = dict()
 
         return cls
 
 
 class EmitterMixin(object):
+
     """ Serialize response.
 
-        :param emitters: Emitter's choosen by http header
-        :param emit_template: Force template name for template based emitters
-        :param emit_fields: Manualy defined set of model fields for serializers
-        :param emit_include: Additionaly fields for model serialization
-        :param emit_exclude: Exclude fields from model serialization
-        :param emit_related: Dict with field serialization options
+    .. autoclass:: adrest.mixin.emitter.Meta
+       :members:
 
-        Example: ::
+    Example: ::
 
-            class SomeResource():
+        class SomeResource():
+            class Meta:
                 emit_fields = ['pk', 'user', 'customfield']
                 emit_related = {
                     'user': {
@@ -50,22 +139,21 @@ class EmitterMixin(object):
                     }
                 }
 
-                def to_simple__customfield(self, user):
-                    return "I'm hero! " + user.username
+            def to_simple__customfield(self, user):
+                return "I'm hero! " + user.username
 
     """
+
     __metaclass__ = EmitterMeta
 
-    emitters = JSONEmitter
-    emit_exclude = None
-    emit_fields = None
-    emit_include = None
-    emit_options = None
-    emit_related = None
-    emit_template = None
+    # Set default options
+    Meta = Meta
 
     def emit(self, content, request=None, emitter=None):
         """ Serialize response.
+
+        :return response: Instance of django.http.Response
+
         """
         # Get emitter for request
         emitter = emitter or self.determine_emitter(request)
@@ -73,6 +161,7 @@ class EmitterMixin(object):
 
         # Serialize the response content
         response = emitter.emit()
+
         assert isinstance(response, HttpResponse), \
             "Emitter must return HttpResponse"
 
@@ -91,14 +180,35 @@ class EmitterMixin(object):
 
     @staticmethod
     def to_simple(content, simple, serializer=None):
-        """ Modify simple structure before response.
+        """ Abstract method for modification a structure before serialization.
+
+        :param content: response from called method
+        :param simple: structure is prepared to serialization
+        :param serializer: current serializer
+
+        :return object: structure for serialization
+
+        ::
+
+            class SomeResource(ResourceView):
+                def get(self, request, **resources):
+                    return dict(true=False)
+
+                def to_simple(self, content, simple, serializer):
+                    simple['true'] = True
+                    return simple
+
         """
         return simple
 
     @classmethod
     def determine_emitter(cls, request):
-        " Return must fine emitter for request "
-        default_emitter = cls.emitters[0]
+        """ Get emitter for request.
+
+        :return emitter: Instance of adrest.utils.emitters.BaseEmitter
+
+        """
+        default_emitter = cls._meta.emitters[0]
         if not request:
             return default_emitter
 
@@ -109,8 +219,8 @@ class EmitterMixin(object):
         if accept == '*/*':
             return default_emitter
 
-        base_format = mimeparse.best_match(cls.meta.emitters_dict.keys(),
+        base_format = mimeparse.best_match(cls._meta.emitters_dict.keys(),
                                            accept)
-        return cls.meta.emitters_dict.get(
+        return cls._meta.emitters_dict.get(
             base_format,
             default_emitter)

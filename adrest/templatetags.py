@@ -1,3 +1,4 @@
+""" ADRest inclusion tags. """
 from django.template import Library, VariableDoesNotExist
 from django.template.base import TagHelperNode, parse_bits
 from django.template.loader import get_template
@@ -11,7 +12,14 @@ __path__ = ""
 
 class AdrestInclusionNode(TagHelperNode):
 
+    """ Service class for tags. """
+
     def render(self, context):
+        """ Render node.
+
+        :return str: Rendered string.
+
+        """
         try:
             args, ctx = self.get_resolved_arguments(context)
             target = args[0]
@@ -30,16 +38,25 @@ class AdrestInclusionNode(TagHelperNode):
 
 
 def adrest_include(parser, token):
-    " Include adrest_template for any objects. "
+    """ Include adrest_template for any objects.
+
+    :return str: Rendered string.
+
+    """
     bits = token.split_contents()[1:]
-    args, kwargs = parse_bits(parser, bits, ['content'], 'args', 'kwargs', tuple(), False, 'adrest_include')
+    args, kwargs = parse_bits(
+        parser, bits, ['content'], 'args', 'kwargs', tuple(),
+        False, 'adrest_include')
     return AdrestInclusionNode(False, args, kwargs)
 adrest_include = register.tag(adrest_include)
 
 
 def adrest_jsonify(content, **options):
-    " Serialize to JSON any object. "
+    """ Serialize any object to JSON .
 
+    :return str: Rendered string.
+
+    """
     from adrest.utils.serializer import JSONSerializer
     worker = JSONSerializer(**options)
     return worker.serialize(content)

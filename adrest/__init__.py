@@ -1,4 +1,11 @@
-version_info = (2, 2, 2)
+"""
+    **ADRest** is an API framework for Django. It supports REST_ and RPC_
+    paradigms.
+
+    :copyright: 2013 by Kirill Klenov.
+    :license: BSD, see LICENSE for more details.
+"""
+version_info = (3, 0, 0)
 
 __version__ = version = '.'.join(map(str, version_info))
 __project__ = PROJECT = __name__
@@ -11,7 +18,7 @@ try:
 
         if not 'adrest' in django_settings.INSTALLED_APPS:
             import logging
-            logging.warn('You should add "adrest" to INSTALLED_APPS.')
+            logging.warn('You should added "adrest" to INSTALLED_APPS.')
 
 except ImportError:
     pass

@@ -1,13 +1,16 @@
-from ...main.tests import *
-from ...rpc.tests import *
-from ...simple.tests import *
-
+""" Collect tests.
+"""
+from .admin import *
 from .api import *
+from .auth import *
+from .dynamic import *
+from .emitter import *
 from .handler import *
 from .resource import *
+from .rpc import *
 from .serializer import *
-from .utils import *
 from .test import *
+from .utils import *
 
 
-# lint_ignore=W404
+# lint_ignore=W0401

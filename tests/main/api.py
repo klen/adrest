@@ -25,3 +25,5 @@ API.register(ArticleResource, authenticators=AccessKeyAuthenticator)
 API.register(SomeOtherResource, url_name='test', url_regex='test/mem/$')
 API.register(BSONResource, parsers=(BSONParser,), emitters=(BSONEmitter,))
 API.register(CSVResource)
+
+# lint_ignore=C

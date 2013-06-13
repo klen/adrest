@@ -1,10 +1,16 @@
+""" Test ADRest API module. """
 from django.test import TestCase
+
 from adrest.views import ResourceView
+from adrest.utils.emitter import XMLEmitter
 
 
 class CoreApiTest(TestCase):
 
+    """ Test api. """
+
     def test_base(self):
+        """ Test main functionality. """
         from adrest.api import Api
 
         api = Api('1.0.0')
@@ -12,23 +18,91 @@ class CoreApiTest(TestCase):
         self.assertTrue(api.urls)
 
         class Resource(ResourceView):
-            model = 'core.pirate'
+
+            class Meta:
+                model = 'core.pirate'
 
         api.register(Resource)
         self.assertEqual(len(api.urls), 2)
         self.assertTrue(api.resources.get('pirate'))
 
         class TreasureResource(ResourceView):
-            model = 'core.treasure'
-            parent = Resource
+
+            class Meta:
+                parent = Resource
+                model = 'core.treasure'
 
         api.register(TreasureResource)
         self.assertEqual(len(api.urls), 3)
         self.assertTrue(api.resources.get('pirate-treasure'))
 
         class PrefixResource(TreasureResource):
-            prefix = 'more'
+            class Meta:
+                prefix = 'more'
 
         api.register(PrefixResource)
         self.assertEqual(len(api.urls), 4)
         self.assertTrue(api.resources.get('pirate-more-treasure'))
+
+        class Resource2(ResourceView):
+
+            class Meta:
+                model = 'core.pirate'
+                emitters = XMLEmitter
+
+        resource = api.register(Resource2, name='wow')
+        self.assertEqual(resource._meta.emitters, (XMLEmitter,))
+        self.assertEqual(resource._meta.name, 'wow')
+
+    def test_register(self):
+        """ Test register method. """
+        from adrest.api import Api
+
+        api = Api('1.0.0')
+
+        class TestResource(ResourceView):
+
+            class Meta:
+                name = 'test1'
+
+        resource = api.register(TestResource, name='test2')
+        self.assertEqual(resource._meta.name, 'test2')
+
+        @api.register
+        class TestResource(ResourceView):
+
+            class Meta:
+                name = 'test3'
+
+        self.assertTrue('test3' in api.resources)
+
+        @api.register()
+        class TestResource(ResourceView):
+
+            class Meta:
+                name = 'test4'
+
+        self.assertTrue('test4' in api.resources)
+
+        @api.register(name='test6')
+        class TestResource(ResourceView):
+
+            class Meta:
+                name = 'test5'
+
+        self.assertFalse('test5' in api.resources)
+        self.assertTrue('test6' in api.resources)
+
+    def test_version(self):
+        """ Test version. """
+        from ..api import api2
+
+        resource = api2.resources.get('pirate')
+        self.assertEqual(resource.api, api2)
+
+        uri = api2.testCase.reverse('pirate')
+        self.assertEqual(uri, '/pirates2/1.0.0/pirate/')
+
+
+
+# lint_ignore=E0102,W0404

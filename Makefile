@@ -44,7 +44,7 @@ audit:
 # target: docs - Compile and upload docs
 docs:
 	python setup.py build_sphinx --source-dir=docs/ --build-dir=docs/_build --all-files
-	python setup.py upload_sphinx --upload-dir=docs/_build/html
+	# python setup.py upload_sphinx --upload-dir=docs/_build/html
 
 $(VIRTUALENV): requirements.txt
 	virtualenv --no-site-packages $(VIRTUALENV)

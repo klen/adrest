@@ -50,8 +50,8 @@
             {% for uri, info in content %}
             <div class="uri">
                 <span class="uri_link">{{ uri }}</span>
-                <sup class="uri_name">[{{ info.resource.meta.url_name }}]</sup>
-                <span class="uri_item uri_methods"> {% for m in info.resource.allowed_methods %}{{ m }}&nbsp;{% endfor %}</span>
+                <sup class="uri_name">[{{ info.url_name }}]</sup>
+                <span class="uri_item uri_methods"> {% for m in info.allowed_methods %}{{ m }}&nbsp;{% endfor %}</span>
                     {% if info.doc %}
                         <p class="uri_resource">{{ info.doc|linebreaksbr }}</p>
                     {% endif %}
@@ -64,6 +64,7 @@
                                 <tr>
                                     <td> {{ f.name }} </td>
                                     <td> {{ f.get_internal_type }} </td>
+                                    <td> {{ f.help_text }} </td>
                                 </tr>
                             {% endfor %}
                         </table>

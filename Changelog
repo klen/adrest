@@ -1,3 +1,26 @@
+2013-06-13  horneds 3.0.0
+
+	* ``api.register`` method could be used as decorator;
+
+	* Added `emit_format` option;
+
+	* WARNING! Changed mixin and resources API.
+	  All service attributes moved to Meta classes;
+
+	* WARNING! Model's emit options moved to `emit_models` option.
+	  Before
+	    class Resouce
+		emit_include = ...
+		emit_exclude = ...
+		emit_related = ...
+	 After
+	    class Resource
+	      class Meta
+	        emit_models = dict(include=..., exclude=..., related=...)
+
+	* WARNING! Pagination parameter `max` should be defined with prefix
+	`adr-max` by default. You can change prefix using Meta.dyn_prefix.
+
 2013-05-07  horneds 2.2.2
 
 	* Fix bugs in serializer
