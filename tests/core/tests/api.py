@@ -1,5 +1,5 @@
 """ Test ADRest API module. """
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 
 from adrest.views import ResourceView
 from adrest.utils.emitter import XMLEmitter
@@ -50,7 +50,8 @@ class CoreApiTest(TestCase):
                 model = 'core.pirate'
                 emitters = XMLEmitter
 
-        resource = api.register(Resource2, name='wow')
+        api.register(Resource2, name='wow')
+        resource = api.resources.get('wow')
         self.assertEqual(resource._meta.emitters, (XMLEmitter,))
         self.assertEqual(resource._meta.name, 'wow')
 
@@ -65,7 +66,8 @@ class CoreApiTest(TestCase):
             class Meta:
                 name = 'test1'
 
-        resource = api.register(TestResource, name='test2')
+        api.register(TestResource, name='test2')
+        resource = api.resources.get('test2')
         self.assertEqual(resource._meta.name, 'test2')
 
         @api.register
@@ -93,6 +95,26 @@ class CoreApiTest(TestCase):
         self.assertFalse('test5' in api.resources)
         self.assertTrue('test6' in api.resources)
 
+    def test_fabric(self):
+        from adrest.api import Api
+
+        api = Api('1.0.0')
+
+        @api.register
+        class PirateResource(ResourceView):
+
+            class Meta:
+                model = 'core.pirate'
+
+            def get_collection(self, request, **resources):
+                return super(PirateResource, self).get_collection(
+                    request, **resources)
+
+        resource = api.resources['pirate']
+        rf = RequestFactory()
+        response = resource().dispatch(rf.get('/'))
+        self.assertContains(response, 'resources')
+
     def test_version(self):
         """ Test version. """
         from ..api import api2
@@ -105,4 +127,4 @@ class CoreApiTest(TestCase):
 
 
 
-# lint_ignore=E0102,W0404
+# lint_ignore=E0102,W0404,C0110

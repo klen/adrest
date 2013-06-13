@@ -20,13 +20,16 @@ class AuthMeta(MixinBaseMeta):
 
         cls._meta.authenticators = as_tuple(cls._meta.authenticators)
 
-        assert cls._meta.authenticators, \
-            "Should be defined at least one authenticator."
+        if not cls._meta.authenticators:
+            raise AssertionError(
+                "Should be defined at least one authenticator.")
 
         for a in cls._meta.authenticators:
-            assert issubclass(a, AbstractAuthenticator), \
-                "{0}.authenticators should be subclasses \
-                    of `adrest.utils.auth.AbstractAuthenticator`"
+            if not issubclass(a, AbstractAuthenticator):
+                raise AssertionError(
+                    "Meta.authenticators should be subclasses of "
+                    "`adrest.utils.auth.AbstractAuthenticator`"
+                )
 
         return cls
 
@@ -61,7 +64,9 @@ class AuthMixin(object):
         for authenticator in authenticators:
             auth = authenticator(self)
             try:
-                assert auth.authenticate(request), error_message
+                if not auth.authenticate(request):
+                    raise AssertionError(error_message)
+
                 self.auth = auth
                 auth.configure(request)
                 return True
@@ -80,7 +85,9 @@ class AuthMixin(object):
             return True
 
         try:
-            assert self.auth.test_rights(resources, request=request)
+            if not self.auth.test_rights(resources, request=request):
+                raise AssertionError()
+
         except AssertionError, e:
             raise HttpError(
                 "Access forbiden. {0}".format(e),

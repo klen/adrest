@@ -104,7 +104,8 @@ class RPCResource(ResourceView):
                 except TypeError:
                     raise AssertionError("Invalid RPC Call.")
 
-            assert 'method' in payload, "Invalid RPC Call."
+            if 'method' not in payload:
+                raise AssertionError("Invalid RPC Call.")
             return self.rpc_call(request, **payload)
 
         except Exception, e:
@@ -127,7 +128,8 @@ class RPCResource(ResourceView):
             args = list(as_tuple(params))
 
         method_key = "{0}.{1}".format(self.scheme_name, method)
-        assert method_key in self.methods, "Unknown method: {0}".format(method)
+        if method_key not in self.methods:
+            raise AssertionError("Unknown method: {0}".format(method))
         method = self.methods[method_key]
 
         if hasattr(method, 'request'):
@@ -160,11 +162,12 @@ class AutoJSONRPC(RPCResource):
         return object: a result
 
         """
-        assert method and self.separator in method, \
-            "Wrong method name: {0}".format(method)
+        if not method or self.separator not in method:
+            raise AssertionError("Wrong method name: {0}".format(method))
 
         resource_name, method = method.split(self.separator, 1)
-        assert resource_name in self.api.resources, "Unknown method"
+        if resource_name not in self.api.resources:
+            raise AssertionError("Unknown method " + method)
 
         data = QueryDict('', mutable=True)
         data.update(payload.get('data', dict()))

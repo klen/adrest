@@ -49,8 +49,8 @@ class DynamicMixinMeta(MixinBaseMeta):
 
         cls = super(DynamicMixinMeta, mcs).__new__(mcs, name, bases, params)
 
-        assert cls._meta.dyn_prefix, \
-            "Resource.Meta.dyn_prefix should be defined."
+        if not cls._meta.dyn_prefix:
+            raise AssertionError("Resource.Meta.dyn_prefix should be defined.")
 
         if cls._meta.model and cls._meta.queryset is None:
             cls._meta.queryset = cls._meta.model.objects.all()

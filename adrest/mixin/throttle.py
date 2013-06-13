@@ -14,8 +14,11 @@ class ThrottleMeta(MixinBaseMeta):
     def __new__(mcs, name, bases, params):
         cls = super(ThrottleMeta, mcs).__new__(mcs, name, bases, params)
 
-        assert issubclass(cls._meta.throttle, AbstractThrottle), \
-            "'cls.Meta.throttle' must be subclass of AbstractThrottle"
+        if not issubclass(cls._meta.throttle, AbstractThrottle):
+            raise AssertionError(
+                "'cls.Meta.throttle' must be subclass of AbstractThrottle"
+            )
+
         return cls
 
 

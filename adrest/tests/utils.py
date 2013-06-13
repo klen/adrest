@@ -109,12 +109,13 @@ class AdrestTestCase(TestCase):
         :return str: URI string
 
         """
-        assert cls.api, "AdrestTestCase must have the api attribute."
+        if not cls.api:
+            raise AssertionError("AdrestTestCase must have the api attribute.")
 
         if isinstance(resource, basestring):
             url_name = resource
-            assert cls.api.resources.get(
-                url_name), "Invalid resource name: %s" % url_name
+            if not cls.api.resources.get(url_name):
+                raise AssertionError("Invalid resource name: %s" % url_name)
 
         else:
             url_name = resource._meta.url_name
