@@ -1,3 +1,8 @@
+2013-06-13  horneds 3.0.1
+
+	* Returned support of emit_include, emit_exclude and etc. options
+	  Them will be translated in 'emit_models' dictionary
+
 2013-06-13  horneds 3.0.0
 
 	* ``api.register`` method could be used as decorator;
