@@ -1,4 +1,4 @@
-2013-06-08  horneds 3.0.0
+2013-06-13  horneds 3.0.0
 
 	* ``api.register`` method could be used as decorator;
 
