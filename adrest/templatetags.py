@@ -23,9 +23,10 @@ class AdrestInclusionNode(TagHelperNode):
         try:
             args, ctx = self.get_resolved_arguments(context)
             target = args[0]
-            assert target
+            if not target:
+                return ''
             ctx['content'] = target
-        except (VariableDoesNotExist, AssertionError):
+        except VariableDoesNotExist:
             return ''
 
         emitter = context.get('emitter')

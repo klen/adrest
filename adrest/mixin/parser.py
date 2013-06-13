@@ -14,14 +14,17 @@ class ParserMeta(MixinBaseMeta):
         cls = super(ParserMeta, mcs).__new__(mcs, name, bases, params)
 
         cls._meta.parsers = as_tuple(cls._meta.parsers)
-        assert cls._meta.parsers, "Should be defined at least one parser."
+        if not cls._meta.parsers:
+            raise AssertionError("Should be defined at least one parser.")
 
         cls._meta.default_parser = cls._meta.parsers[0]
         cls._meta.parsers_dict = dict()
 
         for p in cls._meta.parsers:
-            assert issubclass(p, AbstractParser), \
-                "Parser must be subclass of AbstractParser."
+            if not issubclass(p, AbstractParser):
+                raise AssertionError(
+                    "Parser must be subclass of AbstractParser.")
+
             cls._meta.parsers_dict[p.media_type] = p
 
         return cls

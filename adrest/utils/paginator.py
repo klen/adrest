@@ -21,7 +21,10 @@ class Paginator(object):
             self.paginator = DjangoPaginator(
                 response,
                 self.query_dict.get(per_page) or resource._meta.limit_per_page)
-            assert self.paginator.per_page
+
+            if not self.paginator.per_page:
+                self.paginator = None
+
         except (ValueError, AssertionError):
             self.paginator = None
 

@@ -123,11 +123,15 @@ class EmitterMeta(MixinBaseMeta):
         cls._meta.emitters_dict = dict(
             (e.media_type, e) for e in cls._meta.emitters
         )
-        assert cls._meta.emitters, "Should be defined at least one emitter."
+        if not cls._meta.emitters:
+            raise AssertionError("Should be defined at least one emitter.")
 
         for e in cls._meta.emitters:
-            assert issubclass(e, BaseEmitter), \
-                "Emitter should be subclass of `adrest.utils.emitter.BaseEmitter`" # nolint
+            if not issubclass(e, BaseEmitter):
+                raise AssertionError(
+                    "Emitter should be subclass of "
+                    "`adrest.utils.emitter.BaseEmitter`"
+                )
 
         if cls._meta.emit_models is None:
             cls._meta.emit_models = dict()
@@ -188,8 +192,8 @@ class EmitterMixin(object):
         # Serialize the response content
         response = emitter.emit()
 
-        assert isinstance(response, HttpResponse), \
-            "Emitter must return HttpResponse"
+        if not isinstance(response, HttpResponse):
+            raise AssertionError("Emitter must return HttpResponse")
 
         # Append pagination headers
         if isinstance(content, Paginator):

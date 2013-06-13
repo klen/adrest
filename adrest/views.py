@@ -186,13 +186,13 @@ class ResourceView(
 
         objects = resources.get(self._meta.name)
         if self._meta.model and self._meta.parent._meta.model and objects:
-            try:
-                pr = resources.get(self._meta.parent._meta.name)
-                assert pr and all(
-                    pr.pk == getattr(
-                        o, "%s_id" % self._meta.parent._meta.name, None)
-                    for o in as_tuple(objects))
-            except AssertionError:
+            pr = resources.get(self._meta.parent._meta.name)
+            check = all(
+                pr.pk == getattr(
+                    o, "%s_id" % self._meta.parent._meta.name, None)
+                for o in as_tuple(objects))
+
+            if not pr or not check:
                 # 403 Error if there is error in parent-children relationship
                 raise HttpError(
                     "Access forbidden.", status=status.HTTP_403_FORBIDDEN)

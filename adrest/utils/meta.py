@@ -65,16 +65,16 @@ class MixinBaseMeta(type):
 
         # Create model from string
         if isinstance(cls._meta.model, basestring):
-            assert '.' in cls._meta.model, (
-                "'model_class' must be either a model"
-                " or a model name in the format"
-                " app_label.model_name")
+            if not '.' in cls._meta.model:
+                raise AssertionError(
+                    "'model_class' must be either a model"
+                    " or a model name in the format"
+                    " app_label.model_name")
             cls._meta.model = get_model(*cls._meta.model.split("."))
 
         # Check meta.name and queryset
-        assert issubclass(
-            cls._meta.model, Model), \
-            "'model' attribute must be subclass of Model "
+        if not issubclass(cls._meta.model, Model):
+            raise AssertionError("'model' attribute must be subclass of Model")
 
         cls._meta.fields = set(f.name for f in cls._meta.model._meta.fields)
 

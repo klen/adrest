@@ -131,12 +131,13 @@ class Api(object):
             return wrapper
 
         # Must be instance of ResourceView
-        assert issubclass(resource, ResourceView), \
-            "{0} not subclass of ResourceView".format(resource)
+        if not issubclass(resource, ResourceView):
+            raise AssertionError("%s not subclass of ResourceView" % resource)
 
         # Cannot be abstract
-        assert not resource._meta.abstract, \
-            "Attempt register of abstract resource: {0}.".format(resource)
+        if resource._meta.abstract:
+            raise AssertionError("Attempt register of abstract resource: %s."
+                                 % resource)
 
         # Fabric of resources
         meta = dict(self.meta, **meta)
