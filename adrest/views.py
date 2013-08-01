@@ -125,6 +125,9 @@ class ResourceView(
 
             if request.method != 'OPTIONS' or not ADREST_ALLOW_OPTIONS:
 
+                # Parse content
+                request.data = self.parse(request)
+
                 # Get required resources
                 resources = self.get_resources(
                     request, **resources)
@@ -134,9 +137,6 @@ class ResourceView(
 
                 # Check rights for resources with this method
                 self.check_rights(resources, request=request)
-
-                # Parse content
-                request.data = self.parse(request)
 
             response = self.handle_request(request, **resources)
 
@@ -248,4 +248,4 @@ class ResourceView(
 
 
 
-# pymode:lint_ignore=E1120,W0703
+# pymode:lint_ignore=E1120,W0703,W0212

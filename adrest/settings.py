@@ -9,16 +9,12 @@
 
 """
 try:
-    from django.conf import settings
     from django.core.exceptions import ImproperlyConfigured
+    from django.conf import settings
 
     getattr(settings, 'DEBUG')
 
-except ImportError:
-
-    settings = object()
-
-except ImproperlyConfigured:
+except (ImportError, ImproperlyConfigured):
 
     settings.configure()
 

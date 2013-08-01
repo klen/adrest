@@ -46,7 +46,7 @@ from django.core.management import call_command
 call_command('syncdb', interactive=False)
 
 from .core.tests   import *
-# from .main.tests   import *
-# from .rpc.tests    import *
+from .main.tests   import *
+from .rpc.tests    import *
 
 # lint_ignore=W0614,W0401,E272

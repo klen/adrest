@@ -110,5 +110,25 @@ class CoreHandlerTest(API.testCase):
         response = resource.dispatch(request)
         self.assertTrue(pirate in response.resources)
 
+    def test_resources(self):
+        pirates = mixer.cycle(2).blend('pirate', character='evil')
+        response = self.put_resource(
+            'pirate', data=dict(
+                pirate=[p.pk for p in pirates],
+                character='good',
+            )
+        )
+        for p in response.json:
+            self.assertEqual(p['fields']['character'], 'good')
+
+        response = self.put_resource(
+            'pirate', data=dict(
+                pirate=[p.pk for p in pirates],
+                character='sorrow',
+            ), json=True
+        )
+        for p in response.json:
+            self.assertEqual(p['fields']['character'], 'sorrow')
+
 
 # lint_ignore=F0401,C,E1103
