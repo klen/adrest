@@ -396,13 +396,17 @@ class ResourceTest(AdrestTestCase):
             links[1][0], '%s?author=5' % self.reverse('author-test-book'))
         self.assertEquals(links[1][1], 'previous')
 
-        response = self.get_resource('author-test-book',
-                                     data=dict(author=self.author.pk, max=0))
+        response = self.get_resource(
+            'author-test-book', data={
+                'author': self.author.pk, 'adr-max': 0
+            })
         self.assertFalse(response.has_header("Link"))
 
         response = self.get_resource(
             'author-test-book',
-            data=dict(author=self.author.pk, max='all'))
+            data={
+                'author': self.author.pk, 'adr-max': 'all'
+            })
         self.assertEquals(response.status_code, 200)
         self.assertFalse(response.has_header("Link"))
 

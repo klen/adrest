@@ -255,7 +255,7 @@ class HandlerMixin(DynamicMixin):
                 status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def get_resources(self, request, **resources):
-        """ Parse resource objects from URL.
+        """ Parse resource objects from URL and request.
 
         :return dict: Resources.
 
@@ -264,8 +264,11 @@ class HandlerMixin(DynamicMixin):
         if self.parent:
             resources = self.parent.get_resources(request, **resources)
 
-        pks = resources.get(
-            self._meta.name) or request.REQUEST.getlist(self._meta.name)
+        pks = (
+            resources.get(self._meta.name) or
+            request.REQUEST.getlist(self._meta.name) or
+            getattr(request, 'data', None) and request.data.get(
+                self._meta.name))
 
         if not pks or self._meta.queryset is None:
             return resources
