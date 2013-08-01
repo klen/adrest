@@ -1,3 +1,7 @@
+2013-08-01  horneds 3.1.0
+
+	* Content parsing before resource's parsing.
+
 2013-06-13  horneds 3.0.3
 
 	* Returned support of emit_include, emit_exclude and etc. options
