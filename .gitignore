@@ -1,11 +1,6 @@
-._
+*.egg-info
+.vimrc
 build
 dist
 docs/_build
-*.egg
-*.egg-info
 *.pyc
-.ropeproject
-.tags
-.tox
-.vimrc

@@ -2,8 +2,10 @@ from adrest.api import Api
 from adrest.utils.auth import AnonimousAuthenticator
 from adrest.utils.emitter import XMLEmitter, JSONTemplateEmitter
 from adrest.views import ResourceView
-from adrest.resources.rpc import RPCResource
-from . import dummy
+from adrest.resources.rpc import RPCResource, JSONEmitter, JSONPEmitter
+
+
+API = Api('1.0.0', api_rpc=True, emitters=XMLEmitter)
 
 
 class TestAuth(AnonimousAuthenticator):
@@ -16,8 +18,10 @@ class TestAuth(AnonimousAuthenticator):
 
 
 class TestResource(ResourceView):
-    allowed_methods = 'GET', 'POST', 'PUT'
-    model = 'rpc.test'
+
+    class Meta:
+        allowed_methods = 'GET', 'POST', 'PUT'
+        model = 'rpc.test'
 
     def get(self, request, **resources):
         assert not 'error' in request.GET, "Custom error"
@@ -25,23 +29,32 @@ class TestResource(ResourceView):
 
 
 class RootResource(ResourceView):
-    allowed_methods = 'GET', 'POST', 'PUT'
-    model = 'rpc.root'
+
+    class Meta:
+        allowed_methods = 'GET', 'POST', 'PUT'
+        model = 'rpc.root'
 
 
+@API.register
 class ChildResource(ResourceView):
-    allowed_methods = 'GET', 'POST', 'PUT'
-    parent = RootResource
-    model = 'rpc.child'
+
+    class Meta:
+        allowed_methods = 'GET', 'POST', 'PUT'
+        parent = RootResource
+        model = 'rpc.child'
 
 
 class CustomResource(ResourceView):
-    model = 'rpc.custom'
+
+    class Meta:
+        model = 'rpc.custom'
 
 
-API = Api(api_rpc=True, emitters=XMLEmitter)
 API.register(ChildResource)
 API.register(CustomResource, emitters=JSONTemplateEmitter)
 API.register(RootResource, authenticators=TestAuth)
-API.register(RPCResource, url_regex=r'^rpc2$', url_name='rpc2', scheme=dummy)
+API.register(RPCResource, url_regex=r'^rpc2$', url_name='rpc2',
+             scheme='tests.rpc.dummy', emitters=(JSONEmitter, JSONPEmitter))
 API.register(TestResource)
+
+# lint_ignore=C

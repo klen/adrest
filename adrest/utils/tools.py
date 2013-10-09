@@ -10,7 +10,7 @@ def as_tuple(obj):
     if isinstance(obj, (tuple, set, list)):
         return tuple(obj)
 
-    if hasattr(obj, '__iter__'):
+    if hasattr(obj, '__iter__') and not isinstance(obj, dict):
         return obj
 
     return obj,
@@ -19,41 +19,38 @@ def as_tuple(obj):
 def gen_url_name(resource):
     " URL name for resource class generator. "
 
-    if resource.parent:
-        yield resource.parent.meta.url_name
+    if resource._meta.parent:
+        yield resource._meta.parent._meta.url_name
 
-    if resource.prefix:
-        yield resource.prefix
+    if resource._meta.prefix:
+        yield resource._meta.prefix
 
-    for p in resource.url_params:
+    for p in resource._meta.url_params:
         yield p
 
-    yield resource.meta.name
+    yield resource._meta.name
 
 
 def gen_url_regex(resource):
     " URL regex for resource class generator. "
 
-    for r in resource.meta.parents:
-        if r.url_regex:
-            yield r.url_regex.rstrip('/$').lstrip('^')
-        else:
-            yield '%(name)s/(?P<%(name)s>[^/]+)' % dict(
-                name=r.meta.name)
+    if resource._meta.parent:
+        yield resource._meta.parent._meta.url_regex.rstrip('/$').lstrip('^')
 
-    for p in resource.url_params:
+    for p in resource._meta.url_params:
         yield '%(name)s/(?P<%(name)s>[^/]+)' % dict(name=p)
 
-    if resource.prefix:
-        yield resource.prefix
+    if resource._meta.prefix:
+        yield resource._meta.prefix
 
-    yield '%(name)s/(?:(?P<%(name)s>[^/]+)/)?' % dict(name=resource.meta.name)
+    yield '%(name)s/(?P<%(name)s>[^/]+)?' % dict(name=resource._meta.name)
 
 
 def fix_request(request):
     methods = "PUT", "PATCH"
 
-    if request.method in methods and not getattr(request, request.method, None):
+    if request.method in methods\
+            and not getattr(request, request.method, None):
 
         if hasattr(request, '_post'):
             del(request._post)
@@ -66,10 +63,12 @@ def fix_request(request):
         setattr(request, method, request.POST)
         request.method = method
 
+    request.adrest_fixed = True
+
     return request
 
 
-class FrozenDict(collections.Mapping):
+class FrozenDict(collections.Mapping): # nolint
     """ Immutable dict. """
 
     def __init__(self, *args, **kwargs):

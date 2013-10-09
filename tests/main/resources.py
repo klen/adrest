@@ -8,25 +8,33 @@ from adrest.views import ResourceView
 
 
 class AuthorResource(ResourceView):
-    allowed_methods = 'GET', 'POST', 'PATCH'
-    model = 'main.author'
-    url_regex = '^owner/$'
+
+    class Meta:
+        allowed_methods = 'GET', 'POST', 'PATCH'
+        model = 'main.author'
+        url_regex = '^owner/$'
 
 
 class BookResource(ResourceView):
-    allowed_methods = 'GET', 'post', 'pUt', 'DELETE'
-    model = 'main.book'
-    parent = AuthorResource
+
+    class Meta:
+        allowed_methods = 'GET', 'post', 'pUt', 'DELETE'
+        parent = AuthorResource
+        model = 'main.book'
 
 
 class BookPrefixResource(BookResource):
-    prefix = 'test'
+
+    class Meta:
+        prefix = 'test'
 
 
 class ArticleResource(ResourceView):
-    allowed_methods = 'GET', 'PUT', 'DELETE'
-    model = 'main.article'
-    parent = BookPrefixResource
+
+    class Meta:
+        allowed_methods = 'GET', 'PUT', 'DELETE'
+        parent = BookPrefixResource
+        model = 'main.article'
 
     def put(self, request, **kwargs):
         assert False, "Assertion error"
@@ -36,45 +44,56 @@ class ArticleResource(ResourceView):
 
 
 class OtherResource(ResourceView):
-    parent = BookResource
-    url_prefix = 'other'
+
+    class Meta:
+        parent = BookResource
 
     def get(self, request, **kwargs):
         return True
 
 
 class SomeOtherResource(ResourceView):
-    parent = AuthorResource
-    url_params = 'device',
+
+    class Meta:
+        parent = AuthorResource
+        url_params = 'device',
 
     def get(self, request, **kwargs):
         return self.paginate(request, [1, 2, 3])
 
 
 class CustomResource(ResourceView):
-    allowed_methods = 'GET', 'POST'
-    model = 'main.book'
-    queryset = Book.objects.all()
-    template = 'main/custom.xml'
+
+    class Meta:
+        allowed_methods = 'GET', 'POST'
+        model = 'main.book'
+        queryset = Book.objects.all()
+        emit_template = 'main/custom.xml'
 
     def get(self, request, **kwargs):
-        return list(self.queryset)
+        return list(self._meta.queryset)
 
     def post(self, request, **resources):
         try:
             request.data['test'] = 123
         except TypeError, e:
-            raise HttpError(dict(error=str(e)), status=400, emitter=JSONEmitter)
+            raise HttpError(dict(error=str(
+                e)), status=400, emitter=JSONEmitter)
 
 
 class DummyResource(ResourceView):
+
+    class Meta:
+        name = 'iamdummy'
+
     def get(self, request, **resources):
         return True
 
 
 class BSONResource(ResourceView):
 
-    allowed_methods = 'GET', 'POST'
+    class Meta:
+        allowed_methods = 'GET', 'POST'
 
     COUNTER = 1
 
@@ -87,7 +106,11 @@ class BSONResource(ResourceView):
 
 
 class CSVResource(ResourceView):
-    allowed_methods = 'GET'
+
+    class Meta:
+        allowed_methods = 'GET'
 
     def get(self, request, **resources):
         return HttpResponse('value'.encode("utf-16"), mimetype="text/csv")
+
+# lint_ignore=C

@@ -1,0 +1,2 @@
+django>=1.4.3
+python-mimeparse==0.1.4

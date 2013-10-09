@@ -1,3 +1,92 @@
+2013-08-01  horneds 3.1.0
+
+	* Content parsing before resource's parsing.
+
+2013-06-13  horneds 3.0.3
+
+	* Returned support of emit_include, emit_exclude and etc. options
+	  Them will be translated in 'emit_models' dictionary
+
+2013-06-13  horneds 3.0.0
+
+	* ``api.register`` method could be used as decorator;
+
+	* Added `emit_format` option;
+
+	* WARNING! Changed mixin and resources API.
+	  All service attributes moved to Meta classes;
+
+	* WARNING! Model's emit options moved to `emit_models` option.
+	  Before
+	    class Resouce
+		emit_include = ...
+		emit_exclude = ...
+		emit_related = ...
+	 After
+	    class Resource
+	      class Meta
+	        emit_models = dict(include=..., exclude=..., related=...)
+
+	* WARNING! Pagination parameter `max` should be defined with prefix
+	`adr-max` by default. You can change prefix using Meta.dyn_prefix.
+
+2013-05-07  horneds 2.2.2
+
+	* Fix bugs in serializer
+
+2013-05-03  horneds 2.2.1
+
+	* Support Django 1.5
+
+2013-04-27  horneds 2.1.14
+
+	* Update default form initialization (one instance in arguments);
+
+2013-04-26  horneds 2.1.12
+
+	* Respect resource name;
+	* Improvement folding (thanks @alvinfrancis);
+
+2013-04-17  klen 2.1.11
+
+	* Added field `emit_options` to resource class.
+	  Ex. emit_options = dict(ensure_ascii=False)
+	* [WARNING] Changed format of serializer's options
+	  _fields -> fields, _include -> include and etc.
+
+2013-04-12  klen 2.1.5
+
+	* Added num_pages property in paginator serialize result;
+
+2013-04-08  klen 2.1.4
+
+	* Fix Pagination (dont raise server error in invalid values);
+
+2013-04-04  klen 2.1.3
+
+	* [WARNING] Change resource.template attribute
+	  template -> emit_template
+	* [WARNING] Change Paginator attribute, next -> next_page, previous -> previous_page;
+	* Added to_simple__<fieldname> method support to resources;
+	* Added to_simple method to resources (finished serialization);
+
+2013-04-01  klen 2.0.11
+
+	* RPC scheme could be defined as string;
+	* Minor bugfixes
+
+2013-03-22  klen 2.0.9
+
+	* Respect resource.name;
+	* '***_resource' test helper now supported json=True;
+	* Pagination can be disabled by set `limit_per_page=0` in resource
+	class. Also you can send max=0 for disable it dinamicly;
+	* You can proxy a request to rpc methods (use @get_request);
+
+2013-xx-xx  denya 2.0.7
+
+	* Add ensure_ascii=False by default in json.dumps
+
 2012-11-19  klen  2.0.6
 
 	* Fix OPTIONS method in RPC calls

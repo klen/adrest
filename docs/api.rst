@@ -1,11 +1,4 @@
 API
----
+===
 
-.. module:: adrest.api
-
-
-Configuration
-`````````````
-
-.. autoclass:: Api
-   :members:
+.. automodule:: adrest.api

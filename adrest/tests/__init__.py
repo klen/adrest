@@ -1,5 +1,5 @@
 " Adrest test utils. "
 
-from .utils import AdrestClient, AdrestTestCase
+from .utils import AdrestClient, AdrestTestCase, AdrestRequestFactory
 
-assert AdrestClient and AdrestTestCase
+# lint_ignore=W402

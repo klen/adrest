@@ -1,6 +1,6 @@
 from adrest.tests.utils import AdrestTestCase
-from milkman.dairy import milkman
 from django.utils import simplejson
+from mixer.backend.django import mixer
 
 from .api import API
 from .models import Root, Child
@@ -16,7 +16,8 @@ class RPCTestCase(AdrestTestCase):
 
         self.root2 = Root.objects.create(name='test_root2')
         for i in xrange(10):
-            Child.objects.create(root=self.root2, name='test_child2', odd=i % 2)
+            Child.objects.create(
+                root=self.root2, name='test_child2', odd=i % 2)
 
     def test_base_rpc(self):
 
@@ -78,14 +79,14 @@ class RPCTestCase(AdrestTestCase):
 
     def test_base(self):
         uri = self.reverse('test')
-        self.assertEqual(uri, '/rpc/test/')
+        self.assertEqual(uri, '/rpc/1.0.0/test/')
 
         response = self.get_resource('test')
         self.assertContains(response, 'true')
 
     def test_autojsonrpc(self):
         uri = self.reverse('autojsonrpc')
-        self.assertEqual(uri, '/rpc/rpc')
+        self.assertEqual(uri, '/rpc/1.0.0/rpc')
 
         response = self.get_resource('autojsonrpc')
         self.assertContains(response, 'Invalid RPC Call.')
@@ -109,7 +110,7 @@ class RPCTestCase(AdrestTestCase):
             'autojsonrpc',
             rpc=dict(
             method='test.bla'))
-        self.assertContains(response, 'unsupported method')
+        self.assertContains(response, 'not allowed')
 
         response = self.rpc(
             'autojsonrpc',
@@ -184,7 +185,8 @@ class RPCTestCase(AdrestTestCase):
             key=111,
             rpc=dict(
                 data=dict(name='New name'),
-                params=dict(root=self.root1.pk, child=self.root1.child_set.all()[0].pk),
+                params=dict(root=self.root1.pk,
+                            child=self.root1.child_set.all()[0].pk),
                 method='root-child.put'))
         self.assertContains(response, 'New name')
         child = self.root1.child_set.all()[0]
@@ -205,8 +207,29 @@ class RPCTestCase(AdrestTestCase):
         self.assertContains(response, 'test1234')
 
     def test_custom(self):
-        milkman.deliver('rpc.custom')
+        mixer.blend('rpc.custom')
         response = self.rpc(
             'autojsonrpc',
             rpc=dict(method='custom.get'))
         self.assertContains(response, 'Custom template')
+
+    def test_request(self):
+        response = self.rpc(
+            'rpc2',
+            rpc=dict(
+                jsonrpc='2.0',
+                method='method3',
+                params=['test'],
+            ))
+        self.assertEqual(response.content, '"POSTtest"')
+
+    def test_private(self):
+        response = self.rpc(
+            'rpc2',
+            rpc=dict(
+                jsonrpc='2.0',
+                method='__private_method',
+            ))
+        self.assertContains(response, 'error')
+
+# lint_ignore=C,F0401
