@@ -34,8 +34,10 @@ setup(
     packages=find_packages(),
     platforms=('Any'),
     keywords='rest rpc api django'.split(),
-    tests_require=['pymongo', 'mixer'],
-    test_suite='tests.test_adrest',
+    tests_require=['pymongo', 'mixer',
+                   'django-nose==1.2',
+                   'nose==1.3.0'],
+    test_suite='tests.test_adrest.runtests',
     url=' http://github.com/klen/{0}'.format(PROJECT),
     version=version,
     classifiers=[
