@@ -4,7 +4,7 @@ import hashlib
 
 from django.core.cache import cache
 
-from ..settings import ADREST_THROTTLE_AT, ADREST_THROTTLE_TIMEFRAME
+from ..settings import ADREST_CONFIG
 
 
 class AbstractThrottle(object):
@@ -13,8 +13,8 @@ class AbstractThrottle(object):
 
     __meta__ = abc.ABCMeta
 
-    throttle_at = ADREST_THROTTLE_AT
-    timeframe = ADREST_THROTTLE_TIMEFRAME
+    throttle_at = ADREST_CONFIG['THROTTLE_AT']
+    timeframe = ADREST_CONFIG['THROTTLE_TIMEFRAME']
 
     @abc.abstractmethod
     def should_be_throttled(self, resource):

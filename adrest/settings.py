@@ -18,41 +18,51 @@ except (ImportError, ImproperlyConfigured):
 
     settings.configure()
 
-from .utils.tools import as_tuple
+from adrest.utils.tools import get_notifiers
 
 
-#: Enable ADRest API logs. Information about requests and responses will be
-#: saved in database.
-ADREST_ACCESS_LOG = getattr(settings, 'ADREST_ACCESS_LOG', False)
+ADREST_CONFIG = {
+    #: Enable ADRest API logs. Information about requests and responses will be
+    #: saved in database.
+    "ACCESS_LOG": False,
 
-#: Create `adrest.models.AccessKey` models for authorisation by keys
-ADREST_ACCESSKEY = getattr(
-    settings, 'ADREST_ACCESSKEY',
-    'django.contrib.auth' in getattr(settings, 'INSTALLED_APPS', tuple()))
+    #: Create `adrest.models.AccessKey` models for authorisation by keys
+    "ACCESSKEY": 'django.contrib.auth' in getattr(settings, 'INSTALLED_APPS', tuple()),
 
-#: Create AccessKey for Users automaticly
-ADREST_AUTO_CREATE_ACCESSKEY = getattr(
-    settings, 'ADREST_AUTO_CREATE_ACCESSKEY', False)
+    #: Create AccessKey for Users automaticly
+    "AUTO_CREATE_ACCESSKEY": False,
 
-#: Set default number resources per page for pagination
-#: ADREST_LIMIT_PER_PAGE = 0 -- Disabled pagination by default
-ADREST_LIMIT_PER_PAGE = int(getattr(settings, 'ADREST_LIMIT_PER_PAGE', 50))
+    #: Set default number resources per page for pagination
+    #: LIMIT_PER_PAGE = 0 -- Disabled pagination by default
+    "LIMIT_PER_PAGE": 50,
 
-#: Dont parse a exceptions. Show standart Django 500 page.
-ADREST_DEBUG = getattr(settings, 'ADREST_DEBUG', False)
+    #: Dont parse a exceptions. Show standart Django 500 page.
+    "DEBUG": False,
 
-#: List of errors for ADRest's errors mails.
-#: Set ADREST_MAIL_ERRORS = None for disable this functionality
-ADREST_MAIL_ERRORS = as_tuple(getattr(settings, 'ADREST_MAIL_ERRORS', 500))
+    #: List of errors for ADRest's errors mails.
+    #: Set NOTIFY_ERRORS = None for disable this functionality
+    "NOTIFY_ERRORS": [500],
 
-#: Set maximum requests per timeframe
-ADREST_THROTTLE_AT = getattr(settings, 'ADREST_THROTTLE_AT', 120)
+    # List of errors notifiers
+    "NOTIFIERS": ["adrest.utils.notifiers.email_notifier"],
 
-#: Set timeframe length
-ADREST_THROTTLE_TIMEFRAME = getattr(settings, 'ADREST_THROTTLE_TIMEFRAME', 60)
+    #: Set maximum requests per timeframe
+    "THROTTLE_AT": 120,
 
-#: We do not restrict access for OPTIONS request.
-ADREST_ALLOW_OPTIONS = getattr(settings, 'ADREST_ALLOW_OPTIONS', False)
+    #: Set timeframe length
+    "THROTTLE_TIMEFRAME": 60,
 
-#: Template path for ADRest map
-ADREST_MAP_TEMPLATE = getattr(settings, 'ADREST_MAP_TEMPLATE', 'api/map.html')
+    #: We do not restrict access for OPTIONS request.
+    "ALLOW_OPTIONS": False,
+
+    #: Template path for ADRest map
+    "MAP_TEMPLATE": 'api/map.html',
+
+    #: Logger name
+    "LOGGER_NAME": "api.errors"
+    }
+
+
+ADREST_CONFIG.update(getattr(settings, 'ADREST', {}))
+
+NOTIFIERS = get_notifiers(ADREST_CONFIG['NOTIFIERS'])

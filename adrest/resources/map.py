@@ -2,7 +2,7 @@
 from django.forms.models import ModelChoiceField
 from django.utils.encoding import smart_unicode
 
-from ..settings import ADREST_MAP_TEMPLATE
+from ..settings import ADREST_CONFIG
 from ..utils.auth import AnonimousAuthenticator
 from ..utils.emitter import HTMLTemplateEmitter, JSONEmitter
 from ..views import ResourceView
@@ -17,7 +17,7 @@ class MapResource(ResourceView):
 
     class Meta:
         authenticators = AnonimousAuthenticator
-        emit_template = ADREST_MAP_TEMPLATE
+        emit_template = ADREST_CONFIG['MAP_TEMPLATE']
         emitters = HTMLTemplateEmitter, JSONEmitter
         log = False
         url_regex = r'^map$'

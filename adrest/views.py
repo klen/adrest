@@ -1,18 +1,18 @@
 """ Base request resource. """
 
+from logging import getLogger
+
 from django.conf.urls.defaults import url
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
-from logging import getLogger
 
 from .mixin import auth, emitter, handler, parser, throttle
-from .settings import ADREST_ALLOW_OPTIONS, ADREST_DEBUG
+from .settings import ADREST_CONFIG, NOTIFIERS
 from .signals import api_request_started, api_request_finished
 from .utils import status
 from .utils.exceptions import HttpError, FormError
-from .utils.mail import adrest_errors_mail
 from .utils.response import SerializedHttpResponse
 from .utils.tools import as_tuple, gen_url_name, gen_url_regex, fix_request
 
@@ -123,7 +123,7 @@ class ResourceView(
             # Throttle check
             self.throttle_check()
 
-            if request.method != 'OPTIONS' or not ADREST_ALLOW_OPTIONS:
+            if request.method != 'OPTIONS' or not ADREST_CONFIG['ALLOW_OPTIONS']:
 
                 # Parse content
                 request.data = self.parse(request)
@@ -149,8 +149,8 @@ class ResourceView(
         response["Allow"] = ', '.join(self._meta.allowed_methods)
         response["Vary"] = 'Authenticate, Accept'
 
-        # Send errors on mail
-        adrest_errors_mail(response, request)
+        # Notify about errors
+        self.notify_errors(request, response)
 
         # Send finished signal
         api_request_finished.send(
@@ -202,6 +202,8 @@ class ResourceView(
     def handle_exception(self, e, request=None):
         """ Handle code exception.
 
+        :param e: error instance
+        :param request: :class:``django.http.HttpRequest`` instance
         :return response: Http response
 
         """
@@ -222,7 +224,7 @@ class ResourceView(
 
             return self.emit(response, request=request)
 
-        if ADREST_DEBUG:
+        if ADREST_CONFIG['DEBUG']:
             raise
 
         logger.exception('\nADREST API Error: %s', request.path)
@@ -246,6 +248,19 @@ class ResourceView(
 
         return url(url_regex, cls.as_view(api=api), name=url_name)
 
+
+    @staticmethod
+    def notify_errors(request, response):
+        """Process response errors
+
+        :param request: :class:``django.http.HttpRequest``
+        :param response: :class:``django.http.HttpResponse``
+        """
+        if not response.status_code in ADREST_CONFIG['NOTIFY_ERRORS']:
+            return False
+
+        for notifier in NOTIFIERS:
+            notifier(request, response)
 
 
 # pymode:lint_ignore=E1120,W0703,W0212
