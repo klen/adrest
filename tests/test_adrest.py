@@ -38,8 +38,9 @@ settings.configure(
 
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend',
 
+    ADREST_ABSTRACT_ACCESS_KEY=False,
+
     ADREST = dict(
-        ABSTRACT_ACCESS_KEY=False,
         ABSTRACT_ACCESS=False,
         ALLOW_OPTIONS=True,
         NOTIFY_ERRORS=(500, 400),
@@ -55,7 +56,6 @@ settings.configure(
         ]
 )
 
-import sys
 def runtests(*test_args):
     from django_nose.runner import NoseTestSuiteRunner
     tests_runner = NoseTestSuiteRunner()

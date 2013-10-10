@@ -64,6 +64,9 @@ ADREST_CONFIG = {
     "LOGGER_NAME": "api.errors"
     }
 
+# Backward compatibility with old versions
+for key in filter(lambda x: x.startswith("ADREST_"), dir(settings)):
+    ADREST_CONFIG[key[7:]] = getattr(settings, key, None)
 
 ADREST_CONFIG.update(getattr(settings, 'ADREST', {}))
 
