@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
 from .mixin import auth, emitter, handler, parser, throttle
-from .settings import ADREST_CONFIG, NOTIFIERS
+from .settings import ADREST_CONFIG, NOTIFIERS, LOG_HANDLERS
 from .signals import api_request_started, api_request_finished
 from .utils import status
 from .utils.exceptions import HttpError, FormError
@@ -152,6 +152,9 @@ class ResourceView(
         # Notify about errors
         self.notify_errors(request, response)
 
+        # Save request to log handlers
+        self.save_log(self, request=request, response=response, **resources)
+
         # Send finished signal
         api_request_finished.send(
             self, request=request, response=response, **resources)
@@ -261,6 +264,20 @@ class ResourceView(
 
         for notifier in NOTIFIERS:
             notifier(request, response)
+
+    @staticmethod
+    def save_log(self, request, response, **kwargs):
+        """
+        Send request data to handers
+
+        :param self: resource instance
+        :param request: :class:``django.http.HttpRequest``
+        :param response: :class:``django.http.HttpResponse``
+        :param \*\*kwargs\*\*: resources
+        """
+        for handler in LOG_HANDLERS:
+            handler(self, request, response, **kwargs)
+
 
 
 # pymode:lint_ignore=E1120,W0703,W0212

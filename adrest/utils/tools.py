@@ -105,7 +105,7 @@ class FrozenDict(collections.Mapping): # nolint
         return "<FrozenDict: %s>" % repr(dict(self.iteritems()))
 
 
-def get_notifiers(notifiers):
+def import_functions(paths):
     """Import notifiers
 
     :param notifiers: list of string
@@ -113,8 +113,10 @@ def get_notifiers(notifiers):
     """
 
     res = []
-    for notifier in notifiers:
+    for notifier in paths:
         module, notifier_name = notifier.rsplit('.', 1)
         res.append(getattr(import_module(module), notifier_name, None))
 
     return res
+
+

@@ -18,16 +18,18 @@ except (ImportError, ImproperlyConfigured):
 
     settings.configure()
 
-from adrest.utils.tools import get_notifiers
+from adrest.utils.tools import import_functions
 
 
 ADREST_CONFIG = {
-    #: Enable ADRest API logs. Information about requests and responses will be
-    #: saved in database.
-    "ACCESS_LOG": False,
+    # Handlers for API logs.
+    "LOG_HANDLERS": ["adrest.utils.log_handlers.db_handler", ],
 
-    #: Create `adrest.models.AccessKey` models for authorisation by keys
-    "ACCESSKEY": 'django.contrib.auth' in getattr(settings, 'INSTALLED_APPS', tuple()),
+    #: Make abstract model to create custom models
+    "ABSTRACT_ACCESS_KEY": True,
+
+    #: Make abstract `adrest.models.AccessKey`
+    "ABSTRACT_ACCESS": True,
 
     #: Create AccessKey for Users automaticly
     "AUTO_CREATE_ACCESSKEY": False,
@@ -65,4 +67,6 @@ ADREST_CONFIG = {
 
 ADREST_CONFIG.update(getattr(settings, 'ADREST', {}))
 
-NOTIFIERS = get_notifiers(ADREST_CONFIG['NOTIFIERS'])
+NOTIFIERS = import_functions(ADREST_CONFIG['NOTIFIERS'])
+
+LOG_HANDLERS = import_functions(ADREST_CONFIG['LOG_HANDLERS'])

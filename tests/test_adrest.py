@@ -39,7 +39,8 @@ settings.configure(
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend',
 
     ADREST = dict(
-        ACCESS_LOG=True,
+        ABSTRACT_ACCESS_KEY=False,
+        ABSTRACT_ACCESS=False,
         ALLOW_OPTIONS=True,
         NOTIFY_ERRORS=(500, 400),
         AUTO_CREATE_ACCESSKEY=True

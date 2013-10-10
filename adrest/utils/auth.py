@@ -90,7 +90,8 @@ class UserAuthenticator(UserLoggedInAuthenticator):
 
     @classmethod
     def get_fields(cls):
-        return [(cls.username_fieldname, dict(required=True)), (cls.password_fieldname, dict(required=True))]
+        return [(cls.username_fieldname, dict(required=True)),
+                (cls.password_fieldname, dict(required=True))]
 
 
 try:
