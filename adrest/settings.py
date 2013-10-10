@@ -26,10 +26,10 @@ ADREST_CONFIG = {
     "LOG_HANDLERS": ["adrest.utils.log_handlers.db_handler", ],
 
     #: Make abstract model to create custom models
-    "ABSTRACT_ACCESS_KEY": True,
+    "ABSTRACT_ACCESS_KEY": False,
 
     #: Make abstract `adrest.models.AccessKey`
-    "ABSTRACT_ACCESS": True,
+    "ABSTRACT_ACCESS": False,
 
     #: Create AccessKey for Users automaticly
     "AUTO_CREATE_ACCESSKEY": False,
