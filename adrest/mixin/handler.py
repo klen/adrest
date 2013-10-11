@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from logging import getLogger
 
 from ..forms import PartitialForm
-from ..settings import ADREST_ALLOW_OPTIONS
+from ..settings import ADREST_CONFIG
 from ..utils import status, UpdatedList
 from ..utils.exceptions import HttpError, FormError
 from ..utils.tools import as_tuple
@@ -88,7 +88,7 @@ class HandlerMeta(DynamicMixinMeta):
 
         methods = tuple([str(m).upper() for m in as_tuple(methods)])
 
-        if not 'OPTIONS' in methods and ADREST_ALLOW_OPTIONS:
+        if not 'OPTIONS' in methods and ADREST_CONFIG['ALLOW_OPTIONS']:
             methods += 'OPTIONS',
 
         if not 'HEAD' in methods and 'GET' in methods:

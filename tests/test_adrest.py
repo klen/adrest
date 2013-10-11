@@ -1,5 +1,8 @@
 """ Prepare a Django project for tests. """
+import sys
+
 from django.conf import settings
+
 
 # Configure Django
 settings.configure(
@@ -35,18 +38,32 @@ settings.configure(
 
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend',
 
-    ADREST_ACCESS_LOG=True,
-    ADREST_ALLOW_OPTIONS=True,
-    ADREST_MAIL_ERRORS=(500, 400),
-    ADREST_AUTO_CREATE_ACCESSKEY=True,
+    ADREST_ABSTRACT_ACCESS_KEY=False,
+
+    ADREST = dict(
+        ABSTRACT_ACCESS=False,
+        ALLOW_OPTIONS=True,
+        NOTIFY_ERRORS=(500, 400),
+        AUTO_CREATE_ACCESSKEY=True
+        ),
+    NOSE_ARGS = [
+        '--verbosity=3',
+        '--nologcapture',
+        '--no-byte-compile',
+        #    '--stop', # stop after first failure
+           '--pdb-failures',
+        #    '--logging-clear-handlers'
+        ]
 )
 
-# Setup tests
-from django.core.management import call_command
-call_command('syncdb', interactive=False)
+def runtests(*test_args):
+    from django_nose.runner import NoseTestSuiteRunner
+    tests_runner = NoseTestSuiteRunner()
+    failures = tests_runner.run_tests(['tests.core.tests',
+                                       'tests.main.tests',
+                                       'tests.rpc.tests'])
 
-from .core.tests   import *
-from .main.tests   import *
-from .rpc.tests    import *
+
+    sys.exit(failures)
 
 # lint_ignore=W0614,W0401,E272

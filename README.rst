@@ -28,7 +28,7 @@ Documentation in `construction <http://adrest.readthedocs.org>`_.
     :alt: Donate
 
 .. _requirements:
-    
+
 Requirements
 =============
 
@@ -71,24 +71,27 @@ Setup
 
 Adrest settings (default values): ::
 
-    # Enable logs
-    ADREST_ACCESS_LOG = False
+    ADREST = {
+       # Enable logs
+       "ABSTRACT_ACCESS": False,
+       "LOG_HANDLERS": ["adrest.utils.log_handlers.db_handler"],
 
-    # Auto create adrest access key for User
-    ADREST_AUTO_CREATE_ACCESSKEY = False
+       # Auto create adrest access key for User
+       "AUTO_CREATE_ACCESSKEY": False,
 
-    # Max resources per page in list views
-    ADREST_LIMIT_PER_PAGE = 50
+       # Max resources per page in list views
+       "LIMIT_PER_PAGE": 50,
 
-    # Display django standart technical 500 page
-    ADREST_DEBUG = False
+       # Display django standart technical 500 page
+       "DEBUG": False,
 
-    # Limit request number per second from same identifier, null is not limited
-    ADREST_THROTTLE_AT = 120
-    ADREST_THROTTLE_TIMEFRAME = 60
+        # Limit request number per second from same identifier, null is not limited
+        "THROTTLE_AT": 120,
+        "THROTTLE_TIMEFRAME": 60,
 
-    # We do not restrict access for OPTIONS request
-    ADREST_AUTHENTICATE_OPTIONS_REQUEST = False
+        # We do not restrict access for OPTIONS request
+        "AUTHENTICATE_OPTIONS_REQUEST": False
+     }
 
 .. note::
     Add 'adrest' to INSTALLED_APPS

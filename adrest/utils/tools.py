@@ -1,4 +1,5 @@
 import collections
+from django.utils.importlib import import_module
 
 
 def as_tuple(obj):
@@ -102,3 +103,19 @@ class FrozenDict(collections.Mapping): # nolint
 
     def __repr__(self):
         return "<FrozenDict: %s>" % repr(dict(self.iteritems()))
+
+
+def import_functions(paths):
+    """Import notifiers
+
+    :param notifiers: list of string
+    :return: list of imported functions
+    """
+
+    res = []
+    for notifier in paths:
+        module, notifier_name = notifier.rsplit('.', 1)
+        res.append(getattr(import_module(module), notifier_name, None))
+
+    return res
+

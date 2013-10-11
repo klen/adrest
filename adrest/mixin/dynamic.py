@@ -2,7 +2,7 @@
 from django.core.exceptions import FieldError
 from logging import getLogger
 
-from ..settings import ADREST_LIMIT_PER_PAGE
+from ..settings import ADREST_CONFIG
 from ..utils import UpdatedList
 from ..utils.meta import MixinBaseMeta, MixinBase
 from ..utils.paginator import Paginator
@@ -34,7 +34,7 @@ class Meta:
     #: Limit per page for pagination
     #: Set to `0` for disable pagination in resource, but user can still force
     #: it with `?max=...`
-    limit_per_page = ADREST_LIMIT_PER_PAGE
+    limit_per_page = ADREST_CONFIG['LIMIT_PER_PAGE']
 
     #: Define queryset for resource's operation.
     #: By default: self.Meta.model.objects.all()

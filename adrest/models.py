@@ -1,9 +1,9 @@
 """ ASRest related models. """
+import uuid
 from django.db import models
-from django.utils.encoding import smart_unicode
+from django.contrib.auth.models import User
 
-from . import settings
-from .signals import api_request_finished
+from .settings import ADREST_CONFIG
 
 
 # Preloads ADREST tags
@@ -19,98 +19,65 @@ except ImportError:
 
 # Access log
 # -----------
-if settings.ADREST_ACCESS_LOG:
+class Access(models.Model):
+    """ Log api queries.
+    """
+    created_at = models.DateTimeField(auto_now_add=True)
+    uri = models.CharField(max_length=100, db_index=True)
+    status_code = models.PositiveIntegerField()
+    version = models.CharField(max_length=25)
+    method = models.CharField(max_length=10, choices=(
+        ('GET', 'GET'),
+        ('POST', 'POST'),
+        ('PUT', 'PUT'),
+        ('DELETE', 'DELETE'),
+        ('OPTIONS', 'OPTIONS'),
+    ))
+    request = models.TextField()
+    response = models.TextField()
+    identifier = models.CharField(max_length=255, db_index=True)
 
-    class Access(models.Model):
-        """ Log api queries.
-        """
-        created_at = models.DateTimeField(auto_now_add=True)
-        uri = models.CharField(max_length=100)
-        status_code = models.PositiveIntegerField()
-        version = models.CharField(max_length=25)
-        method = models.CharField(max_length=10, choices=(
-            ('GET', 'GET'),
-            ('POST', 'POST'),
-            ('PUT', 'PUT'),
-            ('DELETE', 'DELETE'),
-            ('OPTIONS', 'OPTIONS'),
-        ))
-        request = models.TextField()
-        response = models.TextField()
-        identifier = models.CharField(max_length=255)
+    class Meta():
+        ordering = ["-created_at"]
+        verbose_name_plural = "Access"
+        abstract = ADREST_CONFIG['ABSTRACT_ACCESS']
 
-        class Meta():
-            ordering = ["-created_at"]
-            verbose_name_plural = "Access"
 
-        def __unicode__(self):
-            return "#{0} {1}:{2}:{3}".format(
-                self.pk, self.method, self.status_code, self.uri)
-
-    def save_log(sender, response=None, request=None, **resources):
-
-        resource = sender
-
-        if not resource._meta.log:
-            return
-
-        try:
-            content = smart_unicode(response.content)[:5000]
-        except (UnicodeDecodeError, UnicodeEncodeError):
-            if response and response['Content-Type'].lower() not in \
-                    [emitter.media_type.lower()
-                        for emitter in resource.emitters]:
-                content = 'Invalid response content encoding'
-            else:
-                content = response.content[:5000]
-
-        Access.objects.create(
-            uri=request.path_info,
-            method=request.method,
-            version=str(resource.api or ''),
-            status_code=response.status_code,
-            request='%s\n\n%s' % (str(request.META), str(
-                getattr(request, 'data', ''))),
-            identifier=resource.identifier or request.META.get(
-                'REMOTE_ADDR', 'anonymous'),
-            response=content)
-
-    api_request_finished.connect(save_log)
+    def __unicode__(self):
+        return "#{0} {1}:{2}:{3}".format(
+            self.pk, self.method, self.status_code, self.uri)
 
 
 # Access keys
 # -----------
-if settings.ADREST_ACCESSKEY:
+class AccessKey(models.Model):
+    """ API key.
+    """
+    key = models.CharField(max_length=40, blank=True)
+    user = models.ForeignKey(User)
+    created = models.DateTimeField(auto_now_add=True)
 
-    import uuid
-    from django.contrib.auth.models import User
+    class Meta():
+        ordering = ["-created"]
+        unique_together = 'user', 'key'
+        abstract = ADREST_CONFIG['ABSTRACT_ACCESS_KEY']
 
-    class AccessKey(models.Model):
-        """ API key.
-        """
-        key = models.CharField(max_length=40, blank=True)
-        user = models.ForeignKey(User)
-        created = models.DateTimeField(auto_now_add=True)
+    def __unicode__(self):
+        return u'#%s %s "%s"' % (self.pk, self.user, self.key)
 
-        class Meta():
-            ordering = ["-created"]
-            unique_together = 'user', 'key'
+    def save(self, **kwargs):
+        self.key = self.key or str(uuid.uuid4()).replace('-', '')
+        super(AccessKey, self).save(**kwargs)
 
-        def __unicode__(self):
-            return u'#%s %s "%s"' % (self.pk, self.user, self.key)
 
-        def save(self, **kwargs):
-            self.key = self.key or str(uuid.uuid4()).replace('-', '')
-            super(AccessKey, self).save(**kwargs)
+# Auto create key for created user
+def create_api_key(sender, created=False, instance=None, **kwargs):
+    if created and instance:
+        AccessKey.objects.create(user=instance)
 
-    # Auto create key for created user
-    def create_api_key(sender, created=False, instance=None, **kwargs):
-        if created and instance:
-            AccessKey.objects.create(user=instance)
-
-    # Connect create handler to user save event
-    if settings.ADREST_AUTO_CREATE_ACCESSKEY:
-        models.signals.post_save.connect(create_api_key, sender=User)
+# Connect create handler to user save event
+if ADREST_CONFIG['AUTO_CREATE_ACCESSKEY'] and not ADREST_CONFIG['ABSTRACT_ACCESS_KEY']:
+    models.signals.post_save.connect(create_api_key, sender=User)
 
 
 # pymode:lint_ignore=W0704
