@@ -9,18 +9,20 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
 from .mixin import auth, emitter, handler, parser, throttle
-from .settings import ADREST_CONFIG, NOTIFIERS, LOG_HANDLERS
+from .settings import ADREST_CONFIG
 from .signals import api_request_started, api_request_finished
 from .utils import status
 from .utils.exceptions import HttpError, FormError
 from .utils.response import SerializedHttpResponse
-from .utils.tools import as_tuple, gen_url_name, gen_url_regex, fix_request
-
+from .utils.tools import as_tuple, gen_url_name, gen_url_regex, fix_request, import_functions
 
 logger = getLogger('django.request')
 
-
 __all__ = 'ResourceView',
+
+
+NOTIFIERS = import_functions(ADREST_CONFIG['NOTIFIERS'])
+LOG_HANDLERS = import_functions(ADREST_CONFIG['LOG_HANDLERS'])
 
 
 class ResourceMetaClass(
@@ -153,7 +155,7 @@ class ResourceView(
         self.notify_errors(request, response)
 
         # Save request to log handlers
-        self.save_log(self, request=request, response=response, **resources)
+        self.log_call(self, request=request, response=response, **resources)
 
         # Send finished signal
         api_request_finished.send(
@@ -266,7 +268,7 @@ class ResourceView(
             notifier(request, response)
 
     @staticmethod
-    def save_log(self, request, response, **kwargs):
+    def log_call(self, request, response, **kwargs):
         """
         Send request data to handers
 
@@ -275,6 +277,7 @@ class ResourceView(
         :param response: :class:``django.http.HttpResponse``
         :param \*\*kwargs\*\*: resources
         """
+
         for handler in LOG_HANDLERS:
             handler(self, request, response, **kwargs)
 

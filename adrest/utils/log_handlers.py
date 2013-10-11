@@ -5,6 +5,14 @@ from adrest.models import Access
 
 
 def db_handler(resource, request=None, response=None, **resources):
+    """Processing for api request
+
+    :param resource: :class:``adrest.views.ResourceView`` object
+    :param request: :class:``django.http.HttpRequest`` object
+    :param response: :class:``django.http.HttpResponse`` object
+    :params \*\*resources\*\*: dict of resouces
+
+    """
 
     if not resource._meta.log:
         return

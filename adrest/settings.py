@@ -19,6 +19,7 @@ except (ImportError, ImproperlyConfigured):
     settings.configure()
 
 from adrest.utils.tools import import_functions
+from django.utils.functional import allow_lazy
 
 
 ADREST_CONFIG = {
@@ -61,8 +62,7 @@ ADREST_CONFIG = {
     "MAP_TEMPLATE": 'api/map.html',
 
     #: Logger name
-    "LOGGER_NAME": "api.errors"
-    }
+    "LOGGER_NAME": "api.errors"}
 
 # Backward compatibility with old versions
 for key in filter(lambda x: x.startswith("ADREST_"), dir(settings)):
@@ -70,6 +70,3 @@ for key in filter(lambda x: x.startswith("ADREST_"), dir(settings)):
 
 ADREST_CONFIG.update(getattr(settings, 'ADREST', {}))
 
-NOTIFIERS = import_functions(ADREST_CONFIG['NOTIFIERS'])
-
-LOG_HANDLERS = import_functions(ADREST_CONFIG['LOG_HANDLERS'])
