@@ -1,3 +1,5 @@
+""" ADRest emitters. """
+
 from datetime import datetime
 from os import path as op
 from time import mktime
@@ -13,7 +15,8 @@ from .status import HTTP_200_OK
 
 
 class EmitterMeta(type):
-    " Preload format attribute. "
+
+    """ Preload format attribute. """
 
     def __new__(mcs, name, bases, params):
         cls = super(EmitterMeta, mcs).__new__(mcs, name, bases, params)
@@ -23,9 +26,14 @@ class EmitterMeta(type):
 
 
 class BaseEmitter(object):
-    """ All emitters must extend this class, set the media_type attribute, and
-        override the serialize() function.
+
+    """ Base class for emitters.
+
+    All emitters must extend this class, set the media_type attribute, and
+    override the serialize() function.
+
     """
+
     __metaclass__ = EmitterMeta
 
     media_type = None
@@ -40,7 +48,13 @@ class BaseEmitter(object):
             status=HTTP_200_OK)
 
     def emit(self):
-        if self.response.finaly:
+        """ Serialize response.
+
+        :return response: Instance of django.http.Response
+
+        """
+        # Skip serialize
+        if not isinstance(self.response, SerializedHttpResponse):
             return self.response
 
         self.response.content = self.serialize(self.response.response)
@@ -49,83 +63,139 @@ class BaseEmitter(object):
 
     @staticmethod
     def serialize(content):
-        " Get content and return string. "
+        """ Low level serialization.
+
+        :return response:
+
+        """
         return content
 
 
 class NullEmitter(BaseEmitter):
+
+    """ Return data as is. """
+
     media_type = 'unknown/unknown'
 
     def emit(self):
+        """ Do nothing.
+
+        :return response:
+
+        """
         return self.response
 
 
 class TextEmitter(BaseEmitter):
+
+    """ Serialize to unicode. """
+
     media_type = 'text/plain'
 
     @staticmethod
     def serialize(content):
-        " Get content and return string. "
+        """ Get content and return string.
+
+        :return unicode:
+
+        """
         return unicode(content)
 
 
 class JSONEmitter(BaseEmitter):
+
+    """ Serialize to JSON. """
+
     media_type = 'application/json'
 
     def serialize(self, content):
+        """ Serialize to JSON.
+
+        :return string: serializaed JSON
+
+        """
         worker = JSONSerializer(
-            _fields=getattr(self.resource, 'emit_fields', None),
-            _include=getattr(self.resource, 'emit_include', None),
-            _exclude=getattr(self.resource, 'emit_exclude', None),
-            **getattr(self.resource, 'emit_related', dict())
+            scheme=self.resource,
+            options=self.resource._meta.emit_options,
+            format=self.resource._meta.emit_format,
+            **self.resource._meta.emit_models
         )
         return worker.serialize(content)
 
 
 class JSONPEmitter(JSONEmitter):
+
+    """ Serialize to JSONP. """
+
     media_type = 'text/javascript'
 
     def serialize(self, content):
+        """ Serialize to JSONP.
+
+        :return string: serializaed JSONP
+
+        """
         content = super(JSONPEmitter, self).serialize(content)
         callback = self.request.GET.get('callback', 'callback')
         return u'%s(%s)' % (callback, content)
 
 
 class XMLEmitter(BaseEmitter):
+
+    """ Serialize to XML. """
+
     media_type = 'application/xml'
-    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>'
+    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>' # nolint
 
     def serialize(self, content):
+        """ Serialize to XML.
+
+        :return string: serialized XML
+
+        """
         worker = XMLSerializer(
-            _fields=getattr(self.resource, 'fields', None),
-            _include=getattr(self.resource, 'include', None),
-            _exclude=getattr(self.resource, 'exclude', None),
-            **getattr(self.resource, 'related', dict())
+            scheme=self.resource,
+            format=self.resource._meta.emit_format,
+            options=self.resource._meta.emit_options,
+            **self.resource._meta.emit_models
         )
         return self.xmldoc_tpl % (
             'true' if not self.response.error else 'false',
-            self.resource.version,
+            str(self.resource.api or ''),
             int(mktime(datetime.now().timetuple())),
             worker.serialize(content)
         )
 
 
 class TemplateEmitter(BaseEmitter):
-    " Serialize by django templates. "
+
+    """ Serialize by django templates. """
 
     def serialize(self, content):
+        """ Render Django template.
+
+        :return string: rendered content
+
+        """
         if self.response.error:
             template_name = op.join('api', 'error.%s' % self.format)
         else:
-            template_name = self.resource.template or self.get_template_path(content)
+            template_name = (self.resource._meta.emit_template
+                             or self.get_template_path(content))
 
         template = loader.get_template(template_name)
+
         return template.render(RequestContext(self.request, dict(
             content=content,
             emitter=self,
             resource=self.resource)))
 
     def get_template_path(self, content=None):
+        """ Find template.
+
+        :return string: remplate path
+
+        """
 
         if isinstance(content, Paginator):
             return op.join('api', 'paginator.%s' % self.format)
@@ -134,55 +204,73 @@ class TemplateEmitter(BaseEmitter):
             return op.join('api', 'updated.%s' % self.format)
 
         app = ''
-        name = self.resource.get_name()
+        name = self.resource._meta.name
 
         if not content:
-            content = self.resource.model
+            content = self.resource._meta.model
 
         if isinstance(content, (Model, ModelBase)):
-            app = content._meta.app_label
-            name = content._meta.module_name
+            app = content._meta.app_label # nolint
+            name = content._meta.module_name # nolint
 
-        basedir = self.resource.api.prefix if getattr(self.resource, 'api', None) else 'api'
+        basedir = 'api'
+        if getattr(self.resource, 'api', None):
+            basedir = self.resource.api.prefix
+
         return op.join(
             basedir,
-            self.resource.version,
-            app,
-            "%s.%s" % (name, self.format)
+            str(self.resource.api or ''), app, "%s.%s" % (name, self.format)
         )
 
 
 class JSONTemplateEmitter(TemplateEmitter):
-    " Template emitter with JSON media type. "
+
+    """ Template emitter with JSON media type. """
+
     media_type = 'application/json'
 
 
 class JSONPTemplateEmitter(TemplateEmitter):
-    " Template emitter with javascript media type. "
+
+    """ Template emitter with javascript media type. """
+
     media_type = 'text/javascript'
     format = 'json'
 
     def serialize(self, content):
+        """ Move rendered content to callback.
+
+        :return string: JSONP
+
+        """
         content = super(JSONPTemplateEmitter, self).serialize(content)
         callback = self.request.GET.get('callback', 'callback')
         return '%s(%s)' % (callback, content)
 
 
 class HTMLTemplateEmitter(TemplateEmitter):
-    " Template emitter with HTML media type. "
+
+    """ Template emitter with HTML media type. """
+
     media_type = 'text/html'
 
 
 class XMLTemplateEmitter(TemplateEmitter):
-    " Template emitter with XML media type. "
+
+    """ Template emitter with XML media type. """
 
     media_type = 'application/xml'
-    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>'
+    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>' # nolint
 
     def serialize(self, content):
+        """ Serialize to xml.
+
+        :return string:
+
+        """
         return self.xmldoc_tpl % (
             'true' if self.response.status_code == HTTP_200_OK else 'false',
-            self.resource.version,
+            str(self.resource.api or ''),
             int(mktime(datetime.now().timetuple())),
             super(XMLTemplateEmitter, self).serialize(content)
         )

@@ -28,7 +28,7 @@ class RawParser(AbstractParser):
 
     @staticmethod
     def parse(request):
-        return request.raw_post_data
+        return request.body
 
 
 class FormParser(AbstractParser):
@@ -38,7 +38,8 @@ class FormParser(AbstractParser):
 
     @staticmethod
     def parse(request):
-        return FrozenDict((k, v if len(v) > 1 else v[0]) for k, v in request.POST.iterlists())
+        return FrozenDict((k, v if len(v) > 1 else v[0])
+                          for k, v in request.POST.iterlists())
 
 
 class JSONParser(AbstractParser):
@@ -51,9 +52,10 @@ class JSONParser(AbstractParser):
     @staticmethod
     def parse(request):
         try:
-            return json.loads(request.raw_post_data)
+            return json.loads(request.body)
         except ValueError, e:
-            raise HttpError('JSON parse error - %s' % str(e), status=HTTP_400_BAD_REQUEST)
+            raise HttpError('JSON parse error - %s'.format(e),
+                            status=HTTP_400_BAD_REQUEST)
 
 
 class XMLParser(RawParser):
@@ -75,9 +77,10 @@ try:
         @staticmethod
         def parse(request):
             try:
-                return BSON(request.raw_post_data).decode()
+                return BSON(request.body).decode()
             except ValueError, e:
-                raise HttpError('BSON parse error - %s' % str(e), status=HTTP_400_BAD_REQUEST)
+                raise HttpError('BSON parse error - %s'.format(e),
+                                status=HTTP_400_BAD_REQUEST)
 
 except ImportError:
     pass

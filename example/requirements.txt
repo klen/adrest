@@ -1,0 +1,15 @@
+# Base
+# ----
+Django==1.5.1
+South==0.7.6
+wsgiref==0.1.2
+
+# Debug
+# -----
+django-debug-toolbar==0.9.4
+ipdb==0.7
+Werkzeug==0.8.3
+
+# Project
+# -------
+adrest==2.0.9

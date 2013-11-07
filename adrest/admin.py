@@ -1,3 +1,5 @@
+""" Add ADRest related models to Django admin.
+"""
 from django.contrib import admin
 
 
@@ -5,7 +7,14 @@ try:
     from .models import Access
 
     class AccessAdmin(admin.ModelAdmin):
-        list_display = 'status_code', 'uri', 'method', 'identifier', 'created_at', 'version'
+        list_display = (
+            'created_at',
+            'identifier',
+            'method',
+            'status_code',
+            'uri',
+            'version'
+        )
         list_filter = 'method', 'version'
         search_fields = 'uri', 'identifier'
         date_hierarchy = 'created_at'
@@ -28,6 +37,3 @@ try:
 
 except ImportError:
     pass
-
-
-# pymode:lint_ignore=W0704

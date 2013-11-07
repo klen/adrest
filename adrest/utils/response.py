@@ -1,49 +1,38 @@
 from django.http import HttpResponse
+
 from .status import HTTP_200_OK
 
 
 class SerializedMeta(type):
 
-    def __call__(mcs, content='', mimetype=None, status=None,
-                 content_type=None, finaly=False, error=False):
+    def __call__(cls, content, *args, **kwargs):
         """ Don't create clones.
         """
-
-        if isinstance(content, mcs):
-            return content
-
         if isinstance(content, HttpResponse):
-            content.finaly = True
             return content
 
-        return super(SerializedMeta, mcs).__call__(
-            content,
-            mimetype=mimetype,
-            status=status,
-            content_type=content_type,
-            finaly=finaly,
-            error=error,
+        return super(SerializedMeta, cls).__call__(
+            content, *args, **kwargs
         )
 
 
-class SerializedHttpResponse(HttpResponse):
+class SerializedHttpResponse(HttpResponse): # nolint
     """ Response has will be serialized.
         Django http response will be returned as is.
 
-        :param finaly: Prevent serialization.
         :param error: Force error in response.
     """
-
     __metaclass__ = SerializedMeta
 
     def __init__(self, content='', mimetype=None, status=None,
-                 content_type=None, finaly=False, error=False):
+                 content_type=None, error=False):
         """
             Save original response.
         """
         self.response = content
-        self.finaly = finaly
         self._error = error
+        self._content_type = content_type
+
         super(SerializedHttpResponse, self).__init__(
             content,
             mimetype=mimetype,

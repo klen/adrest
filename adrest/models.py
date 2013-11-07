@@ -1,8 +1,9 @@
+""" ASRest related models. """
 from django.db import models
 from django.utils.encoding import smart_unicode
 
-from adrest import settings
-from adrest.signals import api_request_finished
+from . import settings
+from .signals import api_request_finished
 
 
 # Preloads ADREST tags
@@ -18,7 +19,7 @@ except ImportError:
 
 # Access log
 # -----------
-if settings.ACCESS_LOG:
+if settings.ADREST_ACCESS_LOG:
 
     class Access(models.Model):
         """ Log api queries.
@@ -43,20 +44,22 @@ if settings.ACCESS_LOG:
             verbose_name_plural = "Access"
 
         def __unicode__(self):
-            return "#%s %s:%s:%s" % (self.pk, self.method, self.status_code, self.uri)
+            return "#{0} {1}:{2}:{3}".format(
+                self.pk, self.method, self.status_code, self.uri)
 
     def save_log(sender, response=None, request=None, **resources):
 
         resource = sender
 
-        if not resource.log:
+        if not resource._meta.log:
             return
 
         try:
             content = smart_unicode(response.content)[:5000]
         except (UnicodeDecodeError, UnicodeEncodeError):
             if response and response['Content-Type'].lower() not in \
-                   [emitter.media_type.lower() for emitter in resource.emitters]:
+                    [emitter.media_type.lower()
+                        for emitter in resource.emitters]:
                 content = 'Invalid response content encoding'
             else:
                 content = response.content[:5000]
@@ -64,10 +67,12 @@ if settings.ACCESS_LOG:
         Access.objects.create(
             uri=request.path_info,
             method=request.method,
-            version=str(resource.api),
+            version=str(resource.api or ''),
             status_code=response.status_code,
-            request='%s\n\n%s' % (str(request.META), str(getattr(request, 'data', ''))),
-            identifier=resource.identifier or request.META.get('REMOTE_ADDR', 'anonymous'),
+            request='%s\n\n%s' % (str(request.META), str(
+                getattr(request, 'data', ''))),
+            identifier=resource.identifier or request.META.get(
+                'REMOTE_ADDR', 'anonymous'),
             response=content)
 
     api_request_finished.connect(save_log)
@@ -75,7 +80,7 @@ if settings.ACCESS_LOG:
 
 # Access keys
 # -----------
-if settings.ACCESSKEY:
+if settings.ADREST_ACCESSKEY:
 
     import uuid
     from django.contrib.auth.models import User
@@ -104,7 +109,7 @@ if settings.ACCESSKEY:
             AccessKey.objects.create(user=instance)
 
     # Connect create handler to user save event
-    if settings.AUTO_CREATE_ACCESSKEY:
+    if settings.ADREST_AUTO_CREATE_ACCESSKEY:
         models.signals.post_save.connect(create_api_key, sender=User)
 
 

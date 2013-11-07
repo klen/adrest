@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+""" Setup ADRest. """
 import os
 
 from setuptools import setup, find_packages
@@ -14,33 +14,38 @@ for folder in ['templates']:
             PACKAGE_DATA.append("%s/%s" % (root[len(PROJECT) + 1:], filename))
 
 
-def read(fname):
+def __read(fname):
     try:
         return open(os.path.join(os.path.dirname(__file__), fname)).read()
     except IOError:
         return ''
 
+install_requires = __read('requirements.txt').split()
 
-META_DATA = dict(
-    name=PROJECT,
-    version=version,
-    license=LICENSE,
-    description=read('DESCRIPTION'),
-    long_description=read('README.rst'),
-    platforms=('Any'),
-
-    author='Kirill Klenov',
+setup(
     author_email='horneds@gmail.com',
-    url=' http://github.com/klen/adrest',
-
+    author='Kirill Klenov',
+    description=__read('DESCRIPTION'),
+    install_requires=install_requires,
+    license=LICENSE,
+    long_description=__read('README.rst'),
+    name=PROJECT,
+    package_data={'': PACKAGE_DATA},
     packages=find_packages(),
-    package_data = {'': PACKAGE_DATA},
-
-    install_requires = ('mimeparse', 'Django>=1.4.0'),
-    test_suite = 'tests.run_tests',
-    tests_require = ['pymongo', 'milkman']
+    platforms=('Any'),
+    keywords='rest rpc api django'.split(),
+    tests_require=['pymongo', 'mixer'],
+    test_suite='tests.test_adrest',
+    url=' http://github.com/klen/{0}'.format(PROJECT),
+    version=version,
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Environment :: Web Environment',
+        'Framework :: Django',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)', # nolint
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Topic :: Utilities'
+    ],
 )
-
-
-if __name__ == "__main__":
-    setup(**META_DATA)
