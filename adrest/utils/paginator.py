@@ -38,7 +38,7 @@ class Paginator(object):
         """
         return dict(
             count=self.paginator.count,
-            page=self.page,
+            page=self.page_number,
             num_pages=self.paginator.num_pages,
             next=self.next_page,
             prev=self.previous_page,
@@ -59,6 +59,14 @@ class Paginator(object):
             except InvalidPage:
                 raise HttpError("Invalid page", status=HTTP_400_BAD_REQUEST)
         return self._page
+
+    @property
+    def page_number(self):
+        """Get page number
+
+        :return: int
+        """
+        return self.page.number if self.page else 1
 
     @property
     def count(self):
