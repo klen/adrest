@@ -1,3 +1,7 @@
+2013-11-08  horneds 3.2.0
+
+	* Fix serialization for paginated content (c) lispython
+
 2013-08-01  horneds 3.1.0
 
 	* Content parsing before resource's parsing.

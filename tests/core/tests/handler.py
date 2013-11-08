@@ -111,7 +111,7 @@ class CoreHandlerTest(API.testCase):
         self.assertTrue(pirate in response.resources)
 
     def test_resources(self):
-        pirates = mixer.cycle(2).blend('pirate', character='evil')
+        pirates = mixer.cycle(2).blend('core.pirate', character='evil')
         response = self.put_resource(
             'pirate', data=dict(
                 pirate=[p.pk for p in pirates],
