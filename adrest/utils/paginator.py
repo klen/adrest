@@ -65,6 +65,7 @@ class Paginator(object):
         """Get page number
 
         :return: int
+
         """
         return self.page.number if self.page else 1
 
