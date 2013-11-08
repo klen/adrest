@@ -87,6 +87,33 @@ class CoreSerializerTest(TestCase):
         self.assertTrue(out['fields']['boat_set'])
         self.assertEqual(len(list(out['fields']['boat_set'])), 2)
 
+    def test_paginator(self):
+        from adrest.mixin import EmitterMixin
+        from django.views.generic import View
+        from django.test import RequestFactory
+        from tests.core.models import Pirate
+        from adrest.utils.paginator import Paginator
+
+        pirates = mixer.cycle(3).blend('core.pirate')
+
+        class SomeResource(EmitterMixin, View):
+
+            class Meta:
+                model = 'core.pirate'
+                dyn_prefix = 'adr-'
+                limit_per_page = 2
+
+            def dispatch(self, request, **resources):
+                p = Paginator(request, self, Pirate.objects.all())
+                return self.emit(p, request=request)
+
+        rf = RequestFactory()
+        resource = SomeResource()
+
+        response = resource.dispatch(rf.get('/'))
+        self.assertContains(response, '"page": 1')
+        self.assertContains(response, '"num_pages": 2')
+
     def test_xml(self):
         from adrest.utils.serializer import XMLSerializer
         from ...main.models import Book

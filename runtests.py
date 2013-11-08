@@ -2843,5 +2843,5 @@ if __name__ == "__main__":
     importer = DictImporter(sources)
     sys.meta_path.insert(0, importer)
 
-    entry = "import py; raise SystemExit(py.test.cmdline.main())"
+    entry = "import py; raise SystemExit(py.test.cmdline.main(['-s']))"
     do_exec(entry, locals())
