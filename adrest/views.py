@@ -1,6 +1,6 @@
 """ Base request resource. """
 
-from django.conf.urls.defaults import url
+from django.conf.urls import url
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
