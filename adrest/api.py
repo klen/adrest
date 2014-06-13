@@ -197,9 +197,10 @@ class Api(object):
         :return object: Result of resource's execution
 
         """
-        if not name in self.resources:
-            raise exceptions.HttpError('Unknown method \'%s\'' % name,
-                                       status=status.HTTP_501_NOT_IMPLEMENTED)
+        if name not in self.resources:
+            raise exceptions.HttpError(
+                'Unknown method \'%s\'' % name,
+                status=status.HTTP_501_NOT_IMPLEMENTED)
         request = request or HttpRequest()
         resource = self.resources[name]
         view = resource.as_view(api=self)
@@ -215,6 +216,3 @@ class Api(object):
         from adrest.tests import AdrestTestCase
 
         return type('TestCase', (AdrestTestCase, ), dict(api=self))
-
-
-# lint_ignore=W0212

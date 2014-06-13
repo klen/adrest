@@ -38,6 +38,3 @@ class PartitialForm(ModelForm):
              else f.get_default()) for f in required_fields
         )
         return dict(item for item in gen if not item[1] is None)
-
-
-# lint_ignore=W0212,R0924

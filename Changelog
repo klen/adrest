@@ -1,3 +1,7 @@
+2014-06-13  horneds
+
+	* Drop python2.6 support
+
 2013-11-08  horneds 3.2.1
 
 	* Fix serialization for paginated content (c) lispython

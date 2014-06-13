@@ -1,5 +1,6 @@
-" Adrest test utils. "
+""" Adrest test utils. """
 
-from .utils import AdrestClient, AdrestTestCase, AdrestRequestFactory
+from .utils import AdrestClient, AdrestTestCase, reverse
+from .client import AdrestRequestFactory
 
-# lint_ignore=W402
+# pylama:ignore=W0611
