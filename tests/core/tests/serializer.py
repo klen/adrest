@@ -15,7 +15,7 @@ class CoreSerializerTest(TestCase):
         try:
             from collections import OrderedDict
         except ImportError:
-            from ordereddict import OrderedDict # nolint
+            from ordereddict import OrderedDict # noqa
 
         from datetime import datetime
         from decimal import Decimal
@@ -94,7 +94,7 @@ class CoreSerializerTest(TestCase):
         from tests.core.models import Pirate
         from adrest.utils.paginator import Paginator
 
-        pirates = mixer.cycle(3).blend('core.pirate')
+        mixer.cycle(3).blend('core.pirate')
 
         class SomeResource(EmitterMixin, View):
 
@@ -134,6 +134,4 @@ class CoreSerializerTest(TestCase):
         ))
         test = worker.serialize(authors)
         self.assertTrue("main.author" in test)
-        self.assertTrue('"fields":{"active":true,"name"' in test)
-
-# lint_ignore=C0110,F0401
+        self.assertTrue('":{"' in test)

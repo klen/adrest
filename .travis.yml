@@ -6,6 +6,7 @@ python:
 env:
   - TOXENV=py27-14
   - TOXENV=py27-15
+  - TOXENV=py27-16
   - TOXENV=cov
 
 
