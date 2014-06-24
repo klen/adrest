@@ -26,6 +26,7 @@ except ImportError:
     pass
 
 from .api import Api
+from .views import ResourceView
 from .utils.auth import *
 from .utils.emitter import *
 from .utils.parser import *
