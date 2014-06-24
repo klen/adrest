@@ -53,6 +53,8 @@ class AdrestClient(client.Client):
 
     """ Patch client. """
 
+    api = None
+
     def put(self, path, data=None, content_type=client.MULTIPART_CONTENT,
             follow=False, method='PUT', **extra):
         """ Implement PUT.
@@ -104,6 +106,7 @@ class AdrestClient(client.Client):
         """
         method = getattr(self, method)
         headers = headers or dict()
+        api = api or self.api
 
         if isinstance(key, Model):
             key = key.key
@@ -117,7 +120,7 @@ class AdrestClient(client.Client):
             headers['content_type'] = 'application/json'
             data = simplejson.dumps(data)
 
-        url = reverse(resource, api=api, **kwargs)
+        url = self.reverse(resource, api=api, **kwargs)
         return jsonify(method(url, data=data, **headers))
 
     get_resource = request_resource
@@ -125,6 +128,10 @@ class AdrestClient(client.Client):
     post_resource = curry(request_resource, method='post')
     patch_resource = curry(request_resource, method='patch')
     delete_resource = curry(request_resource, method='delete')
+
+    def reverse(self, resource, api=None, **kwargs):
+        api = api or self.api
+        return reverse(resource, api=api, **kwargs)
 
 
 class FakePayload(object):
