@@ -28,7 +28,8 @@ register:
 .PHONY: upload
 # target: upload - Upload module on PyPi
 upload: docs
-	@python setup.py sdist upload || echo 'Upload already'
+	@python setup.py sdist upload || echo 'Skip upload'
+	@python setup.py bdist_wheel upload || echo 'Skip upload'
 
 .PHONY: t
 # target: t - Runs tests

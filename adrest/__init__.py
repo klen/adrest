@@ -6,12 +6,13 @@ It supports REST_ and RPC_ paradigms.
 :license: BSD, see LICENSE for more details.
 
 """
-version_info = (3, 2, 1)
 
-__version__ = "3.2.1"
+__version__ = "3.2.3"
 __project__ = "adrest"
 __author__ = "Kirill Klenov <horneds@gmail.com>"
 __license__ = "GNU LGPL"
+
+version_info = [p for p in map(int, __version__.split("."))]
 
 try:
     from django.conf import settings as django_settings
