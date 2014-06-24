@@ -21,15 +21,12 @@ class AuthMeta(MixinBaseMeta):
         cls._meta.authenticators = as_tuple(cls._meta.authenticators)
 
         if not cls._meta.authenticators:
-            raise AssertionError(
-                "Should be defined at least one authenticator.")
+            raise AssertionError("Should be defined at least one authenticator.")
 
         for a in cls._meta.authenticators:
             if not issubclass(a, AbstractAuthenticator):
-                raise AssertionError(
-                    "Meta.authenticators should be subclasses of "
-                    "`adrest.utils.auth.AbstractAuthenticator`"
-                )
+                raise AssertionError("Meta.authenticators should be subclasses of "
+                                     "`adrest.utils.auth.AbstractAuthenticator`")
 
         return cls
 
@@ -89,7 +86,4 @@ class AuthMixin(object):
                 raise AssertionError()
 
         except AssertionError, e:
-            raise HttpError(
-                "Access forbiden. {0}".format(e),
-                status=status.HTTP_403_FORBIDDEN
-            )
+            raise HttpError("Access forbiden. {0}".format(e), status=status.HTTP_403_FORBIDDEN)

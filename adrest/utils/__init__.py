@@ -1,9 +1,6 @@
-""" ADRest tupes.
-"""
+""" ADREST types. """
 
 
 class UpdatedList(list):
 
-    """ Collection of ADRest results. """
-
-# lint_ignore=W0212
+    """ Results collection. """
