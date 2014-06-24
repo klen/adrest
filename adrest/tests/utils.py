@@ -84,11 +84,12 @@ class AdrestTestCase(TestCase):
     delete_resource = curry(get_resource, method='delete')
 
 
-def reverse(resource, api=None, **resources):
+def reverse(resource, api=None, namespace=None, **resources):
     """ Reverse resource by ResourceClass or name string.
 
     :param resource: Resource Class or String name.
     :param api: API intance (if resource is string)
+    :param namespace: Set namespace prefix
     :param **resources: Uri params
 
     :return str: URI string
@@ -123,8 +124,9 @@ def reverse(resource, api=None, **resources):
         params[name] = resource
 
     name_ver = '' if not str(api) else '%s-' % str(api)
+    ns_prefix = '' if not namespace else '%s:' % namespace
     uri = django_reverse(
-        '%s-%s%s' % (api.prefix, name_ver, url_name), kwargs=params)
+        '%s%s-%s%s' % (ns_prefix, api.prefix, name_ver, url_name), kwargs=params)
 
     if query:
         uri += '?'
