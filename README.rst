@@ -50,10 +50,9 @@ Quick start
 ===========
 ::
 
-    from adrest.api import Api
-    from adrest.views import ResourceView
+    from adrest import Api, ResourceView
 
-    api = Api('1.0.0')
+    api = Api('v1')
 
     @api.register
     class BookResource(ResourceView):
