@@ -14,6 +14,11 @@ from .serializer import JSONSerializer, XMLSerializer
 from .status import HTTP_200_OK
 
 
+__all__ = (
+    'NullEmitter', 'TextEmitter', 'JSONEmitter', 'JSONPEmitter', 'XMLEmitter',
+    'HTMLTemplateEmitter', 'XMLTemplateEmitter', 'BaseEmitter')
+
+
 class EmitterMeta(type):
 
     """ Preload format attribute. """
@@ -285,6 +290,8 @@ try:
         @staticmethod
         def serialize(content):
             return BSON.encode(content)
+
+    __all__ += 'BSONEmitter',
 
 except ImportError:
     pass

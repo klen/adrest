@@ -12,6 +12,9 @@ from django.utils.encoding import smart_unicode
 from .tools import as_tuple
 
 
+__all__ = 'JSONSerializer', 'XMLSerializer', 'BaseSerializer'
+
+
 class BaseSerializer(object):
 
     """ Abstract class for serializers. """

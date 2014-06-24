@@ -6,6 +6,9 @@ from .status import HTTP_400_BAD_REQUEST
 from .tools import FrozenDict
 
 
+__all__ = 'FormParser', 'JSONParser', 'RawParser', 'XMLParser', 'AbstractParser'
+
+
 class AbstractParser(object):
     " Base class for parsers. "
 
@@ -81,6 +84,8 @@ try:
             except ValueError, e:
                 raise HttpError('BSON parse error - %s'.format(e),
                                 status=HTTP_400_BAD_REQUEST)
+
+    __all__ += 'BSONParser',
 
 except ImportError:
     pass

@@ -6,6 +6,10 @@ import base64
 from django.contrib.auth import authenticate
 
 
+__all__ = ('AnonimousAuthenticator', 'BasicAuthenticator', 'UserAuthenticator',
+           'UserLoggedInAuthenticator', 'AbstractAuthenticator')
+
+
 class AbstractAuthenticator(object):
 
     """ Abstract Authenticator. """
@@ -119,6 +123,8 @@ try:
 
             except(KeyError, AccessKey.DoesNotExist):
                 return False
+
+    __all__ += 'AccessKeyAuthenticator',
 
 except ImportError:
     pass
