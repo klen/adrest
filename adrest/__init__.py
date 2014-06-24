@@ -25,10 +25,11 @@ try:
 except ImportError:
     pass
 
+from .api import Api
 from .utils.auth import *
 from .utils.emitter import *
 from .utils.parser import *
 from .utils.serializer import *
 from .utils.throttle import *
 
-# pylama:ignore=W0401
+# pylama:ignore=W0401,W0611
