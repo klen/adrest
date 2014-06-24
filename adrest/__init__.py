@@ -32,5 +32,6 @@ from .utils.emitter import *
 from .utils.parser import *
 from .utils.serializer import *
 from .utils.throttle import *
+from .utils.exceptions import HttpError
 
 # pylama:ignore=W0401,W0611
