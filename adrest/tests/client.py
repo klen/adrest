@@ -1,8 +1,12 @@
 from django.conf import settings
 from django.test import client
+from collections import defaultdict
+from django.core.urlresolvers import reverse as django_reverse
 from django.utils.encoding import smart_str
 from django.utils.functional import curry
 from django.utils.http import urlencode
+from django.utils import simplejson
+from django.db.models import Model
 from urlparse import urlparse
 
 
@@ -12,9 +16,8 @@ except ImportError:
     from io import StringIO
 
 
-def generic_method(
-        rf, path, data=None, content_type=client.MULTIPART_CONTENT,
-        follow=False, method='PUT', **extra):
+def generic_method(rf, path, data=None, content_type=client.MULTIPART_CONTENT, follow=False,
+                   method='PUT', **extra):
     """ Fix django.
 
     :return request: request
@@ -84,6 +87,45 @@ class AdrestClient(client.Client):
         r.update(extra)
         return self.request(**r)
 
+    def request_resource(self, resource, method='get', data=None, headers=None, json=False,
+                         api=None, key=None, **kwargs):
+        """ Simply request resource method.
+
+        :param resource: Resource Class or String name.
+        :param data: Request data
+        :param json: Make JSON request
+        :param headers: Request headers
+        :param client: Test client
+        :param api: Resource API
+        :param key: HTTP_AUTHORIZATION token
+
+        :return object: result
+
+        """
+        method = getattr(self, method)
+        headers = headers or dict()
+
+        if isinstance(key, Model):
+            key = key.key
+
+        headers['HTTP_AUTHORIZATION'] = key or headers.get('HTTP_AUTHORIZATION')
+
+        data = data or dict()
+
+        # Support JSON request
+        if json:
+            headers['content_type'] = 'application/json'
+            data = simplejson.dumps(data)
+
+        url = reverse(resource, api=api, **kwargs)
+        return jsonify(method(url, data=data, **headers))
+
+    get_resource = request_resource
+    put_resource = curry(request_resource, method='put')
+    post_resource = curry(request_resource, method='post')
+    patch_resource = curry(request_resource, method='patch')
+    delete_resource = curry(request_resource, method='delete')
+
 
 class FakePayload(object):
 
@@ -112,5 +154,67 @@ class FakePayload(object):
         content = self.__content.read(num_bytes)
         self.__len -= num_bytes
         return content
+
+
+def reverse(resource, api=None, namespace=None, **resources):
+    """ Reverse resource by ResourceClass or name string.
+
+    :param resource: Resource Class or String name.
+    :param api: API intance (if resource is string)
+    :param namespace: Set namespace prefix
+    :param **resources: Uri params
+
+    :return str: URI string
+
+    """
+    if isinstance(resource, basestring):
+        url_name = resource
+        if not api:
+            raise AssertionError("You sould send api parameter")
+
+        if not api.resources.get(url_name):
+            raise AssertionError("Invalid resource name: %s" % url_name)
+
+    else:
+        url_name = resource._meta.url_name
+        api = resource.api
+
+    params = dict()
+    query = defaultdict(list)
+
+    for name, resource in resources.items():
+
+        if isinstance(resource, Model):
+            resource = resource.pk
+
+        if name in params:
+            query[name].append(params[name])
+            query[name].append(resource)
+            del params[name]
+            continue
+
+        params[name] = resource
+
+    name_ver = '' if not str(api) else '%s-' % str(api)
+    ns_prefix = '' if not namespace else '%s:' % namespace
+    uri = django_reverse(
+        '%s%s-%s%s' % (ns_prefix, api.prefix, name_ver, url_name), kwargs=params)
+
+    if query:
+        uri += '?'
+        for name, values in query:
+            uri += '&'.join('%s=%s' % (name, value) for value in values)
+
+    return uri
+
+
+def jsonify(response):
+    """ Check for request content is JSON. """
+    if response.get('Content-type') == 'application/json':
+        try:
+            response.json = simplejson.loads(response.content)
+        except ValueError:
+            return response
+    return response
 
 # pylama:ignore=D100,W0212,D102

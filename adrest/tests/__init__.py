@@ -1,6 +1,6 @@
 """ Adrest test utils. """
 
-from .utils import AdrestClient, AdrestTestCase, reverse, request_resource
+from .utils import AdrestClient, AdrestTestCase, reverse
 from .client import AdrestRequestFactory
 
 # pylama:ignore=W0611
