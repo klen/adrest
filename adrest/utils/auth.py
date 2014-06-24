@@ -1,3 +1,5 @@
+""" Authentication support. """
+
 import abc
 import base64
 
@@ -5,7 +7,8 @@ from django.contrib.auth import authenticate
 
 
 class AbstractAuthenticator(object):
-    " Abstract base authenticator "
+
+    """ Abstract Authenticator. """
 
     __meta__ = abc.ABCMeta
 
@@ -31,7 +34,8 @@ class AbstractAuthenticator(object):
 
 
 class AnonimousAuthenticator(AbstractAuthenticator):
-    " Anonymous access. Set identifier by IP address. "
+
+    """ Anonymous access. Set identifier by IP address. """
 
     def authenticate(self, request):
         return True
@@ -41,7 +45,8 @@ class AnonimousAuthenticator(AbstractAuthenticator):
 
 
 class UserLoggedInAuthenticator(AbstractAuthenticator):
-    " Check auth by session. "
+
+    """ Check current session for user is authenticated. """
 
     def __init__(self, *args, **kwargs):
         self.user = None
@@ -57,7 +62,8 @@ class UserLoggedInAuthenticator(AbstractAuthenticator):
 
 
 class BasicAuthenticator(UserLoggedInAuthenticator):
-    " HTTP Basic authentication. "
+
+    """ HTTP Basic Authentication. """
 
     def authenticate(self, request=None):
         if 'HTTP_AUTHORIZATION' in request.META:
@@ -73,7 +79,8 @@ class BasicAuthenticator(UserLoggedInAuthenticator):
 
 
 class UserAuthenticator(UserLoggedInAuthenticator):
-    " Authorization by login and password "
+
+    """ Authorization by login and password. """
 
     username_fieldname = 'username'
     password_fieldname = 'password'
@@ -90,18 +97,20 @@ class UserAuthenticator(UserLoggedInAuthenticator):
 
     @classmethod
     def get_fields(cls):
-        return [(cls.username_fieldname, dict(required=True)), (cls.password_fieldname, dict(required=True))]
+        return [
+            (cls.username_fieldname, dict(required=True)),
+            (cls.password_fieldname, dict(required=True))]
 
 
 try:
     from ..models import AccessKey
 
     class AccessKeyAuthenticator(UserLoggedInAuthenticator):
-        " Authorization by API token. "
+
+        """ Authorization by API token. """
 
         def authenticate(self, request=None):
-            """ Authenticate user using AccessKey from HTTP Header or GET params.
-            """
+            """ Authenticate using AccessKey from HTTP headers or GET params. """
             try:
                 token = request.META.get('HTTP_AUTHORIZATION') or request.REQUEST['key']
                 accesskey = AccessKey.objects.select_related('user').get(key=token)

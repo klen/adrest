@@ -24,7 +24,7 @@ __all__ = 'ResourceView',
 
 
 class ResourceMetaClass(
-    handler.HandlerMeta, throttle.ThrottleMeta, emitter.EmitterMeta,
+        handler.HandlerMeta, throttle.ThrottleMeta, emitter.EmitterMeta,
         parser.ParserMeta, auth.AuthMeta):
 
     """ MetaClass for ResourceView. Create meta options. """
@@ -54,7 +54,7 @@ class ResourceMetaClass(
 
 
 class ResourceView(
-    handler.HandlerMixin, throttle.ThrottleMixin, emitter.EmitterMixin,
+        handler.HandlerMixin, throttle.ThrottleMixin, emitter.EmitterMixin,
         parser.ParserMixin, auth.AuthMixin, View):
 
     """ REST Resource. """
@@ -247,5 +247,4 @@ class ResourceView(
         return url(url_regex, cls.as_view(api=api), name=url_name)
 
 
-
-# pymode:lint_ignore=E1120,W0703,W0212
+# pylama:ignore=E1120,W0703

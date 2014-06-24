@@ -43,9 +43,7 @@ class BaseEmitter(object):
         self.resource = resource
         self.request = request
         self.response = SerializedHttpResponse(
-            response,
-            mimetype=self.media_type,
-            status=HTTP_200_OK)
+            response, content_type=self.media_type, status=HTTP_200_OK)
 
     def emit(self):
         """ Serialize response.
@@ -145,7 +143,7 @@ class XMLEmitter(BaseEmitter):
     """ Serialize to XML. """
 
     media_type = 'application/xml'
-    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>' # nolint
+    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>' # noqa
 
     def serialize(self, content):
         """ Serialize to XML.
@@ -196,7 +194,6 @@ class TemplateEmitter(BaseEmitter):
         :return string: remplate path
 
         """
-
         if isinstance(content, Paginator):
             return op.join('api', 'paginator.%s' % self.format)
 
@@ -210,8 +207,8 @@ class TemplateEmitter(BaseEmitter):
             content = self.resource._meta.model
 
         if isinstance(content, (Model, ModelBase)):
-            app = content._meta.app_label # nolint
-            name = content._meta.module_name # nolint
+            app = content._meta.app_label
+            name = content._meta.module_name
 
         basedir = 'api'
         if getattr(self.resource, 'api', None):
@@ -260,7 +257,7 @@ class XMLTemplateEmitter(TemplateEmitter):
     """ Template emitter with XML media type. """
 
     media_type = 'application/xml'
-    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>' # nolint
+    xmldoc_tpl = '<?xml version="1.0" encoding="utf-8"?>\n<response success="%s" version="%s" timestamp="%s">%s</response>' # noqa
 
     def serialize(self, content):
         """ Serialize to xml.
@@ -277,9 +274,12 @@ class XMLTemplateEmitter(TemplateEmitter):
 
 
 try:
-    from bson import BSON
+    from bson import BSON  # noqa
 
     class BSONEmitter(BaseEmitter):
+
+        """ Emit to bson. """
+
         media_type = 'application/bson'
 
         @staticmethod

@@ -1,4 +1,4 @@
-""" ADRest inclusion tags. """
+""" ADREST inclusion tags. """
 from django.template import Library, VariableDoesNotExist
 from django.template.base import TagHelperNode, parse_bits
 from django.template.loader import get_template

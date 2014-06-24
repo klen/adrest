@@ -1,10 +1,11 @@
-"""
-    Configuration
-    =============
+""" .
 
-    You should add ``adrest`` to your ``INSTALLED_APPS`` in Django settings.
+Configuration
+=============
 
-    Also you can redefine default **ADRest** settings writen bellow.
+You should add ``adrest`` to your ``INSTALLED_APPS`` in Django settings.
+
+Also you can redefine default **ADRest** settings writen bellow.
 
 
 """

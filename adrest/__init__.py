@@ -1,26 +1,26 @@
-"""
-    **ADRest** is an API framework for Django. It supports REST_ and RPC_
-    paradigms.
+""" **ADREST** is an API framework for Django.
 
-    :copyright: 2013 by Kirill Klenov.
-    :license: BSD, see LICENSE for more details.
-"""
-version_info = (3, 2, 1)
+It supports REST_ and RPC_ paradigms.
 
-__version__ = version = '.'.join(map(str, version_info))
-__project__ = PROJECT = __name__
-__author__ = AUTHOR = "Kirill Klenov <horneds@gmail.com>"
-__license__ = LICENSE = "GNU LGPL"
+:copyright: 2013 by Kirill Klenov.
+:license: BSD, see LICENSE for more details.
+
+"""
+
+__version__ = "3.2.3"
+__project__ = "adrest"
+__author__ = "Kirill Klenov <horneds@gmail.com>"
+__license__ = "GNU LGPL"
+
+version_info = [p for p in map(int, __version__.split("."))]
 
 try:
-    from django.conf import settings as django_settings # nolint
+    from django.conf import settings as django_settings
     if django_settings.configured:
 
-        if not 'adrest' in django_settings.INSTALLED_APPS:
+        if 'adrest' not in django_settings.INSTALLED_APPS:
             import logging
             logging.warn('You should added "adrest" to INSTALLED_APPS.')
 
 except ImportError:
     pass
-
-# lint_ignore=W402

@@ -111,6 +111,6 @@ class CSVResource(ResourceView):
         allowed_methods = 'GET'
 
     def get(self, request, **resources):
-        return HttpResponse('value'.encode("utf-16"), mimetype="text/csv")
+        return HttpResponse('value'.encode("utf-16"), content_type="text/csv")
 
 # lint_ignore=C

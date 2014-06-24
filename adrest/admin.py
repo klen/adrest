@@ -1,5 +1,5 @@
-""" Add ADRest related models to Django admin.
-"""
+""" Add ADREST related models to Django admin. """
+
 from django.contrib import admin
 
 
@@ -7,6 +7,9 @@ try:
     from .models import Access
 
     class AccessAdmin(admin.ModelAdmin):
+
+        """ Support access log in django admin. """
+
         list_display = (
             'created_at',
             'identifier',
@@ -29,6 +32,9 @@ try:
     from .models import AccessKey
 
     class AccessKeyAdmin(admin.ModelAdmin):
+
+        """ Support access keys in django admin. """
+
         list_display = 'key', 'user', 'created'
         search_fields = '=key', '=user'
         raw_id_fields = 'user',

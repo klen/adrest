@@ -1,3 +1,5 @@
+""" ADREST signals. """
+
 from django.dispatch import Signal
 
 

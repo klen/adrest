@@ -1,4 +1,5 @@
-""" ASRest related models. """
+""" ADREST related models. """
+
 from django.db import models
 from django.utils.encoding import smart_unicode
 
@@ -22,8 +23,9 @@ except ImportError:
 if settings.ADREST_ACCESS_LOG:
 
     class Access(models.Model):
-        """ Log api queries.
-        """
+
+        """ Log api queries. """
+
         created_at = models.DateTimeField(auto_now_add=True)
         uri = models.CharField(max_length=100)
         status_code = models.PositiveIntegerField()
@@ -48,7 +50,7 @@ if settings.ADREST_ACCESS_LOG:
                 self.pk, self.method, self.status_code, self.uri)
 
     def save_log(sender, response=None, request=None, **resources):
-
+        """ Save log to db. """
         resource = sender
 
         if not resource._meta.log:
@@ -59,7 +61,7 @@ if settings.ADREST_ACCESS_LOG:
         except (UnicodeDecodeError, UnicodeEncodeError):
             if response and response['Content-Type'].lower() not in \
                     [emitter.media_type.lower()
-                        for emitter in resource.emitters]:
+                     for emitter in resource.emitters]:
                 content = 'Invalid response content encoding'
             else:
                 content = response.content[:5000]
@@ -86,8 +88,9 @@ if settings.ADREST_ACCESSKEY:
     from django.contrib.auth.models import User
 
     class AccessKey(models.Model):
-        """ API key.
-        """
+
+        """ API key. """
+
         key = models.CharField(max_length=40, blank=True)
         user = models.ForeignKey(User)
         created = models.DateTimeField(auto_now_add=True)
@@ -105,6 +108,7 @@ if settings.ADREST_ACCESSKEY:
 
     # Auto create key for created user
     def create_api_key(sender, created=False, instance=None, **kwargs):
+        """ Create key for user. """
         if created and instance:
             AccessKey.objects.create(user=instance)
 

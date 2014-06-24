@@ -24,7 +24,7 @@ class SerializedHttpResponse(HttpResponse): # nolint
     """
     __metaclass__ = SerializedMeta
 
-    def __init__(self, content='', mimetype=None, status=None,
+    def __init__(self, content='', status=None,
                  content_type=None, error=False):
         """
             Save original response.
@@ -35,7 +35,6 @@ class SerializedHttpResponse(HttpResponse): # nolint
 
         super(SerializedHttpResponse, self).__init__(
             content,
-            mimetype=mimetype,
             status=status,
             content_type=content_type)
 
