@@ -1,3 +1,8 @@
+2014-09-25  horneds
+
+	* Droped Django 1.4 support
+	* Added Django 1.7 support
+
 2014-06-13  horneds 3.2.3
 
 	* Drop python2.6 support
