@@ -7,7 +7,7 @@ It supports REST_ and RPC_ paradigms.
 
 """
 
-__version__ = "3.2.3"
+__version__ = "3.3.0"
 __project__ = "adrest"
 __author__ = "Kirill Klenov <horneds@gmail.com>"
 __license__ = "GNU LGPL"

@@ -33,7 +33,7 @@ Requirements
 =============
 
 - Python 2.7
-- Django (1.3, 1.4, 1.5, 1.6)
+- Django (1.5, 1.6, 1.7)
 
 .. _installation:
 
