@@ -4,9 +4,9 @@ python:
   - "2.7"
 
 env:
-  - TOXENV=py27-14
   - TOXENV=py27-15
   - TOXENV=py27-16
+  - TOXENV=py27-17
   - TOXENV=cov
 
 
