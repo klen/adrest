@@ -401,22 +401,6 @@ class ResourceTest(AdrestTestCase):
         self.assertEquals(response.status_code, 200)
         self.assertFalse(response.has_header("Link"))
 
-    def test_bson(self):
-        " Test BSON support. "
-
-        from bson import BSON
-
-        response = self.get_resource('bson')
-        test = BSON(response.content).decode()
-        self.assertEqual(test['counter'], 1)
-
-        bson = BSON.encode(dict(counter=4))
-        uri = self.reverse('bson')
-        response = self.client.post(
-            uri, data=bson, content_type='application/bson')
-        test = BSON(response.content).decode()
-        self.assertEqual(test['counter'], 5)
-
 
 class AdrestMapTest(TestCase):
 

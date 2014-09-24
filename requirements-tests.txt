@@ -1,4 +1,3 @@
 ipdb
 mixer
-mongo
 pytest
