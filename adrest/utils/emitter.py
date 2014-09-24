@@ -14,6 +14,11 @@ from .serializer import JSONSerializer, XMLSerializer
 from .status import HTTP_200_OK
 
 
+__all__ = (
+    'NullEmitter', 'TextEmitter', 'JSONEmitter', 'JSONPEmitter', 'XMLEmitter',
+    'HTMLTemplateEmitter', 'XMLTemplateEmitter', 'BaseEmitter')
+
+
 class EmitterMeta(type):
 
     """ Preload format attribute. """
@@ -272,21 +277,5 @@ class XMLTemplateEmitter(TemplateEmitter):
             super(XMLTemplateEmitter, self).serialize(content)
         )
 
-
-try:
-    from bson import BSON  # noqa
-
-    class BSONEmitter(BaseEmitter):
-
-        """ Emit to bson. """
-
-        media_type = 'application/bson'
-
-        @staticmethod
-        def serialize(content):
-            return BSON.encode(content)
-
-except ImportError:
-    pass
 
 # pymode:lint_ignore=F0401,W0704

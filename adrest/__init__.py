@@ -7,7 +7,7 @@ It supports REST_ and RPC_ paradigms.
 
 """
 
-__version__ = "3.2.3"
+__version__ = "3.3.0"
 __project__ = "adrest"
 __author__ = "Kirill Klenov <horneds@gmail.com>"
 __license__ = "GNU LGPL"
@@ -24,3 +24,14 @@ try:
 
 except ImportError:
     pass
+
+from .api import Api
+from .views import ResourceView
+from .utils.auth import *
+from .utils.emitter import *
+from .utils.parser import *
+from .utils.serializer import *
+from .utils.throttle import *
+from .utils.exceptions import HttpError
+
+# pylama:ignore=W0401,W0611

@@ -90,21 +90,6 @@ class DummyResource(ResourceView):
         return True
 
 
-class BSONResource(ResourceView):
-
-    class Meta:
-        allowed_methods = 'GET', 'POST'
-
-    COUNTER = 1
-
-    def get(self, request, **resources):
-        return dict(counter=self.COUNTER)
-
-    def post(self, request, **resources):
-        self.COUNTER += request.data.get('counter', 0)
-        return dict(counter=self.COUNTER)
-
-
 class CSVResource(ResourceView):
 
     class Meta:

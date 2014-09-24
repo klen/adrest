@@ -1,6 +1,6 @@
 from adrest.tests.utils import AdrestTestCase
-from django.utils import simplejson
 from mixer.backend.django import mixer
+import json as js
 
 from .api import API
 from .models import Root, Child
@@ -45,7 +45,7 @@ class RPCTestCase(AdrestTestCase):
                     end=300
                 )
             ))
-        response = simplejson.loads(response.content)
+        response = js.loads(response.content)
         self.assertTrue(200 <= response <= 300)
 
         response = self.rpc(
@@ -63,7 +63,7 @@ class RPCTestCase(AdrestTestCase):
                 jsonrpc='2.0',
                 method='error_method',
             ))
-        response = simplejson.loads(response.content)
+        response = js.loads(response.content)
         self.assertEqual(response['error']['message'], 'Error here')
 
         # GET JSONRPC
@@ -91,37 +91,19 @@ class RPCTestCase(AdrestTestCase):
         response = self.get_resource('autojsonrpc')
         self.assertContains(response, 'Invalid RPC Call.')
 
-        response = self.rpc(
-            'autojsonrpc',
-            callback='answer',
-            rpc=dict(
-                method="iamwrongmethod",
-            )
-        )
+        response = self.rpc('autojsonrpc', callback='answer', rpc=dict(method="iamwrongmethod"))
         self.assertContains(response, 'Wrong method')
 
-        response = self.rpc(
-            'autojsonrpc',
-            callback='answer',
-            rpc=dict(method='bla.bla'))
+        response = self.rpc('autojsonrpc', callback='answer', rpc=dict(method='bla.bla'))
         self.assertContains(response, 'Unknown method')
 
-        response = self.rpc(
-            'autojsonrpc',
-            rpc=dict(
-            method='test.bla'))
+        response = self.rpc('autojsonrpc', rpc=dict(method='test.bla'))
         self.assertContains(response, 'not allowed')
 
-        response = self.rpc(
-            'autojsonrpc',
-            rpc=dict(
-            method='test.get'))
+        response = self.rpc('autojsonrpc', rpc=dict(method='test.get'))
         self.assertContains(response, 'true')
 
-        response = self.rpc(
-            'autojsonrpc',
-            rpc=dict(
-            method='root.get'))
+        response = self.rpc('autojsonrpc', rpc=dict(method='root.get'))
         self.assertContains(response, 'Authorization required')
 
         response = self.rpc(
