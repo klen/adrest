@@ -1,12 +1,12 @@
-from django.conf import settings
-from django.test import client
+import json as js
 from collections import defaultdict
+from django.conf import settings
 from django.core.urlresolvers import reverse as django_reverse
+from django.db.models import Model
+from django.test import client
 from django.utils.encoding import smart_str
 from django.utils.functional import curry
 from django.utils.http import urlencode
-from django.utils import simplejson
-from django.db.models import Model
 from urlparse import urlparse
 
 
@@ -118,7 +118,7 @@ class AdrestClient(client.Client):
         # Support JSON request
         if json:
             headers['content_type'] = 'application/json'
-            data = simplejson.dumps(data)
+            data = js.dumps(data)
 
         url = self.reverse(resource, api=api, **kwargs)
         return jsonify(method(url, data=data, **headers))
@@ -219,7 +219,7 @@ def jsonify(response):
     """ Check for request content is JSON. """
     if response.get('Content-type') == 'application/json':
         try:
-            response.json = simplejson.loads(response.content)
+            response.json = js.loads(response.content)
         except ValueError:
             return response
     return response

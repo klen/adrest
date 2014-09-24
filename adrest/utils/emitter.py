@@ -278,22 +278,4 @@ class XMLTemplateEmitter(TemplateEmitter):
         )
 
 
-try:
-    from bson import BSON  # noqa
-
-    class BSONEmitter(BaseEmitter):
-
-        """ Emit to bson. """
-
-        media_type = 'application/bson'
-
-        @staticmethod
-        def serialize(content):
-            return BSON.encode(content)
-
-    __all__ += 'BSONEmitter',
-
-except ImportError:
-    pass
-
 # pymode:lint_ignore=F0401,W0704
