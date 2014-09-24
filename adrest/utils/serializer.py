@@ -6,8 +6,8 @@ from datetime import datetime, date, time
 from decimal import Decimal
 
 from django.db.models import Model, Manager
-from django.utils import simplejson
 from django.utils.encoding import smart_unicode
+import json as js
 
 from .tools import as_tuple
 
@@ -65,10 +65,7 @@ class BaseSerializer(object):
             return value
 
         if hasattr(value, 'to_simple') and not inspect.isclass(value):
-            return self.to_simple(
-                value.to_simple(self),
-                **options
-            )
+            return self.to_simple(value.to_simple(self), **options)
 
         if isinstance(value, Model):
             return self.to_simple_model(value, **options)
@@ -87,11 +84,11 @@ class BaseSerializer(object):
             result = result[:12]
         return result
 
-    def to_simple_model(self, instance, **options): # nolint
+    def to_simple_model(self, instance, **options): # noqa
         """ Convert model to simple python structure.
         """
         options = self.init_options(**options)
-        fields, include, exclude, related = options['fields'], options['include'], options['exclude'], options['related'] # nolint
+        fields, include, exclude, related = options['fields'], options['include'], options['exclude'], options['related'] # noqa
 
         result = dict(
             model=smart_unicode(instance._meta),
@@ -100,11 +97,7 @@ class BaseSerializer(object):
             fields=dict(),
         )
 
-        m2m_fields = [f.name for f in instance._meta.many_to_many]
-        o2m_fields = [f.get_accessor_name()
-                      for f in instance._meta.get_all_related_objects()]
-        default_fields = set([field.name for field in instance._meta.fields
-                              if field.serialize])
+        default_fields = set([field.name for field in instance._meta.fields if field.serialize])
         serialized_fields = fields or (default_fields | include) - exclude
 
         for fname in serialized_fields:
@@ -153,7 +146,7 @@ class JSONSerializer(BaseSerializer):
 
     def serialize(self, value):
         simple = super(JSONSerializer, self).serialize(value)
-        return simplejson.dumps(simple, **self.serializer_options)
+        return js.dumps(simple, **self.serializer_options)
 
 
 class XMLSerializer(BaseSerializer):

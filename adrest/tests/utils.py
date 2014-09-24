@@ -1,6 +1,6 @@
 """ ADRest test's helpers. """
+import json as js
 from django.test import TestCase
-from django.utils import simplejson
 from django.utils.functional import curry
 
 from .client import AdrestClient, reverse
@@ -63,12 +63,12 @@ class AdrestTestCase(TestCase):
             method = 'get'
             data = dict(
                 callback=callback,
-                payload=simplejson.dumps(data))
+                payload=js.dumps(data))
 
         else:
             headers['HTTP_ACCEPT'] = 'application/json'
             method = 'post'
-            data = simplejson.dumps(data)
+            data = js.dumps(data)
 
         return self.client.request_resource(
             resource, method=method, data=data, headers=headers, api=self.api, key=key, **kwargs)

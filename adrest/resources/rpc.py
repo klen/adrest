@@ -1,11 +1,12 @@
 """ RPC support. """
+import json as js
 from django.http import QueryDict, HttpResponse
-from django.utils import simplejson, importlib
+from django.utils import importlib
 
 from ..utils.emitter import JSONPEmitter, JSONEmitter
 from ..utils.parser import JSONParser, FormParser
-from ..utils.tools import as_tuple
 from ..utils.response import SerializedHttpResponse
+from ..utils.tools import as_tuple
 from ..views import ResourceView, ResourceMetaClass
 
 
@@ -100,7 +101,7 @@ class RPCResource(ResourceView):
             if request.method == 'GET':
                 payload = request.GET.get('payload')
                 try:
-                    payload = simplejson.loads(payload)
+                    payload = js.loads(payload)
                 except TypeError:
                     raise AssertionError("Invalid RPC Call.")
 
@@ -108,11 +109,8 @@ class RPCResource(ResourceView):
                 raise AssertionError("Invalid RPC Call.")
             return self.rpc_call(request, **payload)
 
-        except Exception, e:
-            return SerializedHttpResponse(
-                dict(error=dict(message=str(e))),
-                error=True
-            )
+        except Exception as e: # noqa (any error)
+            return SerializedHttpResponse(dict(error=dict(message=str(e))), error=True)
 
     def rpc_call(self, request, method=None, params=None, **kwargs):
         """ Call a RPC method.
