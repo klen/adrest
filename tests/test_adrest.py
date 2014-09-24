@@ -53,7 +53,7 @@ if VERSION >= (1, 7):
 
 # Setup tests
 from django.core.management import call_command
-call_command('migrate', interactive=False)
+call_command('syncdb', interactive=False)
 
 from .core.tests import * # noqa
 from .main.tests import * # noqa
