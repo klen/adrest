@@ -7,24 +7,28 @@ Documentation in `construction <http://adrest.readthedocs.org>`_.
 
 .. _badges:
 
-.. image:: https://secure.travis-ci.org/klen/adrest.png?branch=develop
+.. image:: http://img.shields.io/travis/klen/adrest.svg?style=flat-square
     :target: http://travis-ci.org/klen/adrest
     :alt: Build Status
 
-.. image:: https://coveralls.io/repos/klen/adrest/badge.png?branch=develop
+.. image:: http://img.shields.io/coveralls/klen/adrest.svg?style=flat-square
     :target: https://coveralls.io/r/klen/adrest
     :alt: Coverals
 
-.. image:: https://pypip.in/v/adrest/badge.png
-    :target: https://crate.io/packages/adrest
+.. image:: http://img.shields.io/pypi/v/adrest.svg?style=flat-square
+    :target: https://pypi.python.org/pypi/adrest
     :alt: Version
 
-.. image:: https://pypip.in/d/adrest/badge.png
-    :target: https://crate.io/packages/adrest
+.. image:: http://img.shields.io/pypi/dm/adrest.svg?style=flat-square
+    :target: https://pypi.python.org/pypi/adrest
     :alt: Downloads
 
-.. image:: https://dl.dropboxusercontent.com/u/487440/reformal/donate.png
-    :target: https://www.gittip.com/klen/
+.. image:: http://img.shields.io/pypi/l/adrest.svg?style=flat-square
+    :target: https://pypi.python.org/pypi/adrest
+    :alt: License
+
+.. image:: http://img.shields.io/gratipay/klen.svg?style=flat-square
+    :target: https://www.gratipay.com/klen/
     :alt: Donate
 
 .. _requirements:

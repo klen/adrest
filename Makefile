@@ -20,6 +20,33 @@ clean:
 	@rm -f */*.py[co]
 	@rm -f */*.orig
 
+# ==============
+#  Bump version
+# ==============
+
+.PHONY: release
+VERSION?=minor
+# target: release - Bump version
+release:
+	@pip install bumpversion
+	@bumpversion $(VERSION)
+	@git checkout master
+	@git merge develop
+	@git checkout develop
+	@git push --all
+	@git push --tags
+
+.PHONY: minor
+minor: release
+
+.PHONY: patch
+patch:
+	make release VERSION=patch
+
+# ===============
+#  Build package
+# ===============
+
 .PHONY: register
 # target: register - Register module on PyPi
 register:
@@ -31,6 +58,16 @@ upload: docs
 	@python setup.py sdist upload || echo 'Skip upload'
 	@python setup.py bdist_wheel upload || echo 'Skip upload'
 
+.PHONY: docs
+# target: docs - Compile and upload docs
+docs:
+	python setup.py build_sphinx --source-dir=docs/ --build-dir=docs/_build --all-files
+	# python setup.py upload_sphinx --upload-dir=docs/_build/html
+
+# =============
+#  Development
+# =============
+
 .PHONY: t
 # target: t - Runs tests
 t: clean
@@ -40,12 +77,6 @@ t: clean
 # target: audit - Audit code
 audit:
 	@pylama $(MODULE) -i E501
-
-.PHONY: docs
-# target: docs - Compile and upload docs
-docs:
-	python setup.py build_sphinx --source-dir=docs/ --build-dir=docs/_build --all-files
-	# python setup.py upload_sphinx --upload-dir=docs/_build/html
 
 $(VIRTUALENV): requirements.txt
 	virtualenv --no-site-packages $(VIRTUALENV)

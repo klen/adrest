@@ -85,14 +85,14 @@ if settings.ADREST_ACCESS_LOG:
 if settings.ADREST_ACCESSKEY:
 
     import uuid
-    from django.contrib.auth.models import User
+    from django.conf import settings as django_settings
 
     class AccessKey(models.Model):
 
         """ API key. """
 
         key = models.CharField(max_length=40, blank=True)
-        user = models.ForeignKey(User)
+        user = models.ForeignKey(django_settings.AUTH_USER_MODEL)
         created = models.DateTimeField(auto_now_add=True)
 
         class Meta():
@@ -114,7 +114,14 @@ if settings.ADREST_ACCESSKEY:
 
     # Connect create handler to user save event
     if settings.ADREST_AUTO_CREATE_ACCESSKEY:
-        models.signals.post_save.connect(create_api_key, sender=User)
+        from django import VERSION
+
+        user_model = django_settings.AUTH_USER_MODEL
+        if VERSION < (1, 7):
+            from django.contrib.auth import get_user_model
+            user_model = get_user_model()
+
+        models.signals.post_save.connect(create_api_key, sender=user_model)
 
 
-# pymode:lint_ignore=W0704
+# pylama:ignore=E1002
