@@ -27,9 +27,9 @@ clean:
 .PHONY: release
 VERSION?=minor
 # target: release - Bump version
-release:
-	@pip install bumpversion
-	@bumpversion $(VERSION)
+release: $(VIRTUALENV)
+	@$(VIRTUALENV)/bin/pip install bumpversion
+	@$(VIRTUALENV)/bin/bumpversion $(VERSION)
 	@git checkout master
 	@git merge develop
 	@git checkout develop
@@ -49,19 +49,21 @@ patch:
 
 .PHONY: register
 # target: register - Register module on PyPi
-register:
-	@python setup.py register
+register: $(VIRTUALENV)
+	@$(VIRTUALENV)/bin/python setup.py register
 
 .PHONY: upload
 # target: upload - Upload module on PyPi
-upload: docs
-	@python setup.py sdist upload || echo 'Skip upload'
-	@python setup.py bdist_wheel upload || echo 'Skip upload'
+upload: docs $(VIRTUALENV)
+	@$(VIRTUALENV)/bin/pip install wheel
+	@$(VIRTUALENV)/bin/python setup.py sdist upload || echo 'Skip upload'
+	@$(VIRTUALENV)/bin/python setup.py bdist_wheel upload || echo 'Skip upload'
 
 .PHONY: docs
 # target: docs - Compile and upload docs
-docs:
-	python setup.py build_sphinx --source-dir=docs/ --build-dir=docs/_build --all-files
+docs: $(VIRTUALENV)
+	@$(VIRTUALENV)/bin/pip install sphinx
+	@$(VIRTUALENV)/bin/python setup.py build_sphinx --source-dir=docs/ --build-dir=docs/_build --all-files
 	# python setup.py upload_sphinx --upload-dir=docs/_build/html
 
 # =============

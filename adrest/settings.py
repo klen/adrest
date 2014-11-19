@@ -5,7 +5,7 @@ Configuration
 
 You should add ``adrest`` to your ``INSTALLED_APPS`` in Django settings.
 
-Also you can redefine default **ADRest** settings writen bellow.
+There are default **ADRest** settings are writen bellow.
 
 
 """
@@ -36,7 +36,7 @@ ADREST_AUTO_CREATE_ACCESSKEY = getattr(
     settings, 'ADREST_AUTO_CREATE_ACCESSKEY', False)
 
 #: Set default number resources per page for pagination
-#: ADREST_LIMIT_PER_PAGE = 0 -- Disabled pagination by default
+#: ADREST_LIMIT_PER_PAGE = 0 -- Disable pagination
 ADREST_LIMIT_PER_PAGE = int(getattr(settings, 'ADREST_LIMIT_PER_PAGE', 50))
 
 #: Dont parse a exceptions. Show standart Django 500 page.
