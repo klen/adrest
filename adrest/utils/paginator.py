@@ -18,9 +18,8 @@ class Paginator(object):
 
         try:
             per_page = resource._meta.dyn_prefix + 'max'
-            self.paginator = DjangoPaginator(
-                response,
-                self.query_dict.get(per_page) or resource._meta.limit_per_page)
+            self.paginator = DjangoPaginator(response, self.query_dict.get(per_page)
+                                             or resource._meta.limit_per_page)
 
             if not self.paginator.per_page:
                 self.paginator = None
@@ -62,7 +61,7 @@ class Paginator(object):
 
     @property
     def page_number(self):
-        """Get page number
+        """Get page number.
 
         :return: int
 

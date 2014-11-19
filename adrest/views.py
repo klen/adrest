@@ -47,8 +47,7 @@ class ResourceMetaClass(
         # Prepare urls
         cls._meta.url_params = list(as_tuple(cls._meta.url_params))
         cls._meta.url_name = cls._meta.url_name or '-'.join(gen_url_name(cls))
-        cls._meta.url_regex = cls._meta.url_regex or '/'.join(
-            gen_url_regex(cls))
+        cls._meta.url_regex = cls._meta.url_regex or '/'.join(gen_url_regex(cls))
 
         return cls
 

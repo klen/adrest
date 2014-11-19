@@ -73,10 +73,9 @@ class DynamicMixin(MixinBase):
 
     def __init__(self, *args, **kwargs):
         """ Copy self queryset for prevent query caching. """
-
         super(DynamicMixin, self).__init__(*args, **kwargs)
 
-        if not self._meta.queryset is None:
+        if self._meta.queryset is not None:
             self._meta.queryset = self._meta.queryset.all()
 
     def get_collection(self, request, **resources):
@@ -85,7 +84,6 @@ class DynamicMixin(MixinBase):
         :return collection: collection of related resources.
 
         """
-
         if self._meta.queryset is None:
             return []
 
@@ -133,7 +131,7 @@ class DynamicMixin(MixinBase):
             tokens = field.split(LOOKUP_SEP)
             field_name = tokens[0]
 
-            if not field_name in self._meta.fields:
+            if field_name not in self._meta.fields:
                 continue
 
             exclude = False
@@ -141,9 +139,9 @@ class DynamicMixin(MixinBase):
                 exclude = True
                 tokens.pop()
 
-            converter = self._meta.model._meta.get_field(
-                field_name).to_python if len(tokens) == 1 else lambda v: v
-            value = map(converter, request.GET.getlist(field))
+            value = request.GET.getlist(field)
+            if len(tokens) == 1:
+                value = map(self._meta.model._meta.get_field(field_name).to_python, value)
 
             if len(value) > 1:
                 tokens.append('in')
