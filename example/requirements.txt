@@ -8,7 +8,7 @@ wsgiref==0.1.2
 # -----
 django-debug-toolbar==0.9.4
 ipdb==0.7
-Werkzeug==0.8.3
+Werkzeug==0.15.3
 
 # Project
 # -------
